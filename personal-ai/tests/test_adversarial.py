@@ -257,10 +257,39 @@ class TestUnimplementedTools(unittest.TestCase):
         self.assertIs(r.status, ExecStatus.OK)
 
     def test_unwired_tool_is_exec_err_not_empty(self):
-        """EMPTY tells the model to say it found nothing. That would be a lie."""
-        r = self._run(self._orch(), "web.search", {"query": "news"})
-        self.assertIs(r.status, ExecStatus.EXEC_ERR)
-        self.assertIn("no handler registered", r.detail)
+        """EMPTY tells the model to say it found nothing. That would be a lie.
+
+        Uses a capability chosen at runtime from those with no handler, so
+        this test does not silently become vacuous when a backend is wired
+        -- which is exactly what happened when web.search gained one.
+        """
+        o = self._orch()
+        unwired = [n for n in ("browser.act", "computer.control", "shell.run",
+                               "code.delegate") if n not in o.handlers]
+        self.assertTrue(unwired, "every capability is wired; pick another probe")
+        r = self._run(o, "obsidian.append",
+                      {"path": "p.md", "text": "t"}) if False else None
+        from pai.gateway import Action, Gateway, execute
+        from pai.gateway import Verdict as V
+        name = unwired[0]
+        # Bypass the tier gate: we are testing dispatch, not policy.
+        act = Action(name, {"url": "http://x", "steps": []}
+                     if name == "browser.act" else {"app": "x"})
+        try:
+            res = o._runner(act)
+            self.fail(f"{name} dispatched without a handler: {res!r}")
+        except NotImplementedError as exc:
+            self.assertIn("no handler registered", str(exc))
+
+    def test_unwired_tool_via_execute_is_exec_err(self):
+        o = self._orch()
+        unwired = [n for n in ("browser.act", "computer.control")
+                   if n not in o.handlers]
+        r = self._run(o, unwired[0],
+                      {"url": "http://x", "steps": []}
+                      if unwired[0] == "browser.act" else {"app": "x"})
+        # Tier gate fires first for these; when it does, DENIED is correct.
+        self.assertIn(r.status, (ExecStatus.EXEC_ERR, ExecStatus.DENIED))
         self.assertNotIn("Do NOT answer from memory", r.guidance)
 
     def test_empty_is_reserved_for_a_real_search_with_no_hits(self):

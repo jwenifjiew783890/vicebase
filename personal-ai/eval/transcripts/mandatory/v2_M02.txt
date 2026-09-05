@@ -1,0 +1,41 @@
+TEST #M02
+Scenario:
+  casual HI, natural spoken register
+
+USER:
+  Yaar kya scene hai?
+AI:  [route=fast lang=hinglish 34w/2s ttft=20224ms 5.8tok/s]
+  Tumne koi specific topic ya context nahi bataya, mujhe pata nahi hai scene kaunsa hai. Agar tum batao ki kis baat ke baare mein baat kar rahe ho, toh main sahi information de paunga.
+
+USER:
+  Tu kya kar raha hai?
+AI:  [route=fast lang=hinglish 40w/2s ttft=23320ms 5.6tok/s]
+  Main tumhare saath baat kar raha hoon, par tumhe pata nahi hai ki hum baat kar rahe hain ya nahi. Tumne kisi specific topic ya context ka zikr nahi kiya, isliye maine jawab diya ki mujhe koi idea nahi hai.
+
+USER:
+  Yaar I'm bored.
+AI:  [route=fast lang=hinglish 22w/1s ttft=26552ms 5.0tok/s]
+  Boredi ho toh kuch sunna ya koi naya cheez try karna sahi rahega, par batao kya hai jo tumhe pasand aata hai?
+
+USER:
+  Sun, mere paas ek idea hai.
+AI:  [route=fast lang=hinglish 8w/2s ttft=29219ms 5.6tok/s]
+  Kya idea hai? Batao, main sunna chahta hoon.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         26.0
+  p90 words                34
+  max words                40
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            50%
+  hedge rate               50%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         2
+  language match           100%
+  cross-turn repetition    0.19
+  opener variety           100%

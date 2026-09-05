@@ -222,6 +222,7 @@ class Orchestrator:
                 dict(r) for r in self.store.db.execute(
                     "SELECT subject,predicate,object FROM facts "
                     "WHERE valid_to IS NULL")],
+            "web.search": self._web_search,
         }
 
     # ------------------------------------------------------------ prompt
@@ -343,6 +344,16 @@ class Orchestrator:
             raise NotImplementedError(
                 f"no handler registered for {action.name!r}")
         return handler(action)
+
+    def _web_search(self, action: Action):
+        """Real web search. Returns tainted results, or nothing.
+
+        Nothing is the important case: an empty result must reach the model
+        as EMPTY, whose guidance forbids answering from memory instead.
+        """
+        from .web import search, rewrite_query
+        outcome = search(rewrite_query(str(action.args["query"])))
+        return outcome.results or None
 
     def register(self, name: str, handler: Callable[[Action], Any]) -> None:
         """Wire a real implementation for one capability."""

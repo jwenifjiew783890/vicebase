@@ -44,9 +44,12 @@ true, not less: almost every failure found in this project was a failure of
 the system around the model, and almost every fix landed in deterministic
 code rather than in the model or the prompt.
 
-The count is the argument. Of the 28 documented failures, **24 were fixed
-in code outside the model**, 3 in the prompt, and 1 was a limitation
-accepted and documented. Not one was fixed by making the model bigger.
+The count is the argument. Of the 38 documented failures, **33 were fixed
+in code outside the model** and 5 in the prompt. Not one was fixed by
+making the model bigger, and not one would have been fixed by a larger
+model: a 7B would still have had a parser that discarded its own output, a
+router that never checked the vault, and a web path with nothing behind
+it.
 
 ```
       user turn
@@ -86,14 +89,14 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **283** (3 skipped: opt-in live network) | MEASURED |
-| Frozen scenario checks | **135 / 135** | MEASURED |
-| Mutation audit | **PENDING** | MEASURED |
+| Unit tests | **327** (3 skipped: opt-in live network) | MEASURED |
+| Frozen scenario checks | **176 / 176** | MEASURED |
+| Mutation audit | see §31 | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
-| Real conversations with the model | **PENDING** | MEASURED |
-| Real conversational turns | **PENDING** | MEASURED |
-| Documented failures found + fixed | **28** | MEASURED |
+| Real conversations with the model | **68** across four rounds | MEASURED |
+| Documented failures found + fixed | **38** | MEASURED |
 | Planner → gateway reach | **0/12 → 11/12** | MEASURED |
+| Tool calls actually reaching the gateway | **0 → 6** on the frozen set | MEASURED |
 
 ---
 ## 3. Corrections to my own previous report
@@ -509,7 +512,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **56 mutations** now, covering trust, gateway, memory, learning,
+defence. **72 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once

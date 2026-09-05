@@ -11,10 +11,11 @@ Status legend: **FIXED** = change made and regression-tested ·
 
 ## Index
 
-44 entries, every one found by reading a transcript from a real
-Qwen3.5-4B-Q4_K_M running locally, and every one quoted below with the run
-log line that goes with it. (G1 is the exception: a gap that was stated in
-every earlier report and finally closed.)
+46 entries, every one found by reading a transcript from a real
+Qwen3.5-4B-Q4_K_M running locally, or by an audit of the tests themselves,
+and every one quoted below with the evidence that goes with it. (G1 is the
+exception: a gap that was stated in every earlier report and finally
+closed.)
 
 | # | what happened |
 |---|---|
@@ -62,12 +63,20 @@ every earlier report and finally closed.)
 | F41 | Evidence lived for exactly one turn |
 | F42 | It denied a capability it had just used |
 | F43 | "yaar aaj bahut kaam tha" went to a search engine |
+| F44 | Three of my own defences were false greens |
+| F45 | I committed a live mutation |
 
 Rounds: F1-F16 round 1 · F17-F18 the audit of the tests themselves ·
-F19-F28 round 2 (the mandatory set) · F29-F38 round 3 · F39-F43 round 4.
+F19-F28 round 2 (the mandatory set) · F29-F38 round 3 · F39-F43 round 4 ·
+F44-F45 the final audit.
+
+**Six were self-inflicted** — introduced by a fix for an earlier failure,
+or by the tooling — and they carry their own numbers rather than being
+folded into the entries that caused them: F35, F39, F40, F44, F45, and the
+metric correction noted after F31.
 
 Five were fixed in the prompt (F1, F11, F14, F16, F38). The other
-39 were fixed in deterministic code outside the model.
+41 were fixed in deterministic code outside the model.
 
 ---
 

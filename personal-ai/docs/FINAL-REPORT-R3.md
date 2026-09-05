@@ -29,6 +29,10 @@ runtime. Running twenty real conversations is what exposed them. They are
 listed in §3 before anything else, because a report that buries its own
 corrections is not worth the sections that follow.
 
+Four of the forty-three failures in this project were introduced by fixes
+for earlier ones, and they are documented under their own numbers rather
+than folded into the entries that caused them.
+
 **Second: no GPU and no audio hardware exist in this environment.** Every
 latency number here is CPU. Voice is policy-tested and model-untested.
 Neither can be fixed by trying harder; both are marked NOT TESTED where
@@ -69,15 +73,17 @@ they apply.
 29. [What a 4B model cannot do, no matter the architecture](#29-what-a-4b-model-cannot-do-no-matter-the-architecture)
 30. [Hardware plan for the 4050](#30-hardware-plan-for-the-4050)
 
-Sections 31-34 are added at the end of the run and cover round 4,
-the completion bar, the original 22 questions, and the verdict.
+31. Round 4 — the final verification
+32. The completion bar, item by item
+33. Honest scorecard against the original 22 questions
+34. Verdict
 
 ---
 ## 1. What this is
 
 A **personal AI system built around a small conversational LLM** — not a
 small conversational LLM. That distinction was the answer to the question
-you asked me to challenge, and three rounds of testing have made it more
+you asked me to challenge, and four rounds of testing have made it more
 true, not less: almost every failure found in this project was a failure of
 the system around the model, and almost every fix landed in deterministic
 code rather than in the model or the prompt.
@@ -112,8 +118,10 @@ it.
    |   GATEWAY    |   ALLOW / CONFIRM / CONFIRM_TYPED / DENY
    +------+-------+
           |
-   +------v-------+   two guards, post-generation, deterministic
-   |   HONESTY    |   no source without evidence · no claim without execution
+   +------v-------+   four guards, post-generation, deterministic
+   |   HONESTY    |   no source without evidence · no claim without
+   |              |   execution · no memory without a record · no denying
+   |              |   a capability it just used
    +--------------+
 ```
 

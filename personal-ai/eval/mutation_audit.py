@@ -411,6 +411,17 @@ MUTATIONS = [
      "        self.db.execute(\"UPDATE facts SET valid_to=? WHERE id=?\",",
      "        self.db.execute(\"DELETE FROM facts WHERE ?=? OR id=?\","),
 
+    ("orchestrator: the hypothetical check runs over the whole reply again",
+     "pai/orchestrator.py",
+     "    for clause in re.split(r\"(?<=[.!?।])\\s+\", text):\n"
+     "        if ACTION_CLAIM.search(clause) and not _HYPOTHETICAL.search(clause):",
+     "    for clause in [text]:\n"
+     "        if ACTION_CLAIM.search(clause) and not _HYPOTHETICAL.search(clause):"),
+
+    ("orchestrator: roleplayed work is not a claim", "pai/orchestrator.py",
+     "    if _ROLEPLAY.search(text):\n        return True",
+     "    if False:\n        return True"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

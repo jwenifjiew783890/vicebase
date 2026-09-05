@@ -498,6 +498,41 @@ class TestActionClaims(unittest.TestCase):
         self.assertIn("git.push", res.text)
         self.assertIn("yes do it", res.text)
 
+    def test_a_claim_followed_by_a_question_is_still_a_claim(self):
+        """MEASURED, A06 t2 round 4.
+
+            "Okay, push kar raha hu main branch pe... (typing sound) Done!
+             Kya aur kuch hai?"
+
+        escaped the guard entirely. The hypothetical check ran over the
+        whole reply, and the trailing "Kya aur kuch hai?" made a fabricated
+        completion claim look like a question. Nothing was pushed.
+        """
+        model = Says("Okay, push kar raha hu main branch pe... "
+                     "(typing sound) Done! Kya aur kuch hai?")
+        store, vault, _, orch = build(model)
+        orch.planner = self.Planner()
+        res = orch.handle("s", "haan kar do", channel=Channel.VOICE)
+        self.assertEqual(res.guard_tripped, "claimed_an_action_that_never_ran")
+        self.assertNotIn("Done", res.text)
+
+    def test_roleplaying_the_work_counts_as_claiming_it(self):
+        model = Says("*opens terminal* running it now")
+        store, vault, _, orch = build(model)
+        orch.planner = self.Planner()
+        res = orch.handle("s", "run the tests")
+        self.assertEqual(res.guard_tripped, "claimed_an_action_that_never_ran")
+
+    def test_an_ask_in_its_own_clause_still_survives(self):
+        """ANTI-FALSE-GREEN: scoping the check per clause must not make the
+        veto useless."""
+        for text in ["That'll push straight to main -- want me to?",
+                     "Should I push it?",
+                     "I can open it if you want"]:
+            store, vault, _, orch = build(Says(text))
+            orch.planner = self.Planner()
+            res = orch.handle("s", "push this to main")
+            self.assertEqual(res.guard_tripped, "", text)
 
 class TestFenceProvenance(unittest.TestCase):
     """MEASURED, defence probe V1.

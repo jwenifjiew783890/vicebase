@@ -388,9 +388,27 @@ ACTION_CLAIM = re.compile(
     r"|\b(?:kar|ho)\s*diya\s+" + _CAP_VERB + r"\b",
     re.IGNORECASE | re.UNICODE)
 
+# Roleplaying the action counts as claiming it. A 4B model narrating
+# "(typing sound)" or "*opens terminal*" is describing work it did not do,
+# and a reader has no way to know that.
+_ROLEPLAY = re.compile(
+    r"\((?:typing|typing sound|clicks?|clicking|opens?|running|working)[^)]*\)"
+    r"|\*(?:types?|clicks?|opens?|runs?|pushes?)[^*]*\*"
+    r"|\b(?:done|ho gaya|kar diya)\s*[!.]",
+    re.IGNORECASE | re.UNICODE)
+
 # Conditional or interrogative framing is not a claim. "Should I push it?"
 # and "I can push it if you want" are the correct things to say when
 # nothing has run, and must survive the guard untouched.
+#
+# MEASURED, A06 t2 round 4: this was applied to the WHOLE reply, so
+#
+#     "Okay, push kar raha hu main branch pe... (typing sound) Done!
+#      Kya aur kuch hai?"
+#
+# escaped the guard entirely -- the trailing "Kya aur kuch hai?" made a
+# fabricated completion claim look like a question. It is now tested
+# against the clause the claim is IN, not the sentence after it.
 _HYPOTHETICAL = re.compile(
     r"\?\s*$"
     r"|\b(should i|shall i|do you want|want me to|if you want|can i|may i|"
@@ -527,6 +545,22 @@ RETRACTION_REPLY = {
     "hinglish": ["Theek hai, stopped.", "Ok, nahi kar raha.",
                  "Samajh gaya, cancelled."],
 }
+
+
+def _claims_an_action(text: str) -> bool:
+    """Does this reply claim work was done, in a clause that is not an ask?
+
+    The hypothetical check has to look at the CLAUSE the claim is in. Run
+    over the whole reply it is trivially defeated by ending with a
+    question, which is how "Okay, push kar raha hu ... Done! Kya aur kuch
+    hai?" got through in A06 t2.
+    """
+    if _ROLEPLAY.search(text):
+        return True
+    for clause in re.split(r"(?<=[.!?।])\s+", text):
+        if ACTION_CLAIM.search(clause) and not _HYPOTHETICAL.search(clause):
+            return True
+    return False
 
 
 def _is_bare_retraction(text: str) -> bool:
@@ -981,8 +1015,7 @@ class Orchestrator:
         #    decision only changes what the honest replacement should say.
         if route.path is Path.ACTION and not any(
                 a.status is ExecStatus.OK for a in res.actions) \
-                and ACTION_CLAIM.search(res.text) \
-                and not _HYPOTHETICAL.search(res.text):
+                and _claims_an_action(res.text):
             res.guard_tripped = "claimed_an_action_that_never_ran"
             res.text = (_pending_reply(res.pending[0], route.lang)
                         if res.pending

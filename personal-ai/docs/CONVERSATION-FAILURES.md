@@ -690,3 +690,63 @@ fluent. All six are the model failing to be *disciplined* — inventing
 detail, over-asking, over-growing, over-citing. That is consistent with the
 prior that conversational polish at 4B is a post-training and
 prompt-discipline problem, not a capacity problem.
+
+---
+
+## F29 — "Simple bol." was classified as English  ·  FIXED
+
+```
+M04 t3  USER: Simple bol.
+        [lang=en -> the model was told "Reply in English only"]
+AI:     "Bas ek simple interface hai jo do software ke beech me baat-cheet
+         karta hai..."                                     [Hindi anyway]
+```
+
+"bolo" was in the Hindi marker list. "bol" — the bare imperative, which is
+how people actually say it — was not. Same class as F22, different hole:
+that one was about tokens with no language signal, this one is about
+tokens with an obvious signal that the list happened to miss.
+
+Also caught: M03 t2 and t4. Language match across round 2 was 88%, and
+this accounts for a large part of the missing 12%.
+
+**Fix.** Bare imperative stems added: bol, dekh, chal, soch, likh, padh,
+samjha. Deliberately NOT "sun" — it collides with the English word.
+
+---
+
+## F30 — An explicit brevity correction still did not shorten the reply  ·  FIXED
+
+This is F10 part (1), which round 1 identified, prompting was tried on, and
+the measurement said prompting did not fix. Round 2 confirms it is still
+broken:
+
+```
+M04  t1 USER: Explain what an API is.                          AI: 33 words
+     t2 USER: Arre itna bada answer kyun de raha hai?           AI: 22 words
+     t3 USER: Simple bol.                                       AI: 27 words
+     t4 USER: Ab batao, cache kya hota hai?                     AI: 40 words
+```
+
+He asked for shorter answers twice. The longest answer in the conversation
+came two turns later.
+
+**Why it was broken.** The learning loop requires evidence from three
+*distinct sessions* before promoting a rule. That threshold is correct and
+it is what stops one bad afternoon from becoming permanent — but it answers
+a different question. "Arre itna bada answer kyun de raha hai?" is not weak
+evidence about long-term preference; it is an unambiguous instruction about
+the next reply, and obeying it should not be contingent on him saying the
+same thing again next week.
+
+**Fix.** A style correction detected in a user turn takes effect on *that
+turn's reply* and holds for the rest of the session, applied through the
+same `RULE_EFFECTS` machinery as a promoted rule (35-token cap, 2-sentence
+trim) — and applied *last*, so what he just said outranks what he used to
+prefer. Promotion still requires cross-session evidence; immediate
+compliance and durable learning are now two mechanisms instead of one
+mechanism doing neither job well.
+
+This is the §5 rule applied to the most important failure in the set: the
+correction is detected deterministically and enforced by arithmetic, not
+requested in prose.

@@ -834,3 +834,61 @@ personal-ai/
 ```
 
 ---
+## 19. Method — how the three rounds were run
+
+**Round 1** — eleven conversations, persona v1 and v2. Found the
+confabulation, the emotional-statement web search, the leaked reasoning
+trace, the verbosity escalation, and the finding that a longer persona is
+not a better one.
+
+**Round 2** — the frozen mandatory set: twenty conversations, 69 turns,
+persona v3, all thirty required probes embedded in realistic multi-turn
+conversations rather than asked as isolated one-liners. Conversational
+behaviour only shows up in sequence; a single-turn probe cannot catch a
+retraction, a topic return, or an acknowledgement that contradicts the
+sentence after it.
+
+**Round 3** — the same twenty conversations re-run against the fixed code,
+turn for turn, plus eight new probes written specifically to attack the new
+defences and one cross-session memory probe. The mandatory set is frozen so
+the two runs are comparable; the new probes live in a separate file so they
+cannot contaminate that comparison.
+
+**Why the run log matters as much as the transcript.** Three of the worst
+findings are invisible in the transcript alone:
+
+```
+M10 t4  AI: "Maine internet se check kiya hai ki ..."
+        LOG: injected=0  actions=[]  pending=[]
+```
+
+The reply reads fine. The log says nothing was retrieved and nothing ran.
+Judging conversation quality from transcripts alone would have passed all
+three.
+
+---
+## 20. Round 3 — predictions made before the run
+
+Written and committed before the round-3 transcripts existed, so the
+results in §21 can be checked against them rather than rationalised
+afterwards.
+
+| # | Prediction | Basis |
+|---|---|---|
+| 1 | M10 t1/t2 and M11 t3 emit **no acknowledgement** | `build_brief` says the delegation cannot start |
+| 2 | M10 t3 routes **grounded**, not fast | FORCE_VAULT |
+| 3 | M10 t4 runs a real search, which returns nothing here, and the reply does **not** cite the internet | web dispatch + directive + guard |
+| 4 | M11 t2 gets a deterministic cancel, never "keep going" | bare-retraction short-circuit |
+| 5 | A01 shows **no** English directive on "hmm"/"ok" | `_NEUTRAL` + sticky language |
+| 6 | A04 t3 does **not** route to the web | searchable-subject guard |
+| 7 | A06 t2 reaches the gateway with `git.push` → CONFIRM_TYPED | planner parser fix |
+| 8 | Max consecutive question run drops to **2** across all twenty | pre-generation restraint |
+| 9 | Language match rises from 88%, but **not to 100%** — F29 ("bol") is not fixed in this run | the marker list still lacks bare imperatives |
+| 10 | M04 still fails brevity — F30 is not fixed in this run | session-scoped style not yet implemented |
+
+Predictions 9 and 10 are deliberate: both defects were found while round 3
+was already running, and fixing them mid-run would have destroyed the
+comparison with round 2. They are fixed afterwards and verified separately
+in §22.
+
+---

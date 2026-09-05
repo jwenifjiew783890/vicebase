@@ -1,3 +1,8 @@
+> **Round-1/2 quality analysis.** Superseded by
+> [`FINAL-REPORT-R3.md`](FINAL-REPORT-R3.md) §14 and §21-24, which cover
+> four rounds. Kept because its round-1 transcripts are the baseline
+> everything later is compared against.
+
 # Conversation Quality Report
 
 **System under test:** Qwen3.5-4B-Q4_K_M (unsloth GGUF), llama.cpp CPU,

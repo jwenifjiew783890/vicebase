@@ -1,3 +1,17 @@
+> **SUPERSEDED.** Read
+> [`FINAL-REPORT-R3.md`](FINAL-REPORT-R3.md) instead.
+>
+> This document is kept because three of its claims were later measured to
+> be false, and deleting it would hide that. Specifically: item 8
+> ("Tool/agent orchestration — YES"), item 18 ("No hallucination when
+> retrieval fails — YES") and item 23 ("Dangerous voice actions confirmed
+> — YES") were all marked YES on the strength of unit tests that passed.
+> All three components were unreachable at runtime. See §3 of the new
+> report for what was actually happening and what fixed it.
+>
+> Its test and mutation counts are also out of date (227 tests / 36
+> mutations, against 332 / 74 now).
+
 # Personal AI — Final Verification Report
 
 **Date:** 2026-09-05

@@ -1,3 +1,7 @@
+> **Earlier report, kept for the record.** The current one is
+> [`FINAL-REPORT-R3.md`](FINAL-REPORT-R3.md), which corrects three
+> claims made here and adds rounds 3 and 4 of conversational testing.
+
 # Personal AI — Final Architecture and Engineering Report
 
 Target hardware: **RTX 4050 Laptop (6 GB VRAM), 16 GB RAM, Core i7**

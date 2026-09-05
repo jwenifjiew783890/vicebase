@@ -23,6 +23,15 @@ from pai.llm import LlamaBackend, LlamaConversation
 from eval.conversation import Harness
 from eval.convmetrics import words
 
+def _brevity_rules(h):
+    """Any rule whose key starts with style.brevity, whatever the scope."""
+    return [type("R", (), dict(rule_key=r["rule_key"], id=r["id"],
+                               status=r["status"]))
+            for r in h.store.db.execute(
+                "SELECT id, rule_key, status FROM rules "
+                "WHERE rule_key LIKE 'style.brevity%'")]
+
+
 PROBES = ["explain what a database index is",
           "what's a cache",
           "what does an API do"]
@@ -59,7 +68,7 @@ def main():
     say("A", CORRECTIONS[0])
 
     print("\n--- STEP 3: candidate created? ---")
-    rule = h.store.get_rule("style.brevity.hi") or h.store.get_rule("style.brevity")
+    rule = next((r for r in _brevity_rules(h)), None)
     print(f"  candidate: {rule.rule_key if rule else None} "
           f"status={rule.status if rule else '-'} "
           f"evidence={h.store.evidence_count(rule.id) if rule else 0}")

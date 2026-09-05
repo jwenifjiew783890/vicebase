@@ -62,7 +62,9 @@ class TestEvidenceThreshold(unittest.TestCase):
             L.observe_turn("sess-1", "bhai thoda chhota rakho")
         self.assertEqual(L.review_queue(), [],
                          "one session produced enough evidence to promote")
-        r = s.get_rule("style.brevity.hi")
+        # Brevity is language-independent, so a Hinglish correction lands on
+        # the global key. Language scoping used to fragment this evidence.
+        r = s.get_rule("style.brevity")
         self.assertEqual(s.evidence_count(r.id), 1)
 
     def test_three_sessions_reach_queue(self):
@@ -70,7 +72,7 @@ class TestEvidenceThreshold(unittest.TestCase):
         for i in range(3):
             L.observe_turn(f"sess-{i}", "bhai thoda chhota rakho")
         q = L.review_queue()
-        self.assertEqual([i.rule_key for i in q], ["style.brevity.hi"])
+        self.assertEqual([i.rule_key for i in q], ["style.brevity"])
 
     def test_promotion_requires_review(self):
         s, L = loop(evidence_threshold=2)
@@ -231,17 +233,35 @@ class TestVersioning(unittest.TestCase):
 
 
 class TestLanguageScoping(unittest.TestCase):
-    def test_hindi_rule_does_not_govern_english_turns(self):
+    def test_language_specific_rule_does_not_govern_other_languages(self):
+        """Register IS language-specific; brevity is not. Only register scopes."""
         s, L = loop(evidence_threshold=2)
         for i in range(2):
-            L.observe_turn(f"s{i}", "bhai thoda chhota rakho")
-        L.approve("style.brevity.hi")
-        self.assertIn("style.brevity.hi", {r.rule_key for r in s.active_rules()})
-        en_block = L.system_rules_block(lang="en")
-        hi_block = L.system_rules_block(lang="hi")
-        marker = "When the conversation is in hi"
-        self.assertNotIn(marker, en_block)
-        self.assertIn(marker, hi_block)
+            L.observe_turn(f"s{i}", "normal baat karo yaar")
+        key = "style.register.hinglish"
+        self.assertIsNotNone(s.get_rule(key), "register rule was not scoped")
+        L.approve(key)
+        marker = "When the conversation is in hinglish"
+        self.assertNotIn(marker, L.system_rules_block(lang="en"))
+        self.assertIn(marker, L.system_rules_block(lang="hinglish"))
+
+    def test_brevity_evidence_is_not_fragmented_by_language(self):
+        """Correcting in Hinglish then English must accumulate on ONE rule.
+
+        Regression for the defect the end-to-end learning test exposed:
+        language-scoped brevity split three corrections across two keys, so
+        neither reached the threshold and nothing was ever learned.
+        """
+        s, L = loop(evidence_threshold=3)
+        for i, t in enumerate(["arre nahi, itna bada answer mat do. simple bol.",
+                               "keep it shorter",
+                               "too long, get to the point"]):
+            L.observe_turn(f"s{i}", t)
+        keys = [r["rule_key"] for r in s.db.execute(
+            "SELECT rule_key FROM rules WHERE rule_key LIKE 'style.brevity%'")]
+        self.assertEqual(keys, ["style.brevity"], f"evidence fragmented: {keys}")
+        self.assertEqual([(i.rule_key, i.evidence) for i in L.review_queue()],
+                         [("style.brevity", 3)])
 
     def test_protected_always_present_in_every_language(self):
         s, L = loop()

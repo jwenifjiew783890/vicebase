@@ -114,6 +114,21 @@ _TEMPLATES: dict[Signal, tuple[str, str]] = {
 }
 
 
+# Signals whose lesson is language-INDEPENDENT. Preferring short answers is
+# a preference about this person, not about Hindi.
+#
+# An earlier version scoped every rule by the language the correction
+# arrived in. The end-to-end learning test exposed the cost: correcting
+# once in Hinglish and twice in English produced three pieces of evidence
+# split across style.brevity.hinglish and style.brevity, so NEITHER reached
+# the threshold of 3 and nothing was ever learned. Language scoping was
+# fragmenting exactly the evidence it needed to accumulate.
+#
+# Only register/formality is genuinely language-specific -- how casual to be
+# in Hindi really can differ from English.
+_GLOBAL_SIGNALS = {Signal.STYLE_TOO_LONG, Signal.STYLE_TOO_SHORT}
+
+
 class TemplateProposer:
     """Deterministic proposer. High precision, narrow coverage."""
 
@@ -123,16 +138,16 @@ class TemplateProposer:
         if tpl is None:
             return None
         key, text = tpl
-        # Language-scoped variant when the signal arrived in Hindi/Hinglish.
-        # A user can want brevity in Hindi and detail in English.
         lang = det.lang
-        if lang in ("hi", "hinglish"):
+        if det.signal not in _GLOBAL_SIGNALS and lang in ("hi", "hinglish"):
             key = f"{key}.{lang}"
             text = f"When the conversation is in {lang}, {text[0].lower()}{text[1:]}"
+            return Candidate(rule_key=key, text=text, signal=det.signal,
+                             session_id=session_id, turn_id=turn_id,
+                             scope=lang, note=det.matched)
         return Candidate(rule_key=key, text=text, signal=det.signal,
                          session_id=session_id, turn_id=turn_id,
-                         scope=lang if lang != "en" else "global",
-                         note=det.matched)
+                         scope="global", note=det.matched)
 
 
 # ---------------------------------------------------------------------------

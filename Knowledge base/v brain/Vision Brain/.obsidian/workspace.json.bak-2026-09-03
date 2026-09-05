@@ -1,0 +1,226 @@
+{
+  "main": {
+    "id": "b9b3b1e306fc56ee",
+    "type": "split",
+    "children": [
+      {
+        "id": "d6f547c391fa198d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b5ff47a4d9715483",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "0dcdd6e1dd2d0607",
+    "type": "split",
+    "children": [
+      {
+        "id": "258aa8c3ba3d681e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fe40b10123eaae3d",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "d80ff86ef2aef809",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "2652f78a441cb932",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300.70001220703125
+  },
+  "right": {
+    "id": "d827dc84af915db3",
+    "type": "split",
+    "children": [
+      {
+        "id": "d07231adcf5ae387",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9f62e66641a01548",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "e337b91216fffd61",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "6f17ed4b75b2f22e",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "85fed5bcb4fa21f6",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "d22270a3fc1991d2",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "markdown-importer:Open format converter": false
+    }
+  },
+  "active": "b5ff47a4d9715483",
+  "lastOpenFiles": [
+    "Memory/00 - Memory Index.md",
+    "Memory/98 - Conflicts & Review Queue.md",
+    "Memory/15 - Important Events/Timeline.md",
+    "Memory/14 - Decisions & Principles/Decision Log.md",
+    "Memory/13 - Goals & Plans/Goals & Plans.md",
+    "Memory/12 - Interests & Hobbies/Interests & Hobbies.md",
+    "Memory/11 - AI & Model Preferences/AI & Model Preferences.md",
+    "Memory/10 - Technical Environment/Technical Environment.md",
+    "Memory/09 - Projects/Vision - Abandoned Electron Build.md",
+    "Memory/09 - Projects/Vision.md",
+    "Memory/08 - Business/Business Context.md",
+    "Memory/07 - Travel & Experiences/Travel & Experiences.md",
+    "Memory/06 - Relationships & People/People.md",
+    "Memory/05 - Personal Life/Personal Life.md",
+    "Memory/04 - Preferences/Preferences.md",
+    "Memory/03 - Personality & Behavior/Personality & Behavior.md",
+    "Memory/02 - Communication Style/Communication Style.md",
+    "Memory/01 - User Profile/User Profile.md",
+    "Memory/99 - Memory Rules.md",
+    "Memory/15 - Important Events",
+    "Memory/14 - Decisions & Principles",
+    "Memory/13 - Goals & Plans",
+    "Memory/12 - Interests & Hobbies",
+    "Memory/11 - AI & Model Preferences",
+    "Memory/10 - Technical Environment",
+    "Memory/09 - Projects",
+    "Memory/08 - Business",
+    "Memory/07 - Travel & Experiences",
+    "Memory/06 - Relationships & People",
+    "Vision-Obsidian-Integration-Test.md",
+    "Untitled 1.canvas",
+    "Untitled.canvas",
+    "Previous Projects.md",
+    "Memories/Lessons Learned.md.md",
+    "Memories/Important Memories.md",
+    "Memories/Important Long-Term Memories.md.md",
+    "Memories/Active Context.md.md",
+    "Memories/Things Vision Should Remember.md.md"
+  ]
+}

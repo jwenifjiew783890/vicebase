@@ -1,0 +1,36 @@
+/* Vision Brain Graph — visual polish
+   Native Graph Groups provide the DOMAIN colors.
+   This snippet adds the overall Vision look without replacing those colors.
+*/
+
+.graph-view .view-content {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(80, 100, 130, 0.10), transparent 58%),
+    #0d1218;
+}
+
+.graph-view text {
+  font-weight: 500;
+}
+
+.graph-view.color-line {
+  color: rgba(150, 165, 185, 0.42);
+}
+
+.graph-view.color-line-highlight {
+  color: rgba(225, 235, 255, 0.80);
+}
+
+.graph-view.color-text {
+  color: #d7dee8;
+}
+
+.graph-view.color-fill-unresolved {
+  color: #7f8792;
+}
+
+/* Selected node emphasis */
+.graph-view.color-fill-highlight,
+.graph-view.color-circle-highlight {
+  color: #ffffff;
+}

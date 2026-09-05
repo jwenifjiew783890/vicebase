@@ -1,0 +1,114 @@
+{
+  "collapse-filter": true,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    {
+      "query": "path:\"Inbox/\"",
+      "color": {
+        "a": 1,
+        "rgb": 16638023
+      }
+    },
+    {
+      "query": "path:\"Memory/00\" OR path:\"Memory/98\" OR path:\"Memory/99\"",
+      "color": {
+        "a": 1,
+        "rgb": 16777215
+      }
+    },
+    {
+      "query": "path:\"Memory/01\" OR path:\"Memory/02\" OR path:\"Memory/03\" OR path:\"Identity/\"",
+      "color": {
+        "a": 1,
+        "rgb": 16723349
+      }
+    },
+    {
+      "query": "path:\"Memory/04\" OR path:\"Preferences/\"",
+      "color": {
+        "a": 1,
+        "rgb": 12616956
+      }
+    },
+    {
+      "query": "path:\"Memory/05\" OR path:\"Memory/06\" OR path:\"Memory/07\"",
+      "color": {
+        "a": 1,
+        "rgb": 16478597
+      }
+    },
+    {
+      "query": "path:\"Memory/08\" OR path:\"Memory/12\"",
+      "color": {
+        "a": 1,
+        "rgb": 16486972
+      }
+    },
+    {
+      "query": "path:\"Memory/09\" OR path:\"Projects/\"",
+      "color": {
+        "a": 1,
+        "rgb": 2282478
+      }
+    },
+    {
+      "query": "path:\"Memory/10\"",
+      "color": {
+        "a": 1,
+        "rgb": 3003583
+      }
+    },
+    {
+      "query": "path:\"Memory/11\" OR path:\"Agents/\" OR path:\"Knowledge/\"",
+      "color": {
+        "a": 1,
+        "rgb": 4906624
+      }
+    },
+    {
+      "query": "path:\"Memory/13\"",
+      "color": {
+        "a": 1,
+        "rgb": 10741301
+      }
+    },
+    {
+      "query": "path:\"Memory/14\" OR path:\"Decisions/\"",
+      "color": {
+        "a": 1,
+        "rgb": 8490232
+      }
+    },
+    {
+      "query": "path:\"Memory/15\" OR path:\"Memories/\"",
+      "color": {
+        "a": 1,
+        "rgb": 16498468
+      }
+    },
+    {
+      "query": "path:\"Integrations/\"",
+      "color": {
+        "a": 1,
+        "rgb": 16020150
+      }
+    }
+  ],
+  "collapse-display": true,
+  "showArrow": false,
+  "textFadeMultiplier": -1.2,
+  "nodeSizeMultiplier": 1.6,
+  "lineSizeMultiplier": 1.3,
+  "collapse-forces": false,
+  "centerStrength": 0.620056057303021,
+  "repelStrength": 17.3689352002605,
+  "linkStrength": 0.799439426969791,
+  "linkDistance": 232,
+  "scale": 0.35663773131121645,
+  "close": false
+}

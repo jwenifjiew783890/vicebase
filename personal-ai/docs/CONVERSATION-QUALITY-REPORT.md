@@ -204,5 +204,64 @@ verify them.
 
 ---
 
-*(Sections 4 onward — persona A/B results, learning loop, ASR, and final
-verdict — are completed below once those runs finished.)*
+## 4. What is wired, and what is only declared
+
+An honesty point that matters for reading everything above. The capability
+registry declares 18 tools with schemas, permission tiers and audit
+coverage. **Three have real backends** in this environment:
+
+| Capability | Backend | Status |
+|---|---|---|
+| `obsidian.search` | hybrid BM25 + dense over the test vault | **wired** |
+| `obsidian.read` | vault chunk lookup | **wired** |
+| `memory.recall` | SQLite fact query | **wired** |
+| `web.search`, `web.fetch` | — | declared, **no backend** |
+| `code.delegate` (OpenCode) | — | declared, **no backend** |
+| `browser.act`, `computer.control` | — | declared, **no backend** |
+| `shell.run`, `file.delete`, `git.push`, … | — | declared, **no backend** |
+
+So: routing, schema validation, taint checking, permission tiering,
+confirmation flow and audit logging are exercised end to end against a real
+model. **Execution is not**, except for vault and memory reads.
+
+This was itself a defect worth fixing. Unimplemented capabilities used to
+return `None`, which the gateway typed as `EMPTY` — and `EMPTY`'s guidance
+tells the model *"say you could not find it, do NOT answer from memory."*
+That is a false statement when the truth is the tool does not exist. They
+now raise, typing as `EXEC_ERR` with the reason.
+
+---
+
+## 5. Persona A/B — v1 vs v2 on identical conversations
+
+*Filled in from `eval/transcripts/ab/`.*
+
+**Why the comparison is valid.** llama.cpp uses a fixed default seed, and
+v1 conversations 001–003 reproduced their round-1 metrics **exactly**
+(001: 7.8 mean words; 002: 15.2 mean words / 100% question rate; 003: 42.0
+mean / 79 max). Identical inputs, identical sampling — the only variable is
+the persona.
+
+---
+
+## 6. Learning loop, end to end
+
+*Filled in from `eval/transcripts/learning/`.*
+
+---
+
+## 7. Hindi ASR — MEASURED
+
+*Filled in from `eval/transcripts/asr_hi.json`.*
+
+---
+
+## 8. Acceptance criteria
+
+*Assessed below against measured evidence only.*
+
+---
+
+## 9. Verdict
+
+*Below.*

@@ -124,6 +124,50 @@ made-up citation is worse than none.
 
 ---
 
+## F10 — An explicit in-conversation correction was ignored  ·  test 004  ·  PROMPT + ARCHITECTURE
+
+Persona v1, measured: `mean_words = 95.0  max = 122  question_rate = 0%`
+
+Conversation 004 is the brevity test:
+
+```
+USER: explain what an API is
+AI:   [long answer]
+USER: arre nahi, itna bada answer mat do. simple bol.
+      ("no, don't give such a big answer. keep it simple.")
+AI:   ...
+USER: ok now explain what a database index is
+AI:   [still ~95 words]
+USER: and what's a cache
+AI:   [still ~95 words]
+```
+
+The user gave an unambiguous instruction in his own words and the model
+carried on at the same length for the rest of the conversation.
+
+**Why this is the most important failure in the set.** Everything else is a
+polish problem. This one goes to the premise of the product -- *"the AI
+should get better at talking to me."* If a direct correction does not
+survive to the next turn, nothing downstream matters.
+
+**Two distinct failures needing different fixes.**
+
+1. *Within the conversation.* The model should have shortened immediately.
+   That is a prompt and post-training problem. Persona v2's LENGTH clause
+   is the first attempt; if prompting proves insufficient, this is exactly
+   what the SFT brevity data exists for.
+
+2. *Across conversations.* Even a model that obeys perfectly in-session
+   forgets at the next session boundary. That is what T3 procedural memory
+   is for, and it is why the learning loop is architecture rather than a
+   nice-to-have. `eval/learning_e2e.py` tests precisely this chain.
+
+The architecture already anticipated (2). Round 1 shows (1) is real too, and
+that the two are independent -- a promoted rule does not help if the model
+ignores instructions inside a single conversation.
+
+---
+
 ## F7 — Reasoning trace leaked to the user  ·  found by inspection  ·  FIXED
 
 `_strip_thinking` removed well-formed `<think>...</think>` blocks, but on an

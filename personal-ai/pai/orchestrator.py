@@ -69,6 +69,29 @@ _PERSON_MAP = [
 ]
 
 
+# V3, a deliberate counter-hypothesis to V2.
+#
+# V2 is 1798 characters of prescriptive rules. The first A/B result showed
+# it made conversation 001 WORSE than the 480-character V1 (mean words
+# 7.8 -> 13.0, question rate 50% -> 75%). The hypothesis: at 4B, prompt
+# instructions compete with the task. Each rule the model is holding is
+# attention it is not spending on sounding like a person, and a rule like
+# "do not end every message with a question" can read as a cue that
+# questions are salient.
+#
+# V3 keeps only the constraints that round 1 proved are load-bearing, in as
+# few words as possible, phrased as positives where possible -- a negative
+# instruction still puts the forbidden thing in the model's head.
+BASE_PERSONA_V3 = """You're talking with Muaz. Be a friend, not an assistant.
+
+One or two sentences unless he asks for more.
+Reply in whatever he used - English, Hindi, or the mix. Real spoken Hindi.
+Only say things about his life that appear above. If it's not there, you
+don't know it.
+Say when you don't know. Disagree when he's wrong.
+"""
+
+
 def _second_person(block: str) -> str:
     """Render stored rules in the same voice as the persona.
 

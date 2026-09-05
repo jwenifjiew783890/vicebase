@@ -121,8 +121,9 @@ MUTATIONS = [
      "        if False and (GENERAL_KNOWLEDGE.match(user_text.strip())"),
 
     ("router: volatile fires on self-statements", "pai/router.py",
-     "        volatile = volatile_now and _is_information_request(user_text)",
-     "        volatile = volatile_now  # MUTANT"),
+     "        volatile = (volatile_now and _is_information_request(user_text)\n"
+     "                    and _has_searchable_subject(user_text))",
+     "        volatile = volatile_now and _has_searchable_subject(user_text)"),
 
     ("router: injection gated on RRF score again", "pai/router.py",
      "        confident = [h for h in vault_hits\n                     if h.dense_raw >= self.cfg.min_dense\n                     or h.bm25_raw >= self.cfg.min_bm25]",
@@ -176,6 +177,14 @@ MUTATIONS = [
      "    if not words:\n        return text",
      "    if False:\n        return text"),
 
+    ("router: lexical overlap gate removed", "pai/router.py",
+     "        if self.cfg.require_lexical_overlap:",
+     "        if False:  # MUTANT"),
+
+    ("router: overlap gate applied to strong hits too", "pai/router.py",
+     "                         if h.dense_raw >= self.cfg.strong_dense\n                         or h.bm25_raw >= self.cfg.strong_bm25\n                         or _shares_content_word(user_text, h)]",
+     "                         if _shares_content_word(user_text, h)]"),
+
     ("voice: endpointing ignores incomplete tails", "pai/voice.py",
      "        if _INCOMPLETE_TAIL.search(text.strip()):",
      "        if False:  # MUTANT"),
@@ -191,6 +200,76 @@ MUTATIONS = [
     ("voice: voice identity varies by language", "pai/voice.py",
      'VOICE_BY_LANG = {"en": "primary_female", "hi": "primary_female",\n                 "hinglish": "primary_female"}',
      'VOICE_BY_LANG = {"en": "en_female", "hi": "hi_female",\n                 "hinglish": "mixed_female"}'),
+
+    # ---- round 2: defences added after the mandatory conversation set ----
+
+    ("router: retraction no longer detected", "pai/router.py",
+     "        if RETRACTION.search(user_text):",
+     "        if False and RETRACTION.search(user_text):"),
+
+    ("orchestrator: retraction cancels nothing", "pai/orchestrator.py",
+     "        pending = self._pending.pop(session_id, [])",
+     "        pending = []  # MUTANT"),
+
+    ("orchestrator: bare retraction goes back to the model",
+     "pai/orchestrator.py",
+     "            if route.path is Path.FAST and _is_bare_retraction(user_text):",
+     "            if False and _is_bare_retraction(user_text):"),
+
+    ("router: explicit vault command ignored", "pai/router.py",
+     "        if forced_vault:\n            r.vault_forced = True",
+     "        if False:\n            r.vault_forced = True"),
+
+    ("router: back-references may become web queries", "pai/router.py",
+     "        volatile = (volatile_now and _is_information_request(user_text)\n"
+     "                    and _has_searchable_subject(user_text))",
+     "        volatile = volatile_now and _is_information_request(user_text)"),
+
+    ("router: ack promised for an unstartable delegation", "pai/router.py",
+     "            r.delegate_ready = build_brief(user_text).is_actionable",
+     "            r.delegate_ready = True  # MUTANT"),
+
+    ("signals: bare fillers count as English again", "pai/signals.py",
+     "    if not has_deva and hi_hits == 0 and en_hits == 0:",
+     "    if False:"),
+
+    ("orchestrator: web route dispatches nothing (F24 regression)",
+     "pai/orchestrator.py",
+     "        if route.needs_web:\n            t_w = time.perf_counter()",
+     "        if False:\n            t_w = time.perf_counter()"),
+
+    ("orchestrator: empty-retrieval directive removed", "pai/orchestrator.py",
+     "        if res.evidence == 0:\n            if route.needs_web:",
+     "        if False:\n            if route.needs_web:"),
+
+    ("orchestrator: fabricated source claims allowed through",
+     "pai/orchestrator.py",
+     "                and SOURCE_CLAIM.search(res.text):",
+     "                and False:"),
+
+    ("orchestrator: claimed-but-unrun actions allowed through",
+     "pai/orchestrator.py",
+     "                and ACTION_CLAIM.search(res.text) \\",
+     "                and False \\"),
+
+    ("orchestrator: the fabricated reply is what reaches memory",
+     "pai/orchestrator.py",
+     "        # One write, after every guard has had its say.",
+     "        res.text = res.text  # MUTANT: write happens before guards\n"
+     "        # One write, after every guard has had its say."),
+
+    ("llm: planner accepts only arrays again (F26 regression)", "pai/llm.py",
+     "        if not items:\n            items = _json_objects(text)",
+     "        if False:\n            items = _json_objects(text)"),
+
+    ("llm: flattened planner args no longer lifted", "pai/llm.py",
+     "                if k not in (\"action\", \"args\") and k not in args:",
+     "                if False:"),
+
+    ("opencode: only the first repo candidate is considered",
+     "pai/opencode.py",
+     "        for pattern in (_REPO_NAMED, _REPO_HINT):",
+     "        for pattern in (_REPO_HINT,):  # MUTANT"),
 
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',

@@ -43,6 +43,9 @@ class Turn:
     out_tokens: int = 0
     words: int = 0
     sentences: int = 0
+    evidence: int = 0
+    guard: str = ""
+    cancelled: list = field(default_factory=list)
 
 
 @dataclass
@@ -65,6 +68,12 @@ class Transcript:
                 meta.append("ran=" + ",".join(a for a in t.actions))
             if t.pending:
                 meta.append("gate=" + ",".join(p for p in t.pending))
+            if t.evidence:
+                meta.append(f"evidence={t.evidence}")
+            if t.cancelled:
+                meta.append("cancelled=" + ",".join(t.cancelled))
+            if t.guard:
+                meta.append(f"GUARD={t.guard}")
             meta.append(f"{t.words}w/{t.sentences}s")
             meta.append(f"ttft={t.ttft_ms:.0f}ms")
             meta.append(f"{t.tok_s:.1f}tok/s")
@@ -140,7 +149,9 @@ class Harness:
                 total_ms=getattr(stats, "total_ms", 0.0),
                 tok_s=getattr(stats, "tok_per_s", 0.0),
                 out_tokens=getattr(stats, "completion_tokens", 0),
-                words=count_words(res.text), sentences=count_sentences(res.text)))
+                words=count_words(res.text), sentences=count_sentences(res.text),
+                evidence=res.evidence, guard=res.guard_tripped,
+                cancelled=list(res.cancelled)))
         return tr
 
     # convenience for memory/learning tests

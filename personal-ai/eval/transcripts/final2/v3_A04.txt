@@ -1,0 +1,36 @@
+TEST #A04
+Scenario:
+  ambiguity - should clarify, not guess
+
+USER:
+  kar do
+AI:  [route=action lang=en 14w/2s ttft=11157ms 6.0tok/s]
+  Bhai, kar do kya? Koi kaam hai ya bas mood badhane ke liye bola?
+
+USER:
+  wo wala
+AI:  [route=fast lang=hi 21w/3s ttft=12702ms 5.6tok/s]
+  Ohh, woh wala? Batao, kya scene hai? Kuch naya start karne ka plan hai ya purana kaam pe wapas aa gaya?
+
+USER:
+  kal wala kaam
+AI:  [route=web lang=hinglish ack='one sec, dekhta hoon' 6w/1s ttft=14720ms 5.8tok/s]
+  Arre kal wala kaam kya tha?
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         13.7
+  p90 words                14
+  max words                21
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67%
+  cross-turn repetition    0.13
+  opener variety           100%

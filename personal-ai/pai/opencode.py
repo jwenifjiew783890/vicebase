@@ -78,8 +78,25 @@ _ACTION_VERB = re.compile(
 _FILEISH = re.compile(r"\b([\w./-]+\.(py|ts|tsx|js|jsx|go|rs|java|rb|md|json|"
                       r"yaml|yml|toml|sql|css|html))\b")
 
-_REPO_HINT = re.compile(r"\b(?:in|for|repo|repository|project)\s+([\w.-]{2,})\b",
-                        re.IGNORECASE)
+# Words that follow "in"/"for" but are not a repository name. Without this
+# the pattern happily captured the literal word "repo" out of "for repo
+# vicebase" and reported a complete brief pointing at a repository called
+# "repo" -- an incomplete brief that looked complete, which is the exact
+# failure mode the brief builder exists to prevent. Found by
+# test_the_ack_gate_is_not_a_blanket_suppression once an acknowledgement
+# started depending on brief completeness.
+_NOT_A_REPO = {"repo", "repository", "project", "the", "a", "an", "this",
+               "that", "my", "our", "it", "them", "there", "now", "me"}
+
+# Two passes, in order. An explicit "repo X" is unambiguous and is checked
+# first; a bare "in X" / "for X" is a weaker guess and is only consulted
+# when the strong form is absent. One combined alternation does NOT work:
+# scanning "in api.py for repo vicebase" left to right, the weak branch
+# consumes "for repo" and the strong branch never sees "repo vicebase".
+_REPO_NAMED = re.compile(
+    r"\b(?:repo|repository|project)\s+([\w.-]{2,})\b", re.IGNORECASE)
+_REPO_HINT = re.compile(
+    r"\b(?:in|for)\s+(?:the\s+)?([\w.-]{2,})\b", re.IGNORECASE)
 
 
 def build_brief(utterance: str, *, repo: str = "", lang: str = "en",
@@ -106,9 +123,21 @@ def build_brief(utterance: str, *, repo: str = "", lang: str = "en",
                         for f in brief.files_hint]
 
     if not brief.repo:
-        m = _REPO_HINT.search(text)
-        if m and not _FILEISH.match(m.group(1)):
-            brief.repo = m.group(1)
+        # Every candidate, not just the first. "implement retry logic in
+        # api.py for repo vicebase" put a filename in the first slot; the
+        # single-shot version rejected it and then gave up, reporting the
+        # repository as missing when the sentence names it.
+        for pattern in (_REPO_NAMED, _REPO_HINT):
+            for m in pattern.finditer(text):
+                cand = m.group(1)
+                if not cand or _FILEISH.match(cand):
+                    continue
+                if cand.lower() in _NOT_A_REPO:
+                    continue
+                brief.repo = cand
+                break
+            if brief.repo:
+                break
     if not brief.repo:
         brief.missing.append("which repository")
 

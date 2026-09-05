@@ -181,6 +181,50 @@ def _catalogue() -> str:
     return "\n".join(lines)
 
 
+def _strip_fences(text: str) -> str:
+    """Remove markdown code fences, keeping their contents."""
+    text = _strip_thinking(text)
+    return re.sub(r"```(?:json|javascript)?\s*|```", "", text).strip()
+
+
+def _json_objects(text: str) -> list[dict]:
+    """Every top-level {...} in the text that parses as a JSON object.
+
+    A brace counter rather than a regex: `args` is itself an object, so
+    `\{.*?\}` stops at the wrong brace and `\{.*\}` swallows several
+    objects into one unparsable span.
+    """
+    out: list[dict] = []
+    depth = start = 0
+    in_str = escaped = False
+    for i, ch in enumerate(text):
+        if in_str:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            if depth:
+                depth -= 1
+                if depth == 0:
+                    try:
+                        obj = json.loads(text[start:i + 1])
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(obj, dict):
+                        out.append(obj)
+    return out
+
+
 class LlamaPlanner:
     """Proposes typed actions. Never speaks, never sees retrieved content.
 
@@ -207,17 +251,65 @@ class LlamaPlanner:
 
     @staticmethod
     def _parse(raw: str, user: str) -> list[Action]:
-        m = re.search(r"\[.*\]", raw, re.DOTALL)
-        if not m:
-            return []
-        try:
-            data = json.loads(m.group(0))
-        except json.JSONDecodeError:
-            return []
+        """Extract actions from whatever shape the model actually emitted.
+
+        MEASURED, and this is the reason the method looks like this.
+        `eval/planner_reliability.py` put twelve unambiguous action requests
+        to the 4B planner. Eleven produced correct, well-formed JSON:
+
+            push this to main
+              -> {"action": "git.push", "args": {...}}
+            delete /tmp/scratch.txt
+              -> {"action": "file.delete", "args": {"path": "/tmp/scratch.txt"}}
+
+        and the previous implementation returned [] for every single one,
+        because it searched for a JSON *array* and the model emitted a bare
+        *object*. Score: 0/12 actions, 0/12 times the gateway was reached.
+
+        The consequence was not a missing feature. The capability registry,
+        the permission tiers, the confirmation rules, the voice rule and the
+        audit log were all unreachable in normal use -- every one of them
+        unit-tested and green, and none of them ever handed anything to
+        validate. That is exactly the failure the mandatory conversation set
+        was written to catch: A06 asked for a push to main on the voice
+        channel, got a chatty reply, and exercised nothing.
+
+        So this accepts what the model actually produces: an array, a bare
+        object, several objects in a row, and any of those inside a markdown
+        fence. It stays strict about what it does with them -- names and
+        argument types are still the gateway's business, not this parser's.
+        """
+        text = _strip_fences(raw)
+        items: list[dict] = []
+
+        m = re.search(r"\[.*\]", text, re.DOTALL)
+        if m:
+            try:
+                data = json.loads(m.group(0))
+                items = [d for d in data
+                         if isinstance(d, dict) and "action" in d]
+            except json.JSONDecodeError:
+                items = []
+        # The array branch also fires on an array NESTED inside a single
+        # action -- browser.act carries a `steps` list -- and comes back
+        # with the steps instead of the action. Requiring "action" above
+        # and falling through here is what makes that case parse.
+        if not items:
+            items = _json_objects(text)
+
         out: list[Action] = []
-        for item in data if isinstance(data, list) else []:
-            if isinstance(item, dict) and "action" in item:
-                out.append(Action(str(item["action"]),
-                                  dict(item.get("args") or {}),
-                                  reason=f"user said: {user[:80]}"))
+        for item in items:
+            if "action" not in item:
+                continue
+            args = dict(item.get("args") or {})
+            # Some outputs flatten the arguments to the top level:
+            #   {"action": "file.delete", "path": "/tmp/old.log"}
+            # Lifting them is safe -- the gateway validates names and types
+            # afterwards, so a wrong key becomes a typed refusal, not a
+            # hazard.
+            for k, v in item.items():
+                if k not in ("action", "args") and k not in args:
+                    args[k] = v
+            out.append(Action(str(item["action"]), args,
+                              reason=f"user said: {user[:80]}"))
         return out

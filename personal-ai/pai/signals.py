@@ -103,13 +103,48 @@ _AMBIGUOUS = {
     "tha", "thi", "ji", "bhi", "bas", "hun", "hu", "haan",
 }
 
+# Interjections and acknowledgement tokens that carry NO language signal at
+# all. Distinct from _AMBIGUOUS, which is about words that exist in both
+# vocabularies; these are words that barely belong to either.
+#
+# Found by a real conversation (A01, "filler discipline over many tiny
+# turns"). The user typed eight one-word turns -- hmm / haan / acha / aur? /
+# phir? / ok / hmm / achha -- and "hmm" and "ok" were classified as ENGLISH
+# purely because they are Latin letters not on the Hindi list. The router
+# then told the model "reply in English only" in the middle of an otherwise
+# Hindi conversation, and the model ignored it and answered in Hindi anyway.
+# The directive was wrong, so the model disobeying it was the right outcome
+# for the wrong reason -- and the language-match metric scored the turn as a
+# violation. A filler has no language; the conversation's language holds.
+_NEUTRAL = {
+    "hmm", "hm", "hmmm", "mm", "mmm", "mhm", "uh", "um", "uhh", "umm",
+    "ah", "aah", "oh", "ooh", "eh", "err", "hm", "huh",
+    "ok", "okay", "okey", "k", "kk", "oki",
+    "lol", "haha", "hahaha", "hehe", "hmmmm",
+    # Courtesy and assent tokens. A bare "thanks" does not switch a Hindi
+    # conversation into English, and treating it as English evidence is
+    # what made A08 turn 3 score as a language violation: "thanks" was
+    # classified en, the model was told to reply in English only, and it
+    # answered "Kya baat, bhai. Koi aur plan hai aaj?" -- the natural reply,
+    # marked wrong by a directive that should never have been issued.
+    # Only bare turns are affected: in "thanks for the explanation" the
+    # other words still carry the signal.
+    "thanks", "thanx", "thx", "ty", "cool", "nice", "great",
+    "yeah", "yep", "yup", "sure", "wow", "oops", "ugh", "meh",
+}
 
-def detect_language(text: str) -> str:
+
+def detect_language(text: str, default: str = "en") -> str:
     """Return 'hi', 'en', or 'hinglish'.
 
     Three-way word classification: Hindi-marker / ambiguous / English.
     Unknown Latin words default to English, because English has the far
     larger vocabulary and technical terms in this user's speech are English.
+
+    `default` is returned when the turn carries no language evidence at
+    all (a bare filler, a number, an emoji). Callers that track the
+    conversation's language should pass it; the standalone default is
+    English only because something has to be returned.
 
     LIMITATION, stated honestly: this is a wordlist heuristic and lands
     around 90% on realistic mixed input. Production should replace it with
@@ -119,12 +154,20 @@ def detect_language(text: str) -> str:
     and so TTS voice routing has a default when the model is not consulted.
     """
     if not text.strip():
-        return "en"
+        return default
     has_deva = bool(_DEVANAGARI.search(text))
     words = [w for w in re.findall(r"[a-zA-Z]+", text.lower())]
 
     hi_hits = sum(1 for w in words if w in _HI_MARKERS)
-    en_hits = sum(1 for w in words if w not in _HI_MARKERS and w not in _AMBIGUOUS)
+    en_hits = sum(1 for w in words
+                  if w not in _HI_MARKERS and w not in _AMBIGUOUS
+                  and w not in _NEUTRAL)
+
+    if not has_deva and hi_hits == 0 and en_hits == 0:
+        # No evidence either way -- a bare "hmm", "ok", a number, an emoji.
+        # Guessing here is worse than inheriting: the caller knows what
+        # language the conversation has been in.
+        return default
 
     if has_deva:
         # Devanagari present. Latin content words make it mixed.

@@ -130,13 +130,57 @@ class TestAckDiscipline(unittest.TestCase):
             self.assertFalse(r.route(t, []).needs_ack, t)
 
     def test_delegation_uses_a_doing_ack_not_a_checking_one(self):
-        """"let me check" before a coding task promises the wrong thing."""
+        """"let me check" before a coding task promises the wrong thing.
+
+        The utterance carries a repo because an acknowledgement is now only
+        emitted for a delegation that can actually START -- see
+        test_incomplete_delegation_is_not_acknowledged below, and M10/M11
+        in the mandatory run, where "on it, abhi start karta hoon" was
+        followed by a clarifying question and no action three times out of
+        three. The assertion under test is unchanged: when a delegation IS
+        acknowledged, the phrase must be a doing-phrase.
+        """
         from pai.router import ACKS
         r = Router()
-        route = r.route("open opencode and fix the failing test", [])
+        route = r.route("opencode: fix the failing test in repo vicebase", [])
         self.assertTrue(route.delegate)
+        self.assertTrue(route.delegate_ready)
         self.assertIn(route.ack_text, ACKS["work"]["en"],
                       f"delegation used a checking ack: {route.ack_text!r}")
+
+    def test_incomplete_delegation_is_not_acknowledged(self):
+        """An ack is a promise. Do not promise work that cannot start.
+
+        MEASURED regression source (mandatory conversations M10 t1, M10 t2,
+        M11 t3): every one emitted a "work" acknowledgement and then asked
+        a clarifying question, with actions=[] and pending=[] in the run
+        log. The user was told twice that something had started when
+        nothing had.
+        """
+        r = Router()
+        for text in ["OpenCode khol.",
+                     "Mera assignment kar de.",
+                     "do my assignment",
+                     "refactor the auth module"]:
+            route = r.route(text, [])
+            self.assertTrue(route.delegate, text)
+            self.assertFalse(route.delegate_ready, text)
+            self.assertFalse(route.needs_ack,
+                             f"promised work it cannot start: {text!r}")
+            self.assertEqual(route.ack_text, "", text)
+
+    def test_the_ack_gate_is_not_a_blanket_suppression(self):
+        """Guard against the fix passing because acks never fire at all.
+
+        If delegate_ready were hard-wired False this file would still be
+        green everywhere except here.
+        """
+        r = Router()
+        route = r.route("opencode: implement retry logic in api.py "
+                        "for repo vicebase", [])
+        self.assertTrue(route.delegate_ready)
+        self.assertTrue(route.needs_ack)
+        self.assertNotEqual(route.ack_text, "")
 
     def test_web_uses_a_checking_ack(self):
         from pai.router import ACKS

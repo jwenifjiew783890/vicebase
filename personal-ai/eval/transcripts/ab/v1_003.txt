@@ -1,0 +1,20 @@
+TEST #003
+Scenario:
+  v1
+
+USER:
+  yaar mujhe lag raha hai ye idea actually kaam kar sakta hai, but ek problem hai
+AI:  [route=fast lang=hinglish 16w/2s ttft=10256ms 6.1tok/s]
+  Yaar, batao problem kya hai? Agar idea sahi hai toh roadblocks alag se handle hote hain.
+
+USER:
+  problem ye hai ki latency bahut zyada hogi
+AI:  [route=fast lang=hinglish 31w/3s ttft=11798ms 6.1tok/s]
+  Latency ka matlab hai response time bahut lamba ho jayega. Agar user wait karega, toh engagement toot sakta hai. Kya ye latency network ki wajah se hai ya model architecture ki?
+
+USER:
+  hmm, tu kya sochta hai
+AI:  [route=fast lang=hinglish 79w/4s ttft=14194ms 5.8tok/s]
+  Sach baat ye hai: latency badhna ek dealbreaker hai agar idea real-time use karne wala hai. Kisi bhi system mein agar response time 200ms se upar chala jaye, toh user experience "broken" lagta hai (Source: General UX principles).
+
+Tera idea kaam kar sakta hai, lekin sirf tab jab latency ko fix karein. Abhi ye problem hai ki main specific data nahi de raha ki tera model kya hai aur use case kya hai—taaki main sahi solution bataun.

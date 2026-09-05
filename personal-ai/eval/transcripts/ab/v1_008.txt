@@ -1,0 +1,18 @@
+TEST #008
+Scenario:
+  v1
+
+USER:
+  what did i write about my tax return
+AI:  [route=fast lang=en 25w/2s ttft=9407ms 6.1tok/s]
+  I don't have access to your personal notes or tax documents unless you paste them here or share a link. Where are they stored?
+
+USER:
+  what's my neighbour's phone number
+AI:  [route=fast lang=en 20w/2s ttft=11831ms 6.1tok/s]
+  I don't have that number. Did you write it down somewhere I can access, or should you tell me?
+
+USER:
+  how many users does my app have
+AI:  [route=fast lang=en 29w/2s ttft=13116ms 6.1tok/s]
+  I don't have access to your app's analytics unless you paste a report, share a dashboard link, or tell me the number. Where is that data stored?

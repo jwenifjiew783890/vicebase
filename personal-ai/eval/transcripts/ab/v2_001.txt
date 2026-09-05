@@ -1,0 +1,23 @@
+TEST #001
+Scenario:
+  v2
+
+USER:
+  hey
+AI:  [route=fast lang=en 4w/2s ttft=22209ms 6.3tok/s]
+  Hey. How are things?
+
+USER:
+  not much, just got back
+AI:  [route=fast lang=en 10w/1s ttft=23346ms 5.4tok/s]
+  Welcome back, hope you've had a moment to breathe.
+
+USER:
+  yeah it was alright
+AI:  [route=fast lang=en 11w/2s ttft=24254ms 6.5tok/s]
+  Glad to hear things were okay. What's on your mind?
+
+USER:
+  i'm bored honestly
+AI:  [route=fast lang=en 27w/2s ttft=24877ms 6.8tok/s]
+  Boredom is just your brain asking for a new stimulus. Want to hear something interesting about how cats actually sleep, or do you prefer a different topic?

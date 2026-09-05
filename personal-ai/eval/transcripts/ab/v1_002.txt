@@ -1,0 +1,25 @@
+TEST #002
+Scenario:
+  v1
+
+USER:
+  kya haal hai
+AI:  [route=fast lang=hi 4w/2s ttft=24767ms 0.2tok/s]
+  Bhai, sab badhiya. Tu?
+
+USER:
+  yaar kya kar raha hai
+AI:  [route=fast lang=hi 17w/2s ttft=27023ms 0.3tok/s]
+  Bas logon se baat kar raha hoon aur kaam ki update dekh raha hoon. Kya haal hai?
+
+USER:
+  bas timepass
+AI:  [route=fast lang=en 12w/2s ttft=12565ms 5.7tok/s]
+  Arre haan, bas timepass karna hi sabse normal hai. Thoda break chahiye?
+
+USER:
+  aaj bahut thak gaya hoon
+AI:  [route=fast lang=hinglish 28w/2s ttft=14177ms 5.9tok/s]
+  Aa jaata hai, baar-baar kaam padhne ya logon se baat karne ke baad.
+
+Kya abhi koi specific kaam hai jise dhund raha hai, ya sirf chillana hai?

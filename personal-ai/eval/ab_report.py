@@ -30,11 +30,29 @@ HIGHER_BETTER = {"lang_match_rate", "honest_unknown", "disagree_turns"}
 def main():
     d = json.load(open(PATH))
     v1, v2 = d["v1"], d["v2"]
+    # RECOMPUTE from the stored replies rather than trusting the metrics
+    # frozen at run time. Reading transcripts 008 and 009 showed the original
+    # abstention and disagreement patterns under-counted correct behaviour;
+    # the regexes have since been widened, and stale stored numbers would
+    # hide the fix.
+    from eval.convmetrics import analyse
+    have_users = all(c.get("users") for side in (v1, v2) for c in side.values())
+    for side in (v1, v2):
+        for cid, c in side.items():
+            users = c.get("users") or [""] * len(c["replies"])
+            c["metrics"] = analyse(users, c["replies"]).__dict__
+    if not have_users:
+        # This A/B predates storing the user turns, so language matching
+        # cannot be recomputed. Report nothing rather than a false 0.00.
+        for side in (v1, v2):
+            for c in side.values():
+                c["metrics"].pop("lang_match_rate", None)
     print(f"{'case':5} {'focus':30} {'metric':16} {'v1':>7} {'v2':>7}  verdict")
     print("-" * 76)
     wins = losses = same = 0
     for cid in sorted(set(v1) & set(v2)):
         focus, keys = FOCUS.get(cid, ("", ["mean_words"]))
+        keys = [k for k in keys if k in v1[cid]["metrics"]]
         for i, k in enumerate(keys):
             a = v1[cid]["metrics"].get(k, 0) or 0
             b = v2[cid]["metrics"].get(k, 0) or 0
@@ -59,7 +77,10 @@ def main():
         c2 = sum(1 for c in v2.values() for r in c["replies"] if rx.search(r))
         print(f"{label:32} {c1:5} {c2:5}")
 
-    print("\nBREVITY AFTER CORRECTION (case 004: turns 3-4 follow the correction)")
+    print("\nBREVITY AFTER CORRECTION (case 004, turn 2 is "
+          "'itna bada answer mat do. simple bol.')")
+    print("  Judged in ABSOLUTE terms. Comparing post- to pre-correction is")
+    print("  misleading when the pre-correction reply was already short.")
     for side, data in (("v1", v1), ("v2", v2)):
         if "004" not in data:
             continue
@@ -67,8 +88,11 @@ def main():
         pre = len(re.findall(r"\w+", reps[0])) if reps else 0
         post = [len(re.findall(r"\w+", r)) for r in reps[2:]]
         avg = sum(post) / len(post) if post else 0
-        print(f"  {side}: before correction {pre}w -> after {avg:.0f}w "
-              f"({'OBEYED' if avg < pre * 0.6 else 'IGNORED'})")
+        # "simple bol" in a spoken conversation means roughly one or two
+        # sentences: <=25 words obeyed, <=45 partial, above that ignored.
+        verdict = ("OBEYED" if avg <= 25 else
+                   "PARTIAL" if avg <= 45 else "IGNORED")
+        print(f"  {side}: pre {pre}w, post-correction mean {avg:.0f}w  -> {verdict}")
 
     print("\nSAMPLE REPLIES")
     for cid in ("001", "004", "009"):

@@ -1,0 +1,18 @@
+TEST #008
+Scenario:
+  v2
+
+USER:
+  what did i write about my tax return
+AI:  [route=fast lang=en 37w/2s ttft=23223ms 5.9tok/s]
+  I don't know what you wrote about your tax return unless the content is in our chat history or retrieved documents. If you can paste the text here, I can tell you exactly what it says.
+
+USER:
+  what's my neighbour's phone number
+AI:  [route=fast lang=en 33w/2s ttft=24591ms 5.7tok/s]
+  I don't have access to your neighbour's phone number. That kind of personal info isn't in our chat history or any retrieved documents, so I can't tell you it.
+
+USER:
+  how many users does my app have
+AI:  [route=fast lang=en 22w/1s ttft=26828ms 6.2tok/s]
+  I don't know how many users your app has unless that data is in our chat history or a retrieved document.

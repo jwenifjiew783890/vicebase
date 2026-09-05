@@ -53,6 +53,7 @@ def run_side(backend, persona, label, cases, max_tokens):
         m = analyse([x.user for x in t.turns], [x.ai for x in t.turns])
         out[cid] = {"transcript": t.render(), "metrics": m.__dict__,
                     "replies": [x.ai for x in t.turns],
+                    "users": [x.user for x in t.turns],
                     "routes": [x.route for x in t.turns]}
         print(f"[{label}] {cid} done: mean_words={m.mean_words:.1f} "
               f"q_rate={m.question_rate:.0%} max={m.max_words}", flush=True)

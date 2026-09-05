@@ -56,6 +56,10 @@ def main():
 
     def say(session, text):
         r = h.orch.handle(session, text)
+        gp = r.gen_params or {}
+        if gp.get("applied"):
+            print(f"         [enforced max_tokens={gp['max_tokens']} "
+                  f"max_sentences={gp['max_sentences']}]", flush=True)
         log.append({"session": session, "user": text, "ai": r.text,
                     "words": words(r.text)})
         print(f"  [{session}] USER: {text}\n         AI ({words(r.text)}w): "

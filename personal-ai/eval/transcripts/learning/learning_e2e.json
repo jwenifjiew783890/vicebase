@@ -1,0 +1,56 @@
+{
+  "probe": "explain what a database index is",
+  "before_words": 45,
+  "after_words": 55,
+  "promoted": [
+    "style.brevity"
+  ],
+  "rules_block_en": "- Never use emotional pressure to steer the user toward a decision.\n- When answering from retrieved material, state where it came from. Do not present retrieved claims as your own knowledge.\n- Do not open with praise or agreement to make the user feel good.\n- Disagree when the user is wrong, and say why. Do not soften a real problem.\n- Say plainly when you don't know something. Never invent a fact to seem useful.\n- Default to short answers for conversational questions. Expand only when the user asks for detail or the task needs it.",
+  "rules_block_hi": "- Never use emotional pressure to steer the user toward a decision.\n- When answering from retrieved material, state where it came from. Do not present retrieved claims as your own knowledge.\n- Do not open with praise or agreement to make the user feel good.\n- Disagree when the user is wrong, and say why. Do not soften a real problem.\n- Say plainly when you don't know something. Never invent a fact to seem useful.\n- Default to short answers for conversational questions. Expand only when the user asks for detail or the task needs it.",
+  "log": [
+    {
+      "session": "A",
+      "user": "explain what a database index is",
+      "ai": "An index is basically a lookup table that helps the database find rows faster, like a book's index letting you jump straight to a page. It speeds up searches but slows down writes because the database has to update it every time data changes.",
+      "words": 45
+    },
+    {
+      "session": "A",
+      "user": "arre nahi, itna bada answer mat do. simple bol.",
+      "ai": "Arre, index bas ek fast-lookup system hai jaise phone ki address book, jo search ko jaldi kar de aur update mein thoda time lagaye.",
+      "words": 25
+    },
+    {
+      "session": "B",
+      "user": "what's a cache",
+      "ai": "A cache is just a temporary storage spot where your computer or browser saves copies of frequently used files so it doesn't have to download them every time. It makes things load faster, but if you don't clear it regularly, it can slow down your device over time.",
+      "words": 50
+    },
+    {
+      "session": "B",
+      "user": "keep it shorter",
+      "ai": "It's just a temporary storage spot so your device doesn't have to download files every time.",
+      "words": 18
+    },
+    {
+      "session": "C",
+      "user": "what does an API do",
+      "ai": "An API acts like a waiter at a restaurant, taking your order (requests) and getting the food (data) from the kitchen to serve you. They let different software pieces talk to each other without needing to know how they're built inside.",
+      "words": 42
+    },
+    {
+      "session": "C",
+      "user": "too long, get to the point",
+      "ai": "An API is just a set of rules that lets one software program talk to another. It's how your app fetches data or sends commands to a server without seeing the code behind the scenes.",
+      "words": 36
+    },
+    {
+      "session": "D",
+      "user": "explain what a database index is",
+      "ai": "Think of a database index like the index at the back of a book; instead of flipping through pages, it lets you jump straight to the specific data you need. Basically, it speeds up searches by keeping sorted copies of key columns so the database doesn't have to scan every single row every time.",
+      "words": 55
+    }
+  ],
+  "changed": false,
+  "delta_pct": 0.2222222222222222
+}

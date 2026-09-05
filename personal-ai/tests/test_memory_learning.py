@@ -271,5 +271,102 @@ class TestLanguageScoping(unittest.TestCase):
                 self.assertIn(text.split(".")[0][:30], block, f"{key} missing in {lang}")
 
 
+
+class TestEnforceableRules(unittest.TestCase):
+    """A learned rule that can be enforced must be enforced, not requested.
+
+    The end-to-end learning test ran the whole pipeline correctly --
+    correction detected, evidence across three sessions, review, promotion,
+    rule present in the system prompt -- and the model then answered a fresh
+    question in 55 words where its pre-correction baseline was 45. Asking a
+    4B model to be brief is a request; capping its token budget is a fact.
+    """
+
+    def test_no_effect_before_promotion(self):
+        s, L = loop(evidence_threshold=3)
+        p = L.generation_params()
+        self.assertEqual(p["applied"], [])
+        self.assertEqual(p["max_tokens"], 300)
+
+    def test_candidate_alone_does_not_apply(self):
+        s, L = loop(evidence_threshold=3)
+        L.observe_turn("s0", "keep it shorter")
+        self.assertEqual(L.generation_params()["applied"], [])
+
+    def test_promoted_brevity_caps_tokens(self):
+        s, L = loop(evidence_threshold=3)
+        for i, t in enumerate(["arre nahi, itna bada answer mat do. simple bol.",
+                               "keep it shorter", "too long, get to the point"]):
+            L.observe_turn(f"s{i}", t)
+        L.approve("style.brevity")
+        p = L.generation_params()
+        self.assertEqual(p["max_tokens"], 60)
+        self.assertEqual(p["max_sentences"], 2)
+        self.assertEqual([k for k, _ in p["applied"]], ["style.brevity"])
+
+    def test_promoted_detail_raises_the_cap(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"d{i}", "can you explain more")
+        L.approve("style.detail")
+        self.assertEqual(L.generation_params()["max_tokens"], 420)
+
+    def test_archiving_the_rule_removes_the_effect(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"s{i}", "keep it shorter")
+        L.approve("style.brevity")
+        self.assertEqual(L.generation_params()["max_tokens"], 60)
+        s.set_status(s.get_rule("style.brevity").id, "archived")
+        self.assertEqual(L.generation_params()["max_tokens"], 300)
+
+    def test_trim_keeps_only_complete_sentences(self):
+        from pai.orchestrator import trim_to_sentences as T
+        self.assertEqual(T("A. B. C. D.", 2), "A. B.")
+        self.assertEqual(T("First. Second. Third but cut off mid", 2),
+                         "First. Second.")
+        self.assertEqual(T("हाँ। ठीक। और।", 2), "हाँ। ठीक।")
+        self.assertEqual(T("Only one.", 2), "Only one.")
+        # A single unterminated sentence is kept -- dropping it would leave
+        # nothing, and silence is worse than a slightly clipped reply.
+        self.assertEqual(T("no terminator here", 2), "no terminator here")
+
+    def test_orchestrator_trims_when_brevity_is_active(self):
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s, L = loop(evidence_threshold=2)
+        v = VaultIndex(TfidfEmbedder()); v.add_note("a.md", "# A\nx"); v.build_vectors()
+        class C:
+            max_tokens = 300
+            def respond(self, *a): return "One. Two. Three. Four."
+        o = Orchestrator(s, v, C(), learning=L)
+        self.assertEqual(o.handle("t", "hi").text, "One. Two. Three. Four.")
+        for i in range(2):
+            L.observe_turn(f"s{i}", "keep it shorter")
+        L.approve("style.brevity")
+        self.assertEqual(o.handle("t", "hi again").text, "One. Two.")
+
+    def test_orchestrator_applies_and_restores_the_cap(self):
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s, L = loop(evidence_threshold=2)
+        v = VaultIndex(TfidfEmbedder()); v.add_note("a.md", "# A\nx"); v.build_vectors()
+        seen = []
+        class C:
+            max_tokens = 300
+            def respond(self, *a):
+                seen.append(C.max_tokens if False else conv.max_tokens)
+                return "ok"
+        conv = C()
+        o = Orchestrator(s, v, conv, learning=L)
+        o.handle("t", "hello")
+        self.assertEqual(seen[-1], 300)
+        for i in range(2):
+            L.observe_turn(f"s{i}", "keep it shorter")
+        L.approve("style.brevity")
+        o.handle("t", "hello again")
+        self.assertEqual(seen[-1], 60, "cap was not applied during the call")
+        self.assertEqual(conv.max_tokens, 300, "cap was not restored after")
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

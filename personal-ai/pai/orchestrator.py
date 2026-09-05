@@ -18,6 +18,7 @@ Turn lifecycle:
 """
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, Protocol, Sequence
@@ -52,6 +53,7 @@ class TurnResult:
     pending: list[Decision] = field(default_factory=list)
     prompt_chars: int = 0
     timings_ms: dict = field(default_factory=dict)
+    gen_params: dict = field(default_factory=dict)
 
 
 # Ordered longest-first. Verb agreement has to be handled explicitly: a
@@ -103,6 +105,30 @@ def _second_person(block: str) -> str:
     for a, b in _PERSON_MAP:
         block = block.replace(a, b)
     return block
+
+
+_SENT_END = re.compile(r"(?<=[.!?।])\s+")
+
+
+def trim_to_sentences(text: str, limit: int) -> str:
+    """Keep at most `limit` complete sentences, dropping a severed tail.
+
+    Enforcing a learned brevity preference by token cap alone truncates
+    mid-sentence, which reads worse than the verbosity it was meant to fix.
+    Trimming to sentence boundaries makes the cap safe: the model may run
+    out of budget, and what reaches the user is still a finished thought.
+    """
+    if not text.strip():
+        return text
+    parts = [p for p in _SENT_END.split(text.strip()) if p.strip()]
+    if not parts:
+        return text
+    kept = parts[:limit]
+    # If the final kept sentence has no terminator the generation was cut
+    # off; drop it, unless dropping would leave nothing.
+    if kept and not re.search(r"[.!?।]\s*$", kept[-1]) and len(kept) > 1:
+        kept = kept[:-1]
+    return " ".join(kept).strip()
 
 
 BASE_PERSONA_V1 = """You are Muaz's personal assistant. You talk like a sharp,
@@ -259,8 +285,27 @@ class Orchestrator:
         res.prompt_chars = len(system)
 
         history = [dict(r) for r in self.store.turns(session_id)][-12:]
+
+        # Apply generation limits implied by learned rules. A learned
+        # brevity preference becomes a token cap, not a polite request --
+        # the end-to-end test showed the request alone does not work.
+        params = self.learning.generation_params()
+        res.gen_params = params
+        applied = params.get("applied") or []
+        if applied and hasattr(self.conversation, "max_tokens"):
+            previous = self.conversation.max_tokens
+            self.conversation.max_tokens = params["max_tokens"]
+        else:
+            previous = None
+
         t_m = time.perf_counter()
-        res.text = self.conversation.respond(system, history, user_text, context)
+        try:
+            res.text = self.conversation.respond(system, history, user_text, context)
+        finally:
+            if previous is not None:
+                self.conversation.max_tokens = previous
+        if params.get("max_sentences"):
+            res.text = trim_to_sentences(res.text, params["max_sentences"])
         res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
 
         self.store.add_turn(session_id, "assistant", res.text, Trust.MODEL,

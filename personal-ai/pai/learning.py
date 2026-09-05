@@ -354,6 +354,53 @@ class LearningLoop:
             "protected_intact": protected == len(PROTECTED_RULES),
         }
 
+    # -------------------------------------------- enforceable rule effects
+
+    # Some learned rules describe a measurable output property rather than a
+    # judgement. Those should be ENFORCED, not requested.
+    #
+    # The end-to-end learning test proved why. The full pipeline worked --
+    # correction detected, evidence accumulated across three distinct
+    # sessions, review passed, rule promoted, rule present in the system
+    # prompt -- and then the model produced a 55-word answer where the
+    # pre-correction baseline was 45. The rule said "default to short
+    # answers". The model read it and did not comply.
+    #
+    # Asking a 4B model to be brief is a request. Capping its token budget
+    # is a fact. This is the architecture's own principle -- keep behaviour
+    # out of the model where you can -- applied to its own learned rules.
+    # A cap alone is not enough, and the first attempt proved it: 90 tokens
+    # did not bite because the offending 55-word answer was only ~70 tokens.
+    # A cap tight enough to force brevity truncates mid-sentence, which is
+    # worse than verbosity. So brevity is enforced as a cap PLUS a trim to
+    # the last complete sentence -- deterministic, and it yields clean short
+    # output rather than a severed one.
+    RULE_EFFECTS: dict[str, dict] = {
+        "style.brevity": {"max_tokens": 60, "max_sentences": 2,
+                          "reason": "learned: prefers short answers"},
+        "style.detail":  {"max_tokens": 420, "max_sentences": None,
+                          "reason": "learned: prefers detail"},
+    }
+
+    def generation_params(self, base_max_tokens: int = 300) -> dict:
+        """Generation settings implied by the currently active rules.
+
+        Returned to the orchestrator, which applies them to the call. A rule
+        that can be enforced is enforced; the prose stays in the prompt too,
+        because the two reinforce each other and the prose is what the user
+        reads in the review queue.
+        """
+        params: dict = {"max_tokens": base_max_tokens,
+                        "max_sentences": None, "applied": []}
+        for rule in self.store.active_rules():
+            eff = self.RULE_EFFECTS.get(rule.rule_key)
+            if not eff:
+                continue
+            params["max_tokens"] = eff["max_tokens"]
+            params["max_sentences"] = eff["max_sentences"]
+            params["applied"].append((rule.rule_key, eff["reason"]))
+        return params
+
     # ------------------------------------------------------- prompt export
 
     def system_rules_block(self, lang: str = "en", max_chars: int = 1400) -> str:

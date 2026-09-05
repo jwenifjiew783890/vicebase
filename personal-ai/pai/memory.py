@@ -35,7 +35,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Iterable, Optional, Sequence
 
-from .trust import Trust, require
+from .trust import Trust, TrustViolation, require
 
 SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -248,7 +248,13 @@ class MemoryStore:
         it gets a valid_to and a pointer to its replacement, so the history
         stays queryable.
         """
-        require("memory.assert_fact", trust, Trust.USER)
+        # Use the property, not a bare comparison. The mutation audit found
+        # that Trust.may_write_memory was dead code: flipping it to always
+        # return True changed nothing, because this guard duplicated the
+        # comparison instead of consulting it. Two sources of truth for one
+        # invariant is exactly how a security property rots.
+        if not trust.may_write_memory:
+            raise TrustViolation("memory.assert_fact", trust, Trust.USER)
         now = valid_from or time.time()
 
         prev = self.db.execute(

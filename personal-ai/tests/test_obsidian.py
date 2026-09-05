@@ -213,10 +213,31 @@ class TestSafety(unittest.TestCase):
         self.assertIn(".md", ctx)
         self.assertIn("modified", ctx)
 
-    def test_fts_injection_characters_do_not_crash_or_escape(self):
-        """User text must never reach MATCH raw."""
+    def test_fts_query_is_built_not_passed_through(self):
+        """User text must never reach MATCH raw.
+
+        The original version of this test only called search() and checked
+        that nothing raised. The mutation audit showed that passing the raw
+        query straight to MATCH also does not raise for those inputs, so the
+        test proved nothing. It now asserts the actual property: whatever
+        comes out of _fts_query is quoted tokens and nothing else.
+        """
+        from pai.obsidian import _fts_query
+        for q in ['" OR chunks MATCH "', "NEAR(", "a* b*", '"""', "^", "()",
+                  "foo AND bar", "x NOT y", "a: b", "-neg", "*"]:
+            built = _fts_query(q)
+            if not built:
+                continue
+            # Every term is a quoted bare token joined by OR. No operators,
+            # no unbalanced quotes, no wildcards survive.
+            self.assertRegex(built, r'^"[^"]+"( OR "[^"]+")*$',
+                             f"unsafe FTS query built from {q!r}: {built!r}")
+            for bad in ("NEAR", "MATCH", "*", "^", "(", ")", ":"):
+                self.assertNotIn(bad, built, f"{bad!r} survived from {q!r}")
+
+    def test_fts_special_characters_do_not_crash(self):
         idx = build(TfidfEmbedder())
-        for q in ['" OR chunks MATCH "', "NEAR(", "a* b*", '"""', "^", "()"]:
+        for q in ['" OR chunks MATCH "', "NEAR(", "a* b*", '"""', "^", "()", ""]:
             idx.search(q, k=3)   # must not raise
 
 

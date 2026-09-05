@@ -785,12 +785,26 @@ USER: Chal Hinglish mein baat kar.
    the round-2 corpus turned up "main", "mein", "baat", "chal", "bol",
    "hoon", "kis", "karta" — all absent. F29 was the tip of this.
 
-**Fix.** `LANGUAGE_COMMAND` — a deterministic pattern that recognises an
-instruction to switch, in either language, and sets a **session-sticky
-override** that beats per-turn detection until the user changes it again.
-An order is categorical; treating it as one more data point for a heuristic
-was the mistake. Plus roughly forty additional markers, validated against
-every user turn and model reply in rounds 1-3.
+**Fix, part 1.** `LANGUAGE_COMMAND` — a deterministic pattern that
+recognises an instruction to switch, in either language, and sets a
+**session-sticky override** that beats per-turn detection until the user
+changes it again. An order is categorical; treating it as one more data
+point for a heuristic was the mistake. Plus roughly forty additional
+markers, validated against every user turn and model reply in rounds 1-3.
+
+**Fix, part 2, and it is a concession.** Getting the directive right does
+not guarantee the model follows it — that is the standing measured finding
+about calibrated instructions (§5 of the report), and language is the
+clearest case of it. Tolerable when the language is inferred; not tolerable
+when the user said it out loud. So a *locked* turn, and only a locked turn,
+checks the language of the reply and regenerates **once** with a harder
+directive. A Hindi order accepts a Hinglish reply — spoken Hindi with an
+English technical term in it is how he talks — while an English order is
+strict, because that is the case that failed visibly.
+
+The retry costs one extra generation on a rare turn. Both the retry and
+whether it worked are recorded in the transcript, so the cost and the
+benefit are measurable rather than assumed.
 
 ---
 
@@ -905,3 +919,34 @@ lexically-disjoint results retrieval exists to find (F18's over-correction).
 Fixing the query is the root cause; gating the results would be treating
 the symptom. Stated here so the asymmetry is a decision rather than an
 oversight.
+
+---
+
+## F35 — The fix for F29 broke English  ·  FIXED  ·  self-inflicted
+
+Worth recording precisely because it was mine, and because it is the same
+mistake in the opposite direction.
+
+The F29 fix added roughly forty romanised Hindi markers. Two of them were
+**"main"** and **"log"**. Both are real, common Hindi words. Both are also
+extremely common in the technical English this user actually writes:
+
+```
+"push this to main"      -> hinglish     (a git branch)
+"check the log file"     -> hinglish
+"the main function..."   -> hinglish
+```
+
+Caught by running the detector over A06 turn 1 out of curiosity, not by a
+test — `test_english_is_still_english` existed and contained no technical
+English at all, so it passed.
+
+**Fix.** Both moved to `_AMBIGUOUS`, the bucket that exists for exactly
+this: words that belong to both vocabularies and are therefore evidence for
+neither. "de" and "le" went with them — real Hindi verbs, two letters long,
+too easy to hit inside English text.
+
+**And the test was widened**, because a defence whose negative test is too
+narrow to catch the obvious regression is not much of a defence. The
+anti-false-green case list now includes the git and logging vocabulary this
+project is full of.

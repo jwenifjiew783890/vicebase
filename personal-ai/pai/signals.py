@@ -95,18 +95,18 @@ _HI_MARKERS = {
     #
     # Bare imperative stems -- how people actually give instructions.
     "bol", "dekh", "chal", "soch", "likh", "padh", "samjha", "samjhao",
-    "bata", "sunn", "ruk", "ruko", "rakho", "utha", "laa", "de", "le",
+    "bata", "sunn", "ruk", "ruko", "rakho", "utha", "laa",
     # Pronouns and postpositions that carry real signal.
-    "main", "mai", "mein", "mujhse", "tujhe", "tujh", "unko", "inko",
+    "mai", "mein", "mujhse", "tujhe", "tujh", "unko", "inko",
     "hamein", "humein", "tumhara", "tumhari", "tumhare", "kisko", "kiska",
     "kis", "jis", "sabko",
     # Extremely common verb forms.
-    "hoon", "hu", "hain", "hota", "hoti", "hote", "karta", "karti",
+    "hoon", "hain", "hota", "hoti", "hote", "karta", "karti",
     "karte", "karna", "kiya", "karunga", "karungi", "jaunga", "jaungi",
     "bolunga", "bolungi", "dunga", "dungi", "lagta", "lagti", "lagte",
     "milta", "milti", "chahta", "padta", "padti",
     # Common nouns and adverbs.
-    "baat", "cheez", "chiz", "kaam", "waqt", "samay", "log", "aadmi",
+    "baat", "cheez", "chiz", "kaam", "waqt", "samay", "aadmi",
     "bhaiya", "didi", "khana", "paani", "ghar", "dost",
     "abhi", "kabhi", "shayad", "zaroor", "bilkul", "waise", "aise",
     "isliye", "kyunki", "matlab", "yaani", "phir", "wapas", "andar",
@@ -125,6 +125,14 @@ _AMBIGUOUS = {
     "it", "us", "by", "be", "no", "or", "as", "an", "a", "i",
     "ho", "na", "ki", "ka", "ke", "se", "hi", "kar", "kam", "man", "din",
     "tha", "thi", "ji", "bhi", "bas", "hun", "hu", "haan",
+    # Added after a marker expansion (F29) put "main" and "log" on the
+    # HINDI list and broke "push this to main" -- which scored as Hinglish,
+    # in an English conversation about a git branch. Both words are common
+    # in exactly the technical English this user writes, and both are
+    # common Hindi. Neither is evidence; that is what this bucket is for.
+    # "de" and "le" join them: real Hindi verbs, but two letters long and
+    # too easy to hit inside English text.
+    "main", "log", "de", "le",
 }
 
 # Interjections and acknowledgement tokens that carry NO language signal at

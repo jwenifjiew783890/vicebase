@@ -56,12 +56,25 @@ class TestMarkerCoverage(unittest.TestCase):
             self.assertIn(detect_language(text), ("hi", "hinglish"), text)
 
     def test_english_is_still_english(self):
-        """ANTI-FALSE-GREEN: a bigger Hindi list must not swallow English."""
+        """ANTI-FALSE-GREEN: a bigger Hindi list must not swallow English.
+
+        The technical phrases here are not decoration. The first version of
+        the expansion put "main" and "log" on the Hindi list -- both are
+        real, common Hindi words -- and "push this to main" started
+        scoring as HINGLISH in an English conversation about a git branch.
+        This test is what that regression should have hit, and did not,
+        until these cases were added.
+        """
         for text in ["the deployment pipeline is broken",
                      "what is a database index",
                      "I meant the deployment pipeline.",
                      "explain docker networking",
-                     "should i be worried"]:
+                     "should i be worried",
+                     "push this to main",
+                     "merge it into main",
+                     "check the log file",
+                     "log in to the main branch",
+                     "the main function returns early"]:
             self.assertEqual(detect_language(text), "en", text)
 
 

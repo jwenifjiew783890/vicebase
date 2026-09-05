@@ -403,6 +403,14 @@ MUTATIONS = [
      "            if current is not None and current.object.lower() == cand.object.lower():",
      "            if False:"),
 
+    ("orchestrator: a fact cannot be taken back", "pai/orchestrator.py",
+     "        for predicate in extract_retractions(user_text):",
+     "        for predicate in []:"),
+
+    ("memory: retiring a fact deletes its history", "pai/memory.py",
+     "        self.db.execute(\"UPDATE facts SET valid_to=? WHERE id=?\",",
+     "        self.db.execute(\"DELETE FROM facts WHERE ?=? OR id=?\","),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

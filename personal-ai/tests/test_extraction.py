@@ -201,3 +201,70 @@ class TestAgainstTheWholeCorpus(unittest.TestCase):
     def test_the_extractor_still_fires_on_a_real_statement(self):
         """ANTI-FALSE-GREEN: zero on the corpus must not mean zero always."""
         self.assertTrue(extract_facts("main neovim use karta hoon"))
+
+    def test_nothing_in_the_corpus_would_retire_a_fact(self):
+        """The retraction patterns get the same treatment.
+
+        Over-triggering here erases something he told the system, which is
+        worse than failing to erase it: he would have to notice the absence.
+        """
+        from pai.extract import extract_retractions
+        fired = [(t, extract_retractions(t)) for t in self._corpus()
+                 if extract_retractions(t)]
+        self.assertEqual(fired, [], f"would have erased {len(fired)} facts")
+
+    def test_retraction_still_fires_on_a_real_one(self):
+        """ANTI-FALSE-GREEN."""
+        from pai.extract import extract_retractions
+        self.assertEqual(extract_retractions("I don't use neovim any more"),
+                         ["editor"])
+
+
+class TestTakingItBack(unittest.TestCase):
+    """A person has to be able to remove something the system learned.
+
+    The extractor's veto correctly refuses to read a NEW fact out of a
+    negation -- and without this, that leaves the OLD one standing forever.
+    "I don't use neovim any more" would have changed nothing, and
+    `editor: neovim` would have gone into every future prompt.
+    """
+
+    def test_a_negation_retires_the_stored_fact(self):
+        store, model, orch = build()
+        orch.handle("s", "I use neovim")
+        self.assertIsNotNone(store.current_fact("muaz", "editor"))
+        res = orch.handle("s", "I don't use neovim any more")
+        self.assertEqual(res.learned, [("muaz", "editor", None)])
+        self.assertIsNone(store.current_fact("muaz", "editor"))
+
+    def test_retiring_is_not_deleting(self):
+        """Bitemporal, like every other write here."""
+        store, model, orch = build()
+        orch.handle("s", "I use neovim")
+        orch.handle("s", "I don't use neovim any more")
+        self.assertEqual(len(store.fact_history("muaz", "editor")), 1)
+
+    def test_an_explicit_forget_works(self):
+        store, model, orch = build()
+        orch.handle("s", "I work at Anthropic")
+        orch.handle("s", "forget where I work")
+        self.assertIsNone(store.current_fact("muaz", "works_at"))
+
+    def test_retire_then_replace_in_one_turn(self):
+        store, model, orch = build()
+        orch.handle("s", "I use neovim")
+        orch.handle("s", "my editor is helix")
+        self.assertEqual(store.current_fact("muaz", "editor").object, "helix")
+
+    def test_ordinary_turns_retire_nothing(self):
+        """ANTI-FALSE-GREEN: over-triggering would erase his memory."""
+        from pai.extract import extract_retractions
+        for text in ["I use neovim", "yaar kya scene hai", "I work at night",
+                     "don't do that", "I don't know", "explain docker",
+                     "kuch nahi pata", "I prefer dark mode"]:
+            self.assertEqual(extract_retractions(text), [], text)
+
+    def test_retiring_a_fact_that_was_never_there_is_a_no_op(self):
+        store, model, orch = build()
+        res = orch.handle("s", "forget where I work")
+        self.assertEqual(res.learned, [])

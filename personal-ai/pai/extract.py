@@ -138,6 +138,43 @@ def extract_facts(text: str, subject: str = "muaz") -> list[Candidate]:
     return out
 
 
+# --------------------------------------------------------------- retraction
+
+# Taking something back. The extractor's veto refuses to read a fact out of
+# a negation, which is right -- and leaves the OLD fact standing forever.
+# These patterns close it.
+_RETRACT = [
+    ("editor", re.compile(
+        r"\b(?:i )?(?:don'?t|do not|no longer) (?:use|code in)\b"
+        r"|\bnot using .{0,20}(?:any ?more|now)\b"
+        r"|\bmain (?:ab )?.{0,20}use nahi karta\b"
+        r"|\bforget (?:my|about my) (?:editor|ide)\b", re.IGNORECASE)),
+    ("works_at", re.compile(
+        r"\bi (?:don'?t|do not|no longer) work (?:at|for)\b"
+        r"|\bi (?:left|quit) (?:my job|the company)\b"
+        r"|\bmain (?:ab )?wahan kaam nahi karta\b"
+        r"|\bforget where i work\b", re.IGNORECASE)),
+    ("lives_in", re.compile(
+        r"\bi (?:don'?t|do not|no longer) live in\b"
+        r"|\bi moved (?:out|away)\b"
+        r"|\bmain (?:ab )?wahan nahi rehta\b"
+        r"|\bforget where i live\b", re.IGNORECASE)),
+    ("prefers", re.compile(
+        r"\bi (?:don'?t|do not|no longer) prefer\b"
+        r"|\bforget (?:that|what i said about) (?:my )?preference",
+        re.IGNORECASE)),
+]
+
+
+def extract_retractions(text: str) -> list[str]:
+    """Predicates the user is taking back in this turn. Usually none."""
+    out = []
+    for predicate, pattern in _RETRACT:
+        if pattern.search(text):
+            out.append(predicate)
+    return out
+
+
 def _usable(value: str) -> bool:
     if not value:
         return False

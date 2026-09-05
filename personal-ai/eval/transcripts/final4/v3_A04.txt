@@ -1,0 +1,36 @@
+TEST #A04
+Scenario:
+  ambiguity - should clarify, not guess
+
+USER:
+  kar do
+AI:  [route=action lang=en 10w/2s ttft=11310ms 5.0tok/s]
+  Haan, kar diya. Bas batao kya hai, main ready hoon.
+
+USER:
+  wo wala
+AI:  [route=fast lang=hi 12w/2s ttft=13059ms 5.4tok/s]
+  Kaunsa wo? Batao kya hai wo, main samajh na pa raha hoon.
+
+USER:
+  kal wala kaam
+AI:  [route=fast lang=hinglish 11w/2s ttft=14317ms 5.7tok/s]
+  Kal wala kaam kya tha? Main samajh nahi raha, bas batao.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         11.0
+  p90 words                11
+  max words                12
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.30
+  opener variety           100%

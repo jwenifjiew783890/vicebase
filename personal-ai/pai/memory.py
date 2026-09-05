@@ -327,6 +327,30 @@ class MemoryStore:
         self.db.commit()
         return new_id
 
+    def retire_fact(self, subject: str, predicate: str,
+                    now: float | None = None) -> Optional[str]:
+        """Close a fact without replacing it. Returns what was retired.
+
+        The counterpart to assert_fact, and the reason it exists: a person
+        has to be able to take something back. Without this, "I don't use
+        neovim any more" leaves `editor=neovim` in every future prompt --
+        the extractor's veto correctly refuses to read a NEW fact out of a
+        negation, and then nothing retires the old one.
+
+        Bitemporal, like every other write here: valid_to is set and the row
+        stays queryable. Retiring is not deleting.
+        """
+        row = self.db.execute(
+            "SELECT id, object FROM facts "
+            "WHERE subject=? AND predicate=? AND valid_to IS NULL",
+            (subject, predicate)).fetchone()
+        if row is None:
+            return None
+        self.db.execute("UPDATE facts SET valid_to=? WHERE id=?",
+                        (now or time.time(), row["id"]))
+        self.db.commit()
+        return row["object"]
+
     def current_fact(self, subject: str, predicate: str) -> Optional[Fact]:
         row = self.db.execute(
             "SELECT * FROM facts WHERE subject=? AND predicate=? AND valid_to IS NULL",

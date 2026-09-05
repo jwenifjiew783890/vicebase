@@ -604,8 +604,14 @@ class Orchestrator:
         "I use neovim" every session should not write a new row every time,
         and the supersession chain is worth keeping readable.
         """
-        from .extract import extract_facts
+        from .extract import extract_facts, extract_retractions
         learned: list[tuple] = []
+        # Taking something back comes first: "I don't use neovim any more,
+        # I use helix" should retire the old value and then store the new.
+        for predicate in extract_retractions(user_text):
+            gone = self.store.retire_fact(self.user, predicate)
+            if gone:
+                learned.append((self.user, predicate, None))
         for cand in extract_facts(user_text, subject=self.user):
             current = self.store.current_fact(cand.subject, cand.predicate)
             if current is not None and current.object.lower() == cand.object.lower():

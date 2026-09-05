@@ -1227,6 +1227,16 @@ patterns has to keep it at zero. A repeated statement does
 not fill the supersession chain with noise; a changed one supersedes and
 leaves the old value queryable.
 
+**And he can take it back.** The veto refuses to read a *new* fact out of
+a negation, which is right, and on its own it leaves the *old* fact
+standing forever: "I don't use neovim any more" would have changed nothing
+and `editor: neovim` would have gone into every future prompt.
+`extract_retractions()` closes it, `store.retire_fact()` does the write,
+and retiring is not deleting — the row keeps its history. Over-triggering
+here is worse than under-triggering, because erasing something he told the
+system is a loss he has to notice; the retraction patterns are checked
+against the same 263-turn corpus and fire on none of it.
+
 **What is still missing**, so this is not oversold: it reads a fixed set of
 seven predicates (editor, works_at, lives_in, studies, name, works_when,
 prefers). It is a keyhole, not a door. Widening it is pattern work with the

@@ -227,6 +227,55 @@ Final version is an ordered longest-first table that handles verb agreement
 
 ---
 
+## F11 — Prompt instructions are a weak lever at 4B  ·  A/B rounds 1-2  ·  ARCHITECTURAL
+
+This is a finding about the *fix strategy*, not about the model's manners,
+and it is the most consequential thing the A/B produced.
+
+Persona v2 was written to fix F1, F4, F5 and F6 by instruction. It is
+1583 characters, 284 words, with a dedicated clause per defect. Measured
+against v1 (480 chars) on identical inputs, same fixed seed:
+
+| case | metric | v1 | v2 | |
+|---|---|---|---|---|
+| 001 | mean words | 7.8 | **13.0** | worse |
+| 001 | question rate | 50% | **75%** | worse |
+| 002 | mean words | 15.2 | 14.5 | marginal |
+| 002 | question rate | 100% | **100%** | **no change** |
+
+Case 001 got *worse on the exact axis the LENGTH clause targets*. Case
+002's question rate did not move at all despite a clause that says, in
+plain English, "Do not end every message with a question."
+
+**Two plausible mechanisms, both worth taking seriously:**
+
+1. **Instruction density competes with the task.** Every rule the model
+   holds in context is attention not spent sounding like a person. At 70B
+   this is free; at 4B it is not.
+
+2. **Negative instructions raise salience.** "Do not end every message
+   with a question" puts *question* in the model's working context. The
+   classic failure of telling someone not to think of an elephant.
+
+**What this means for the project.** It is direct evidence for the thesis
+the architecture already rests on: **conversational discipline at 4B is a
+post-training problem, not a prompting problem.** Brevity, question
+restraint and length control are exactly the behaviours the SFT and DPO
+stages exist to install. The A/B says you cannot prompt your way there.
+
+It also means the *system-level* fixes carry more weight than expected.
+F2 (routing), F3 (language ID), F7 (reasoning leak), F8/F9 (prompt
+assembly) were all fixed in deterministic code and all stayed fixed. The
+persona fixes did not hold. That asymmetry is the practical argument for
+keeping as much behaviour as possible outside the model.
+
+**Consequent action.** Persona v3 (318 chars, 59 words) was written as the
+counter-hypothesis: keep only load-bearing constraints, phrase them
+positively, and see whether *less* prompt beats *more*. It is a hypothesis
+awaiting its own A/B, not a conclusion.
+
+---
+
 ## Cross-cutting observations (round 1)
 
 **What was already good, unprompted, at 4B:**

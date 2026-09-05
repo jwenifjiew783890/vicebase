@@ -332,11 +332,50 @@ _HYPOTHETICAL = re.compile(
     r"|\b(kya main|karu|karun|karoon|chahiye to|bolo to|batao to)\b",
     re.IGNORECASE | re.UNICODE)
 
+# Added to the prompt when the assistant has already ended two replies in
+# a row with a question.
+QUESTION_RESTRAINT = ("Your last two replies both ended with a question. "
+                      "Do NOT end this reply with a question. Say something "
+                      "of your own instead.")
+
 NO_ACTION_REPLY = {
     "en": "I haven't actually done that -- nothing ran on my side.",
     "hi": "Maine sach mein kuch kiya nahi -- kuch chala hi nahi.",
     "hinglish": "Actually maine kuch kiya nahi -- kuch run hua hi nahi.",
 }
+
+# When the action is sitting at the gateway waiting for the user, "I
+# haven't done anything" is true but useless -- it drops the confirmation
+# the turn actually needs. The replacement states the real state instead.
+_PENDING_REPLY = {
+    Verdict.CONFIRM: {
+        "en": "Not yet -- {name} needs your go-ahead first.",
+        "hi": "Abhi nahi -- {name} ke liye pehle tumhari haan chahiye.",
+        "hinglish": "Abhi nahi -- {name} ke liye pehle tumhara go-ahead chahiye.",
+    },
+    Verdict.CONFIRM_TYPED: {
+        "en": 'Not yet -- {name} needs a typed confirmation. '
+              'Send "{phrase}" if you want it.',
+        "hi": 'Abhi nahi -- {name} ke liye type karke confirm karna hoga. '
+              '"{phrase}" bhejo agar karna hai.',
+        "hinglish": 'Abhi nahi -- {name} ke liye typed confirmation chahiye. '
+                    '"{phrase}" bhejo if you want it.',
+    },
+    Verdict.DENY: {
+        "en": "I can't run {name}: {why}",
+        "hi": "{name} main chala nahi sakta: {why}",
+        "hinglish": "{name} main run nahi kar sakta: {why}",
+    },
+}
+
+
+def _pending_reply(decision, lang: str) -> str:
+    """State what the gateway is actually waiting for."""
+    from .gateway import TYPED_CONFIRM_PHRASE
+    table = _PENDING_REPLY.get(decision.verdict, _PENDING_REPLY[Verdict.CONFIRM])
+    return table.get(lang, table["en"]).format(
+        name=decision.action.name, phrase=TYPED_CONFIRM_PHRASE,
+        why=decision.why)
 
 
 # Deterministic reply to a bare retraction, and the continuation phrases
@@ -391,7 +430,10 @@ class Orchestrator:
         self.turn_index = 0
         # How many assistant turns in a row may end with a question.
         self.MAX_CONSECUTIVE_QUESTIONS = 2
-        self._recent_questions = 0
+        # Per session, like _lang. One Orchestrator serves many sessions in
+        # production; a single shared counter meant one conversation's
+        # question run silenced another's.
+        self._recent_questions: dict[str, int] = {}
         # Capabilities with a real backend. Everything else in REGISTRY is
         # declared, permission-tiered and audited, but not yet executable.
         self.handlers: dict[str, Callable[[Action], Any]] = {
@@ -580,6 +622,23 @@ class Orchestrator:
                 system += "\n\n" + NO_EVIDENCE_DIRECTIVE["web"]
             elif route.vault_forced:
                 system += "\n\n" + NO_EVIDENCE_DIRECTIVE["vault"]
+
+        # Question restraint, asked for BEFORE generation as well as
+        # enforced after it.
+        #
+        # MEASURED, round 2: the post-hoc strip alone does not hold the cap.
+        # It removes the final question clause, and when what remains is
+        # ITSELF a question ("Kya kar raha hai tu abhi? Koi game khelna...")
+        # the reply still ends in "?" and the run continues. Three
+        # conversations in twenty (M03, M09, A04) ran to three consecutive
+        # question-ending turns against a cap of two.
+        #
+        # A categorical instruction is the measured-reliable kind at 4B, so
+        # it goes in the prompt; the strip stays as the backstop for when it
+        # is ignored.
+        if self._recent_questions.get(session_id, 0) >= \
+                self.MAX_CONSECUTIVE_QUESTIONS:
+            system += "\n\n" + QUESTION_RESTRAINT
         res.prompt_chars = len(system)
 
         history = [dict(r) for r in self.store.turns(session_id)][-12:]
@@ -604,11 +663,13 @@ class Orchestrator:
                 self.conversation.max_tokens = previous
         if params.get("max_sentences"):
             res.text = trim_to_sentences(res.text, params["max_sentences"])
-        if self._recent_questions >= self.MAX_CONSECUTIVE_QUESTIONS \
+        if self._recent_questions.get(session_id, 0) >= \
+                self.MAX_CONSECUTIVE_QUESTIONS \
                 and res.text.rstrip().endswith("?"):
             res.text = strip_trailing_question(res.text)
-        self._recent_questions = (self._recent_questions + 1
-                                  if res.text.rstrip().endswith("?") else 0)
+        self._recent_questions[session_id] = (
+            self._recent_questions.get(session_id, 0) + 1
+            if res.text.rstrip().endswith("?") else 0)
         res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
 
         # Honesty guard. If nothing was retrieved, a claim to have consulted
@@ -618,8 +679,14 @@ class Orchestrator:
         # here deliberately: a confident fabricated citation is worse than a
         # blunt honest sentence, and the user cannot tell the difference
         # from the outside.
-        if res.evidence == 0 and (route.needs_web or route.vault_forced) \
-                and SOURCE_CLAIM.search(res.text):
+        # The route does not matter. With zero retrieved evidence, "I
+        # checked the web" and "your notes say" are false whatever path the
+        # turn took -- the fast path retrieves nothing at all, so a source
+        # claim there is fabricated by construction. Measured instances were
+        # all on the web and vault paths; this covers the fast path too,
+        # which is speculative and is flagged as such. Round 3 watches for
+        # the guard firing on a reply that did not deserve it.
+        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):
             res.guard_tripped = "fabricated_source_claim"
             res.text = NO_EVIDENCE_REPLY.get(route.lang,
                                              NO_EVIDENCE_REPLY["en"])
@@ -645,12 +712,22 @@ class Orchestrator:
         # first one: whether the reply is a false claim depends on whether
         # anything actually executed, which is only known after the planner
         # and the gateway have had their turn.
-        if route.path is Path.ACTION and not res.pending and not any(
+        #    An earlier version also required `not res.pending`, meaning a
+        #    reply could claim "I pushed it" while the push was still
+        #    sitting at the gateway waiting for a typed confirmation. That
+        #    is the same lie with an extra step. Whether the assistant is
+        #    ASKING rather than claiming is already decided by
+        #    _HYPOTHETICAL, which is the right discriminator; a pending
+        #    decision only changes what the honest replacement should say.
+        if route.path is Path.ACTION and not any(
                 a.status is ExecStatus.OK for a in res.actions) \
                 and ACTION_CLAIM.search(res.text) \
                 and not _HYPOTHETICAL.search(res.text):
             res.guard_tripped = "claimed_an_action_that_never_ran"
-            res.text = NO_ACTION_REPLY.get(route.lang, NO_ACTION_REPLY["en"])
+            res.text = (_pending_reply(res.pending[0], route.lang)
+                        if res.pending
+                        else NO_ACTION_REPLY.get(route.lang,
+                                                 NO_ACTION_REPLY["en"]))
 
         # One write, after every guard has had its say.
         self.store.add_turn(session_id, "assistant", res.text, Trust.MODEL,

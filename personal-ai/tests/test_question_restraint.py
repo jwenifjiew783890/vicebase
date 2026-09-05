@@ -155,3 +155,64 @@ class TestLanguageDirective(unittest.TestCase):
         o.handle("s", "I meant the deployment pipeline.")
         self.assertIn("Reply in English only", seen[-1],
                       "history language leaked past the router's decision")
+
+
+class TestPreGenerationRestraint(unittest.TestCase):
+    """The post-hoc strip does not hold the cap on its own.
+
+    MEASURED, round 2 of the mandatory set: three conversations of twenty
+    (M03, M09, A04) ran to THREE consecutive question-ending replies
+    against a cap of two.  The strip removes the final question clause, and
+    when what remains is itself a question --
+
+        "Kya kar raha hai tu abhi? Koi game khelna ya kuch naya karna?"
+          -> "Kya kar raha hai tu abhi?"
+
+    -- the reply still ends in "?" and the run continues.  So the model is
+    now also TOLD, before generating, on exactly the turn where it matters.
+    """
+
+    def _orch(self, replies):
+        from pai.memory import MemoryStore
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s = MemoryStore(); v = VaultIndex(TfidfEmbedder())
+        v.add_note("n.md", "# N\nnothing"); v.build_vectors()
+        seen = []
+        class C:
+            def __init__(self): self.i = 0
+            def respond(self, system, history, user, context):
+                seen.append(system)
+                r = replies[min(self.i, len(replies) - 1)]; self.i += 1
+                return r
+        return Orchestrator(s, v, C()), seen
+
+    def test_the_directive_appears_only_after_two_question_turns(self):
+        from pai.orchestrator import QUESTION_RESTRAINT
+        orch, seen = self._orch(["What's up?", "And then?", "Anything else?"])
+        orch.handle("s", "hi")
+        self.assertNotIn(QUESTION_RESTRAINT, seen[0])
+        orch.handle("s", "hi")
+        self.assertNotIn(QUESTION_RESTRAINT, seen[1],
+                         "fired one turn early")
+        orch.handle("s", "hi")
+        self.assertIn(QUESTION_RESTRAINT, seen[2])
+
+    def test_a_statement_resets_the_run(self):
+        """ANTI-FALSE-GREEN: the directive must not become permanent."""
+        from pai.orchestrator import QUESTION_RESTRAINT
+        orch, seen = self._orch(["What's up?", "And then?", "Fair enough.",
+                                 "Right."])
+        for _ in range(4):
+            orch.handle("s", "hi")
+        self.assertIn(QUESTION_RESTRAINT, seen[2])
+        self.assertNotIn(QUESTION_RESTRAINT, seen[3],
+                         "a non-question reply must clear the run")
+
+    def test_the_run_is_counted_per_session(self):
+        """ANTI-FALSE-GREEN: one conversation must not silence another."""
+        from pai.orchestrator import QUESTION_RESTRAINT
+        orch, seen = self._orch(["What's up?"])
+        orch.handle("a", "hi"); orch.handle("a", "hi")
+        orch.handle("b", "hi")
+        self.assertNotIn(QUESTION_RESTRAINT, seen[-1])

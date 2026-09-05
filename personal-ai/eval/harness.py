@@ -135,6 +135,20 @@ def run(verbose=False) -> Result:
                 res.add(sid, cat, "delegate", r.delegate == exp["delegate"],
                         f"got delegate={r.delegate}, expected {exp['delegate']} "
                         f"for {text!r}")
+            if "retract" in exp:
+                res.add(sid, cat, "retract", r.retract == exp["retract"],
+                        f"got retract={r.retract}, expected {exp['retract']} "
+                        f"for {text!r}")
+            if "vault_forced" in exp:
+                res.add(sid, cat, "vault_forced",
+                        r.vault_forced == exp["vault_forced"],
+                        f"got vault_forced={r.vault_forced}, expected "
+                        f"{exp['vault_forced']} for {text!r}")
+            if "ack" in exp:
+                got = bool(r.ack_text)
+                res.add(sid, cat, "ack", got == exp["ack"],
+                        f"got ack={r.ack_text!r}, expected "
+                        f"{'an ack' if exp['ack'] else 'no ack'} for {text!r}")
 
         # --- vault relevance for personal queries
         if exp.get("personal"):

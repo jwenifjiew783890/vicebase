@@ -169,9 +169,11 @@ MUTATIONS = [
      'return Tainted(self.summary, source="agent:opencode")',
      "return self.summary  # MUTANT"),
 
-    ("orchestrator: question restraint removed", "pai/orchestrator.py",
-     "        if self._recent_questions >= self.MAX_CONSECUTIVE_QUESTIONS \\\n                and res.text.rstrip().endswith(\"?\"):",
-     "        if False:"),
+    ("orchestrator: post-hoc question strip removed", "pai/orchestrator.py",
+     "                and res.text.rstrip().endswith(\"?\"):\n"
+     "            res.text = strip_trailing_question(res.text)",
+     "                and False:\n"
+     "            res.text = strip_trailing_question(res.text)"),
 
     ("orchestrator: restraint mangles pure questions", "pai/orchestrator.py",
      "    if not words:\n        return text",
@@ -244,19 +246,27 @@ MUTATIONS = [
 
     ("orchestrator: fabricated source claims allowed through",
      "pai/orchestrator.py",
-     "                and SOURCE_CLAIM.search(res.text):",
-     "                and False:"),
+     "        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
+     "        if False:"),
 
     ("orchestrator: claimed-but-unrun actions allowed through",
      "pai/orchestrator.py",
      "                and ACTION_CLAIM.search(res.text) \\",
      "                and False \\"),
 
+    # NOTE, and it is the point of the whole tool: the first version of
+    # this mutation was `res.text = res.text` -- a no-op. It "survived",
+    # and the audit correctly reported a survivor, because nothing can
+    # detect a change that was never made. An ineffective mutation is
+    # indistinguishable from an untested defence, so the audit's report was
+    # right and my mutation was wrong. This one actually writes the
+    # unguarded reply to the store first.
     ("orchestrator: the fabricated reply is what reaches memory",
      "pai/orchestrator.py",
-     "        # One write, after every guard has had its say.",
-     "        res.text = res.text  # MUTANT: write happens before guards\n"
-     "        # One write, after every guard has had its say."),
+     "        # NOTE: the assistant turn is NOT written here.",
+     "        self.store.add_turn(session_id, \"assistant\", res.text,\n"
+     "                            Trust.MODEL, lang=route.lang)  # MUTANT\n"
+     "        # NOTE: the assistant turn is NOT written here."),
 
     ("llm: planner accepts only arrays again (F26 regression)", "pai/llm.py",
      "        if not items:\n            items = _json_objects(text)",
@@ -271,13 +281,55 @@ MUTATIONS = [
      "        for pattern in (_REPO_NAMED, _REPO_HINT):",
      "        for pattern in (_REPO_HINT,):  # MUTANT"),
 
+    ("orchestrator: pre-generation question restraint removed",
+     "pai/orchestrator.py",
+     "            system += \"\\n\\n\" + QUESTION_RESTRAINT",
+     "            pass  # MUTANT"),
+
+    ("orchestrator: question runs counted globally, not per session",
+     "pai/orchestrator.py",
+     "        self._recent_questions[session_id] = (\n"
+     "            self._recent_questions.get(session_id, 0) + 1",
+     "        self._recent_questions[\"GLOBAL\"] = (\n"
+     "            self._recent_questions.get(session_id, 0) + 1"),
+
+    ("orchestrator: source claims allowed on the fast path",
+     "pai/orchestrator.py",
+     "        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
+     "        if route.needs_web and SOURCE_CLAIM.search(res.text):"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),
 ]
 
 
+def _tree_is_clean() -> bool:
+    """Refuse to start on a tree that already carries a mutation.
+
+    A `finally` does not run when the process is killed. An audit
+    terminated mid-mutation once left `pai/llm.py` on disk with the empty
+    response fallback replaced by `if False:` -- a silently disabled
+    defence in a tree that otherwise looked fine. The next run would then
+    have audited the wrong code and reported a survivor as a kill.
+    """
+    proc = subprocess.run(["git", "diff", "--name-only", "--", "pai"],
+                          cwd=ROOT, capture_output=True, text=True)
+    dirty = [f for f in proc.stdout.split() if f.endswith(".py")]
+    if dirty:
+        print("working tree has uncommitted changes under pai/:")
+        for f in dirty:
+            print("   ", f)
+        print("That is fine for ordinary work, but this audit rewrites those\n"
+              "same files, so a crash would leave you unable to tell your\n"
+              "edits from a mutation. Commit or stash first.")
+        return False
+    return True
+
+
 def main():
+    if "--force" not in sys.argv and not _tree_is_clean():
+        return 2
     base_fails, base_names = run_suite()
     print(f"baseline: {base_fails} failures\n")
     if base_fails:
@@ -292,11 +344,20 @@ def main():
             print(f"  SKIP  {label}\n        (anchor not found in {relpath})")
             survived.append((label, "anchor missing"))
             continue
+        # Breadcrumb: if the process dies between these two writes, this
+        # file is what tells the next run (and the next reader) which
+        # source file is currently mutated and how to put it back.
+        crumb = os.path.join(ROOT, ".mutation-in-flight")
         try:
+            with open(crumb, "w") as fh:
+                fh.write(f"{relpath}\n{label}\n"
+                         "restore with: git checkout -- " + relpath + "\n")
             open(path, "w").write(original.replace(find, repl, 1))
             n, names = run_suite()
         finally:
             open(path, "w").write(original)
+            if os.path.exists(crumb):
+                os.remove(crumb)
         if n > 0:
             killed.append((label, n, names[:2]))
             print(f"  KILLED  {label}\n          ({n} tests fail, e.g. {names[0]})")

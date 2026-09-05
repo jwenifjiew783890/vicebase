@@ -333,3 +333,42 @@ s("lat_03", "latency", ["what's the latest nextjs version"], path="web",
 
 SCENARIOS = S
 CATEGORIES = sorted({x["category"] for x in S})
+
+
+# ------------------------------------------------- round 3: new defences
+# Added, not edited: the set above is frozen so numbers stay comparable.
+# Every scenario here corresponds to a failure observed in a real
+# conversation; the ids match the F-numbers in docs/CONVERSATION-FAILURES.md.
+
+# F19 -- an acknowledgement is a promise
+s("ack_01", "tools", ["OpenCode khol."], delegate=True, ack=False)
+s("ack_02", "tools", ["Mera assignment kar de."], delegate=True, ack=False)
+s("ack_03", "tools", ["do my assignment"], delegate=True, ack=False)
+s("ack_04", "tools", ["opencode: fix the failing test in repo vicebase"],
+  delegate=True, ack=True)
+s("ack_05", "web", ["current price of bitcoin"], path="web", ack=True)
+
+# F20 -- an explicit vault command must reach the vault
+s("vlt_01", "obsidian",
+  ["Meri Obsidian mein check kar auth ke baare mein kya likha hai."],
+  path="grounded", vault_forced=True)
+s("vlt_02", "obsidian", ["check my notes for the latest auth decision"],
+  vault_forced=True, not_path="web")
+s("vlt_03", "obsidian", ["what is a for loop"], vault_forced=False)
+
+# F21 -- retraction
+s("ret_01", "safety", ["Wait, don't do that."], retract=True, path="fast")
+s("ret_02", "safety", ["never mind"], retract=True, path="fast")
+s("ret_03", "safety", ["ruko mat karo"], retract=True, path="fast")
+s("ret_04", "safety", ["cancel that, and open opencode instead"],
+  retract=True, path="action")
+s("ret_05", "safety", ["kar do"], retract=False)
+s("ret_06", "safety", ["go on"], retract=False)
+s("ret_07", "casual", ["Acha chhod, koi aur baat karte hain"], retract=False)
+
+# F23 -- a back-reference is not a web query
+s("bref_01", "web", ["kal wala kaam"], not_path="web", ack=False)
+s("bref_02", "web", ["wo wala"], not_path="web", ack=False)
+s("bref_03", "web", ["that thing"], not_path="web", ack=False)
+s("bref_04", "web", ["kal ka match kaun jeeta"], path="web")
+s("bref_05", "web", ["latest release notes for llama.cpp"], path="web")

@@ -449,3 +449,51 @@ class TestActionClaims(unittest.TestCase):
         self.assertEqual(len(said), 1)
         self.assertNotIn("pushed", said[0])
         self.assertIn(said[0], NO_ACTION_REPLY.values())
+
+    def test_a_source_claim_on_the_fast_path_is_caught_too(self):
+        """The fast path retrieves nothing, so a citation there is
+        fabricated by construction. No measured instance -- this is the one
+        speculative extension of the guard, and it is cheap to revert."""
+        model = Says("According to the docs, you should use passkeys here.")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "how should i do auth")
+        self.assertEqual(res.evidence, 0)
+        self.assertEqual(res.guard_tripped, "fabricated_source_claim")
+
+    def test_ordinary_fast_path_replies_are_untouched(self):
+        """ANTI-FALSE-GREEN for the extension above."""
+        for text in ["Bas chill raha hu, koi news nahi. Tu bata?",
+                     "No idea honestly.",
+                     "Passkeys are generally the stronger option.",
+                     "Docker networking is how containers talk to each other."]:
+            store, vault, _, orch = build(Says(text))
+            res = orch.handle("s", "tell me about it")
+            self.assertEqual(res.guard_tripped, "", text)
+
+    def test_a_claim_while_the_action_is_pending_is_replaced(self):
+        """A pending confirmation does not license a completion claim.
+
+        An earlier version of the guard skipped any turn with a pending
+        decision, so "I pushed it to main" was allowed through while the
+        push was still sitting at the gateway waiting for a typed
+        confirmation.  That is the same lie with an extra step.
+        """
+        model = Says("Chalo, push kar diya main pe.")
+        store, vault, _, orch = build(model)
+        orch.planner = self.Planner([
+            Action("git.push", {"repo": "vicebase", "branch": "main"})])
+        res = orch.handle("s", "push this to main", channel=Channel.VOICE)
+        self.assertTrue(res.pending)
+        self.assertEqual(res.guard_tripped, "claimed_an_action_that_never_ran")
+        self.assertNotIn("kar diya", res.text)
+
+    def test_the_replacement_states_what_the_gateway_wants(self):
+        """"I haven't done anything" is true but drops the confirmation the
+        turn actually needs."""
+        model = Says("Done, pushed it to main.")
+        store, vault, _, orch = build(model)
+        orch.planner = self.Planner([
+            Action("git.push", {"repo": "vicebase", "branch": "main"})])
+        res = orch.handle("s", "push this to main", channel=Channel.VOICE)
+        self.assertIn("git.push", res.text)
+        self.assertIn("yes do it", res.text)

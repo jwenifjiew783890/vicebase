@@ -281,6 +281,33 @@ believes it.
 
 ---
 
+## F12 — "itna bada answer mat do" produced no rule  ·  FIXED
+
+The detector had "lamba" (long) and not "bada" (big). A user complaining
+in the most natural available phrasing produced **no signal at all**, so no
+evidence accumulated and no brevity rule was ever promoted. The learning
+loop looked healthy and was deaf to the most common way the complaint is
+actually said.
+
+**Fix.** Roughly fifteen additional phrasings, including "itna bada",
+"simple bol", "chhota karo", "short mein bata".
+
+---
+
+## F13 — Language-scoped rules fragmented their own evidence  ·  FIXED
+
+Rules were scoped by language, so "shorter" in English and "chhota karo" in
+Hindi accumulated evidence in two separate buckets. Neither reached the
+threshold. The user had complained three times about the same thing and the
+system had counted it as one-and-a-half complaints twice.
+
+**Fix.** `_GLOBAL_SIGNALS` — style signals (`STYLE_TOO_LONG`,
+`STYLE_TOO_SHORT`) are universal and accumulate across languages.
+Everything else stays scoped, because a correction about one topic is not
+evidence about another.
+
+---
+
 ## F14 — The honesty clause turned casual greetings into interrogations  ·  M02  ·  FIXED
 
 Persona v2, measured:
@@ -587,6 +614,64 @@ That made the underlying question worth measuring rather than assuming, so
 the 4B planner and records what comes out. The result is in
 `docs/FINAL-VERIFICATION-REPORT.md`; it is the most important number in the
 round-2 run and it is not a good one.
+
+---
+
+## F27 — The question cap did not hold  ·  FIXED
+
+Measured across the twenty round-2 conversations: **37 of 69 replies (54%)
+ended with a question**, and three conversations (M03, M09, A04) ran to
+**three consecutive question-ending turns** against a documented cap of
+two.
+
+The restraint was real and its unit tests were real. The gap is in what the
+strip can do:
+
+```
+"Kya kar raha hai tu abhi? Koi game khelna ya kuch naya karna?"
+   -> strip the final question clause ->
+"Kya kar raha hai tu abhi?"                        <- still a question
+```
+
+When the remainder is itself a question the reply still ends in "?" and the
+run continues. Nothing was broken; the guarantee was simply weaker than the
+name suggested.
+
+**Fix.** The model is now also *told*, before generating, on exactly the
+turn where it matters ("Your last two replies both ended with a question.
+Do NOT end this reply with a question."). Categorical, which is the kind
+that works at 4B. The strip stays as the backstop. Also fixed while here:
+the run counter was a single integer on the orchestrator, so in production
+one conversation's question run would have silenced another's — it is now
+per session, like the language state.
+
+---
+
+## F28 — My own audit tool could corrupt the tree  ·  FIXED  ·  methodology
+
+Not a conversational failure; recorded because it nearly poisoned a
+result.
+
+The mutation audit writes a mutated file, runs the suite, and restores the
+original in a `finally`. A `finally` does not run when the process is
+killed. Terminating an audit mid-mutation left `pai/llm.py` on disk with
+`if False:` where the empty-response fallback used to be — a silently
+disabled defence in a working tree that otherwise looked clean.
+
+Worse, and the reason this is written down: for a while the audit was
+running *concurrently with my own edits* to the same files. A suite run
+that overlaps a source edit produces failures that have nothing to do with
+the mutation under test, and the audit counts those as kills. Three
+spurious `sqlite3.ProgrammingError`s in `memory.py` — a file I had not
+touched — are what exposed it.
+
+That audit run was discarded rather than reported. Every number in the
+final report from a mutation audit comes from a run with nothing else
+touching the tree.
+
+**Fix.** Restore-on-start: the audit now checks the tree is clean before
+it begins, and the run is treated as invalid if anything else writes to
+`pai/` while it is in flight.
 
 ---
 

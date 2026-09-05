@@ -20,7 +20,7 @@ from eval.harness import run as run_scenarios
 
 
 class TestFrozenScenarios(unittest.TestCase):
-    """The 135 deterministic scenario checks, as a regression gate."""
+    """The 165 deterministic scenario checks, as a regression gate."""
 
     @classmethod
     def setUpClass(cls):
@@ -41,7 +41,7 @@ class TestFrozenScenarios(unittest.TestCase):
 
     def test_scenario_count_has_not_shrunk(self):
         """Guards against scenarios being quietly deleted to make it green."""
-        self.assertGreaterEqual(len(self.result.rows), 130,
+        self.assertGreaterEqual(len(self.result.rows), 160,
                                 "the frozen scenario set lost checks")
 
 

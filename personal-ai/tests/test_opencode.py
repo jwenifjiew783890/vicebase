@@ -92,6 +92,25 @@ class TestBriefBuilder(unittest.TestCase):
             self.assertFalse(b.is_actionable, f"{vague!r} was treated as actionable")
             self.assertTrue(b.missing)
 
+    def test_dangling_reference_is_flagged(self):
+        """"ye theek kar do" has an action verb and no object.
+
+        It passes the action-verb check and builds the goal "ye theek",
+        which a specialist cannot act on. The mutation audit showed the
+        earlier vague-request test did not cover this path -- those inputs
+        were all caught by the _VAGUE literal match instead.
+        """
+        for t in ["ye theek kar do", "isko fix kar do", "that one fix",
+                  "us wala theek kar"]:
+            b = build_brief(t, repo="vicebase")
+            self.assertFalse(b.is_actionable, f"{t!r} was treated as actionable")
+            self.assertIn("what specifically needs to change", " ".join(b.missing))
+
+    def test_a_dangling_reference_WITH_a_file_is_actionable(self):
+        """A file name gives the specialist something concrete to act on."""
+        b = build_brief("isko fix kar do in src/auth/login.ts", repo="vicebase")
+        self.assertTrue(b.is_actionable, b.missing)
+
     def test_missing_repo_is_flagged(self):
         b = build_brief("fix the login bug")
         self.assertFalse(b.is_actionable)

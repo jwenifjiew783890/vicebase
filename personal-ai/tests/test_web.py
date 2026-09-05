@@ -12,7 +12,21 @@ from pai.gateway import is_tainted, Action, Gateway, Verdict, execute, ExecStatu
 from pai.trust import Trust
 
 
+# Live network tests are OPT-IN.
+#
+# The mutation audit caught them making the default suite
+# non-deterministic: a real search intermittently returned nothing and
+# failed the run, which breaks both the audit (it cannot tell a real kill
+# from a flaky baseline) and any CI gate. A suite that fails for reasons
+# unrelated to the code is a suite people learn to ignore.
+#
+# Run them with:  PAI_LIVE_TESTS=1 python3 -m unittest discover -s tests -t .
+LIVE = os.environ.get("PAI_LIVE_TESTS") == "1"
+
+
 def online() -> bool:
+    if not LIVE:
+        return False
     try:
         import urllib.request
         urllib.request.urlopen("https://api.duckduckgo.com/?q=a&format=json",
@@ -86,7 +100,7 @@ class TestEmptyIsHonest(unittest.TestCase):
         self.assertIn("Do NOT answer from memory", r.guidance)
 
 
-@unittest.skipUnless(online(), "no network")
+@unittest.skipUnless(online(), "live tests off (set PAI_LIVE_TESTS=1)")
 class TestLive(unittest.TestCase):
     def setUp(self):
         _CACHE.clear()
@@ -115,3 +129,50 @@ class TestLive(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestBudgetOffline(unittest.TestCase):
+    """The time budget must be tested WITHOUT the network.
+
+    The mutation audit found that deleting the budget check changed nothing
+    offline, because the only test covering it was a live test that is
+    skipped by default. A defense guarded solely by an opt-in test is
+    unguarded in practice.
+    """
+
+    def setUp(self):
+        import pai.web as w
+        self._saved = list(w.PROVIDERS)
+        _CACHE.clear()
+
+    def tearDown(self):
+        import pai.web as w
+        w.PROVIDERS[:] = self._saved
+        _CACHE.clear()
+
+    def test_budget_stops_trying_further_providers(self):
+        import pai.web as w
+        calls = []
+
+        def slow_empty(query, k):
+            calls.append("slow")
+            time.sleep(w.TOTAL_BUDGET_S + 0.2)
+            return []
+
+        def should_not_run(query, k):
+            calls.append("second")
+            return [WebResult("t", "s", "https://x.example")]
+
+        w.PROVIDERS[:] = [slow_empty, should_not_run]
+        o = search("anything", use_cache=False)
+        self.assertEqual(calls, ["slow"],
+                         "the budget did not stop the second provider")
+        self.assertFalse(o.found)
+        self.assertEqual(o.provider, "budget-exhausted")
+
+    def test_fast_providers_are_not_cut_short(self):
+        import pai.web as w
+        w.PROVIDERS[:] = [lambda q, k: [],
+                          lambda q, k: [WebResult("t", "s", "https://x.example")]]
+        o = search("anything", use_cache=False)
+        self.assertTrue(o.found, "a fast second provider was skipped")

@@ -128,7 +128,12 @@ def build_brief(utterance: str, *, repo: str = "", lang: str = "en",
     # for "arre bhai opencode se ye theek kar do", which built the goal
     # "ye theek" and was marked actionable.
     content = re.sub(r"\b(ye|yeh|wo|woh|is|us|this|that|it|isko|usko|"
-                     r"theek|thik|fix|kar|do|de|na|please)\b", " ",
+                     r"theek|thik|fix|kar|do|de|na|please|"
+                     # Placeholder nouns carry no more information than the
+                     # pronouns do. "that one fix" left the word "one" and
+                     # was treated as actionable.
+                     r"one|thing|stuff|ek|cheez|wala|wali|kaam|task|"
+                     r"the|a|an|my|mera|meri|please|jaldi)\b", " ",
                      brief.goal, flags=re.IGNORECASE)
     if len(re.findall(r"[\w]+", content)) < 1 and not brief.files_hint:
         brief.missing.append("what specifically needs to change")

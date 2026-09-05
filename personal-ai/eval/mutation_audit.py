@@ -148,6 +148,34 @@ MUTATIONS = [
      "    excluded = bool(NEGATION_EXCLUSIONS.search(text))",
      "    excluded = False  # MUTANT"),
 
+    ("web: results no longer tainted", "pai/web.py",
+     'source=f"web:{_host(self.url)}")',
+     'source="trusted")  # MUTANT'),
+
+    ("web: search time budget removed", "pai/web.py",
+     "        if time.perf_counter() - t0 > TOTAL_BUDGET_S:",
+     "        if False:  # MUTANT"),
+
+    ("opencode: vague briefs are sent anyway", "pai/opencode.py",
+     "        return bool(self.goal.strip()) and not self.missing",
+     "        return True  # MUTANT"),
+
+    ("opencode: dangling-reference check removed", "pai/opencode.py",
+     "    if len(re.findall(r\"[\\w]+\", content)) < 1 and not brief.files_hint:",
+     "    if False:  # MUTANT"),
+
+    ("opencode: agent output no longer tainted", "pai/opencode.py",
+     'return Tainted(self.summary, source="agent:opencode")',
+     "return self.summary  # MUTANT"),
+
+    ("orchestrator: question restraint removed", "pai/orchestrator.py",
+     "        if self._recent_questions >= self.MAX_CONSECUTIVE_QUESTIONS \\\n                and res.text.rstrip().endswith(\"?\"):",
+     "        if False:"),
+
+    ("orchestrator: restraint mangles pure questions", "pai/orchestrator.py",
+     "    if not words:\n        return text",
+     "    if False:\n        return text"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

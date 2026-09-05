@@ -52,6 +52,16 @@ class TestStripper(unittest.TestCase):
                          "Nice.")
         self.assertEqual(strip_trailing_question("Ok. Why?"), "Ok.")
 
+    def test_punctuation_only_remainder_is_rejected(self):
+        """Stripping can leave "..." -- terminator present, no words.
+
+        The mutation audit showed the empty-words guard was otherwise
+        unreachable by any test, because every case it caught was also
+        caught by the terminator check.
+        """
+        self.assertEqual(strip_trailing_question("... what?"), "... what?")
+        self.assertEqual(strip_trailing_question("?! why?"), "?! why?")
+
     def test_a_dangling_remainder_is_not_produced(self):
         # No terminator before the question -> stripping would leave a
         # fragment, so the original is kept.

@@ -11,9 +11,10 @@ Status legend: **FIXED** = change made and regression-tested ·
 
 ## Index
 
-39 failures, every one found by reading a transcript from a real
+44 entries, every one found by reading a transcript from a real
 Qwen3.5-4B-Q4_K_M running locally, and every one quoted below with the run
-log line that goes with it.
+log line that goes with it. (G1 is the exception: a gap that was stated in
+every earlier report and finally closed.)
 
 | # | what happened |
 |---|---|
@@ -56,12 +57,17 @@ log line that goes with it.
 | F37 | The safety fence made it disown the user's own notes |
 | F38 | It introduced itself as the user |
 | F39 | The brevity fix produced unfinished sentences |
+| G1 | The system never learned anything he told it |
+| F40 | "Done!" followed by a question escaped the action guard |
+| F41 | Evidence lived for exactly one turn |
+| F42 | It denied a capability it had just used |
+| F43 | "yaar aaj bahut kaam tha" went to a search engine |
 
 Rounds: F1-F16 round 1 · F17-F18 the audit of the tests themselves ·
-F19-F28 round 2 (the mandatory set) · F29-F38 round 3 · F39 round 4.
+F19-F28 round 2 (the mandatory set) · F29-F38 round 3 · F39-F43 round 4.
 
 Five were fixed in the prompt (F1, F11, F14, F16, F38). The other
-34 were fixed in deterministic code outside the model.
+39 were fixed in deterministic code outside the model.
 
 ---
 

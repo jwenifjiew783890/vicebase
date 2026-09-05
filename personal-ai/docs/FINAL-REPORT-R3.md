@@ -82,7 +82,7 @@ true, not less: almost every failure found in this project was a failure of
 the system around the model, and almost every fix landed in deterministic
 code rather than in the model or the prompt.
 
-The count is the argument. Of the 39 documented failures, **34 were fixed
+The count is the argument. Of the 43 documented failures, **38 were fixed
 in code outside the model** and 5 in the prompt. Not one was fixed by
 making the model bigger, and not one would have been fixed by a larger
 model: a 7B would still have had a parser that discarded its own output, a
@@ -127,12 +127,12 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **352** (3 skipped: opt-in live network) | MEASURED |
-| Frozen scenario checks | **176 / 176** | MEASURED |
+| Unit tests | **368** (3 skipped: opt-in live network) | MEASURED |
+| Frozen scenario checks | **183 / 183** | MEASURED |
 | Mutation audit | see §31 | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
-| Real conversations with the model | **68** across four rounds | MEASURED |
-| Documented failures found + fixed | **39** | MEASURED |
+| Real conversations with the model | **106 transcripts, 361 user turns** | MEASURED |
+| Documented failures found + fixed | **43** | MEASURED |
 | Planner → gateway reach | **0/12 → 11/12** | MEASURED |
 | Tool calls actually reaching the gateway | **0 → 6** on the frozen set | MEASURED |
 
@@ -591,7 +591,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **80 mutations** now, covering trust, gateway, memory, learning,
+defence. **86 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once

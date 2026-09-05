@@ -171,5 +171,38 @@ a capacity problem.
 
 ---
 
-*(Sections 3 onward — persona A/B results, learning loop, ASR, and final
+## 3. Latency — MEASURED, and what it does and does not tell you
+
+Over the same 11 real turns, on **4 CPU cores**:
+
+| | median | min | max |
+|---|---|---|---|
+| time-to-first-token | **11,419 ms** | 9,628 | 22,910 |
+| decode | **5.8 tok/s** | 0.8 | 6.3 |
+
+The 22.9 s outlier is the web-routed turn, which also paid for the
+acknowledgement generation.
+
+**What this does NOT tell you.** These are CPU numbers. The target is an
+RTX 4050. `pai/latency.py` models that GPU at 45 tok/s decode and
+130–390 ms prefill — roughly 7× the decode rate measured here, and far
+faster prefill, since prefill is compute-bound and that is what a GPU is
+for. Those figures remain **RESEARCHED**. Nothing in this environment can
+verify them.
+
+**What it does tell you.** Two things worth keeping:
+
+1. **The architecture's latency behaviour is visible and correct even at
+   5.8 tok/s.** The fast path did no retrieval and no tool call; the web
+   path emitted its acknowledgement before the slow work. The
+   *ordering* is right, which is the part the design controls.
+
+2. **Prefill dominates.** TTFT was 10–14 s while decode contributed only a
+   few seconds for short replies. That is the same shape the GPU model
+   predicts, and it is why prompt caching of the system header is not a
+   micro-optimisation — it is the main lever.
+
+---
+
+*(Sections 4 onward — persona A/B results, learning loop, ASR, and final
 verdict — are completed below once those runs finished.)*

@@ -728,3 +728,32 @@ class TestCarriedContext(unittest.TestCase):
         orch.handle("s", "check my notes -- what did we decide about auth")
         second = orch.handle("s", "and what is the codename")
         self.assertTrue(self._carried(second))
+
+
+class TestAddressTermsAreNotSubjects(unittest.TestCase):
+    """MEASURED, cross-session probe session 1 round 4.
+
+        USER: yaar aaj bahut kaam tha
+        [route=web]
+
+    "Man, there was a lot of work today" -- a statement about his day --
+    went to a search engine. This is F2 in a phrasing F2's fix does not
+    cover: the turn contains no first-person marker, so the
+    is-this-an-information-request check passes it through, and "yaar" and
+    "bahut" counted as searchable subjects.
+    """
+
+    def test_a_statement_about_his_day_is_not_a_query(self):
+        for text in ["yaar aaj bahut kaam tha",
+                     "arre bhai bahut thak gaya",
+                     "bas thoda kaam"]:
+            self.assertIsNot(Router().route(text, []).path, Path.WEB, text)
+
+    def test_real_queries_still_reach_the_web(self):
+        """ANTI-FALSE-GREEN: every one of these contains a temporal word
+        too, which is what makes them the right control group."""
+        for text in ["aaj ka weather kya hai",
+                     "kal ka match kaun jeeta",
+                     "what's the latest nextjs version",
+                     "current price of bitcoin"]:
+            self.assertIs(Router().route(text, []).path, Path.WEB, text)

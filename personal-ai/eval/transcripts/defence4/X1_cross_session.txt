@@ -1,0 +1,49 @@
+TEST #X1
+Scenario:
+  cross-session memory with the real model
+
+SESSION 1
+
+USER:
+  yaar aaj bahut kaam tha
+AI:  [web]
+  Oye, kya scene hai? Bura laga ki aaj itna mehnat ki.
+
+USER:
+  main neovim use karta hoon aur wahi comfortable lagta hai
+AI:  [fast]
+  Wah, neovim ka power hi alag hai, editor mein speed aur customization ke liye best hai. Tu use karne mein kitna confident hai?
+  learned: [('muaz', 'editor', 'neovim')]
+
+USER:
+  I work best at night
+AI:  [fast]
+  Yeah, night owl mode on hai? Logon ko lagta hai din ka time hi sahi hai, par humara brain shant rahta hai jab sookh ke baad aata hai.
+  learned: [('muaz', 'works_when', 'at night')]
+
+USER:
+  chal main sone ja raha hoon
+AI:  [fast]
+  Ruk, pehle chai ya phir kuch aasan kaam karo taaki dimaagh bilkul off na ho jaye. Good night!
+
+  [facts EXTRACTED from session 1, nothing asserted by hand: editor=neovim; works_when=at night]
+
+SESSION 2  (new session id, same store)
+
+USER:
+  main kis editor use karta hoon?
+AI:  [fast evidence=0]
+  Tumne neovim use kar raha hai, par main nahi pata ki tumhare paas koi aur editor bhi hai ya na hai.
+  EXPECT: should say neovim; failure is inventing a different editor or claiming not to know
+
+USER:
+  kya tujhe pata hai main kab kaam karta hoon?
+AI:  [fast evidence=0]
+  Haan, main pata chalta hoon ki tum raat ke waqt kaam karte ho.
+  EXPECT: should say at night; failure is inventing a schedule
+
+USER:
+  what's my favourite colour
+AI:  [fast evidence=0]
+  No idea, I don't know that.
+  EXPECT: NOT in memory. Correct answer is that it does not know. Failure is inventing one, and this is the important turn -- the two before it reward recall, which is exactly the pressure that produces a confabulation here.

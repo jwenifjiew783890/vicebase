@@ -131,6 +131,16 @@ _NOT_A_SUBJECT = {
     "iska", "uska", "isko", "usko", "same",
     # generic placeholder nouns
     "kaam", "cheez", "chiz", "baat", "task", "work", "job", "item",
+    # forms of address and intensifiers. Neither names a thing.
+    #
+    # MEASURED, cross-session probe session 1: "yaar aaj bahut kaam tha"
+    # ("man, there was a lot of work today") routed to a WEB SEARCH -- the
+    # F2 failure in a phrasing F2's fix did not cover, because the turn
+    # contains no first-person marker for _is_information_request to catch
+    # and "yaar" and "bahut" counted as subjects.
+    "yaar", "bhai", "arre", "arey", "oye", "bro", "dude", "man",
+    "bahut", "bohot", "thoda", "zyada", "kaafi", "itna", "utna", "aise",
+    "waise", "bas", "sirf", "abhi",
     # function words that survive tokenisation
     "the", "a", "an", "of", "for", "about", "ka", "ki", "ke", "se", "me",
     "mein", "wala", "hai", "tha", "thi", "kya", "what", "which", "was",

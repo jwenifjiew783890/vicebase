@@ -1368,3 +1368,38 @@ itself, in every future run, silently. The distinction the pattern has to
 draw is between "there is no record *of that*" (true, about one thing) and
 "I *cannot keep* records" (false, about the system). There is a test
 asserting the guard never fires on any of its own replacement strings.
+
+---
+
+## F43 — "yaar aaj bahut kaam tha" went to a search engine  ·  FIXED
+
+The cross-session probe, session 1, turn 1:
+
+```
+USER: yaar aaj bahut kaam tha        ("man, there was a lot of work today")
+      [route=web]
+```
+
+This is **F2 again**, in a phrasing F2's fix does not cover. F2 was
+*"aaj bahut thak gaya hoon"* and the fix was: a temporal word only counts
+when the turn is not the user describing his own state. That check looks
+for a first-person marker, and this sentence has none — the subject is
+implicit, as it usually is in spoken Hindi. It then passed the
+searchable-subject gate (F23) because "yaar" and "bahut" are not on the
+non-subject list.
+
+**Fix.** Forms of address and intensifiers join the non-subject list:
+yaar, bhai, arre, oye, bro, dude, man, bahut, bohot, thoda, zyada, kaafi,
+itna, aise, bas, sirf. None of them names a thing the web could be asked
+about.
+
+The control group in the test is deliberate: *"aaj ka weather kya hai"*,
+*"kal ka match kaun jeeta"* and *"what's the latest nextjs version"* all
+contain a temporal word too, and all still route to the web.
+
+**Third time for this shape.** F2, F23 and F43 are the same failure — a
+personal remark treated as a query — caught by three different gates, each
+written after the previous one let a phrasing through. The pattern is not
+that the gates are wrong; it is that "is this a question about the world"
+is being decided by a list, and lists have holes. A classifier would not
+have holes in the same places, and this is where one would earn its keep.

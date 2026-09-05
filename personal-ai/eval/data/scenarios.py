@@ -401,3 +401,8 @@ s("mem_q_04", "web", ["what's the latest nextjs version"], path="web")
 s("fact_01", "memory", ["main neovim use karta hoon"], lang="hinglish")
 s("fact_02", "memory", ["I work at Anthropic"], lang="en")
 s("fact_03", "memory", ["I don't use neovim"], lang="en")
+
+# F43 -- forms of address and intensifiers are not searchable subjects
+s("addr_01", "web", ["yaar aaj bahut kaam tha"], not_path="web", ack=False)
+s("addr_02", "web", ["arre bhai bahut thak gaya"], not_path="web")
+s("addr_03", "web", ["aaj ka weather kya hai"], path="web")

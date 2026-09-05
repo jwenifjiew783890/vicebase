@@ -171,14 +171,27 @@ CORRECTION = _p(
 )
 
 TOO_LONG = _p(
-    r"\b(be |keep it |make it |just )?(shorter|briefer|concise|brief)\b",
-    r"\btoo (long|verbose|much)\b", r"\bstop explaining\b",
-    r"\bdon'?t (over-?explain|ramble)\b", r"\bin (one|a) (line|sentence)\b",
-    r"\btl;?dr\b", r"\bget to the point\b",
-    r"\bchh?ota (rakho|karo|kar)\b", r"\bitna lamba (mat|nahi)\b",
-    r"\bkam (bolo|likho)\b", r"\bsirf (point|matlab) batao\b",
-    r"\bek line me\b", r"\bzyada mat\b",
-    r"छोटा (रखो|करो)", r"इतना लंबा", r"एक लाइन में",
+    r"\b(be |keep it |make it |just )?(shorter|briefer|concise|brief|simpler)\b",
+    r"\bkeep it simple\b", r"\bsimplify\b",
+    r"\btoo (long|verbose|much|detailed)\b", r"\bstop explaining\b",
+    r"\bdon'?t (over-?explain|ramble|write so much)\b",
+    r"\bin (one|a) (line|sentence)\b",
+    r"\btl;?dr\b", r"\bget to the point\b", r"\bless words\b",
+    # Hindi / Hinglish. Found by the end-to-end learning test: the phrase
+    # "itna bada answer mat do. simple bol." produced NO candidate rule,
+    # because the patterns had "itna lamba" (long) but not "itna bada"
+    # (big), and nothing for "simple bol" at all. That is the single most
+    # natural way this user actually asks for brevity.
+    r"\bchh?ota (rakho|karo|kar|likho)\b",
+    r"\bitna (lamba|bada|lamba-chauda|detail) (mat|nahi)\b",
+    r"\b(bada|lamba|lamba-chauda) (answer|jawab|reply)? ?mat (do|likho|bolo)\b",
+    r"\bsimple (bol|bolo|batao|rakho|likho|karo)\b",
+    r"\bshort (me|mein) (bol|batao|likho)\b",
+    r"\bkam (bolo|likho|shabdon)\b", r"\bsirf (point|matlab|kaam ki baat)\b",
+    r"\bek line me\b", r"\bzyada (mat|nahi) (bol|likh)\b",
+    r"\bitna explain mat\b", r"\bbas itna\b",
+    r"छोटा (रखो|करो)", r"इतना (लंबा|बड़ा)", r"एक लाइन में",
+    r"सरल (बोलो|बताओ)", r"कम (बोलो|लिखो)",
 )
 
 TOO_SHORT = _p(
@@ -195,7 +208,10 @@ TOO_FORMAL = _p(
     r"\bstop (being|sounding) like (a|an) (robot|ai|assistant)\b",
     r"\brelax\b(?!ing)",
     r"\bnormal (baat|se) (karo|bolo)\b", r"\bitna formal (mat|nahi)\b",
-    r"\bdost ki tarah\b", r"\bsimple bolo\b",
+    r"\bdost ki tarah\b",
+    # "simple bolo" was here AND in TOO_LONG, so it double-counted as two
+    # signals from one utterance and inflated the evidence. Brevity is the
+    # likelier reading, so TOO_LONG keeps it.
     r"इतना formal", r"आम भाषा",
 )
 

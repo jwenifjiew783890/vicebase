@@ -337,9 +337,10 @@ refactored.
 
 ---
 
-## 8. Honesty guards — the two that are enforced, not requested
+## 8. Honesty guards — enforced, not requested
 
-Both were added after round 2. Both are deliberately blunt.
+Three of them now, added one round at a time as each new phrasing of the
+same lie got through the previous one. All are deliberately blunt.
 
 ### 8.1 No source without evidence
 
@@ -367,7 +368,19 @@ hoon" on its own) are not caught, and suppressed by a hypothetical check so
 that *"should I push it?"* and *"I can push it if you want"* — the correct
 things to say when nothing has run — survive untouched.
 
-### 8.3 The guards write to memory, not just to the screen
+### 8.3 No memory without a record
+
+If the turn is a question about the shared history and nothing was
+retrieved from episodic or semantic memory, an affirmative *"yes I
+remember"* is replaced.
+
+This one had to be written after the first two were already in place, which
+is the point. `SOURCE_CLAIM` looks for claims about an *external* source —
+the web, the docs, your notes. *"Haan yaad hai, kal tumne kaha tha..."*
+claims no source at all. It claims a memory, and in a product whose premise
+is that it remembers you, that is the worse lie.
+
+### 8.4 The guards write to memory, not just to the screen
 
 The assistant turn is stored **after** both guards run. Writing it before
 left the fabricated sentence in the store even though the user saw the
@@ -837,7 +850,7 @@ personal-ai/
 ```
 
 ---
-## 19. Method — how the three rounds were run
+## 19. Method — how the four rounds were run
 
 **Round 1** — eleven conversations, persona v1 and v2. Found the
 confabulation, the emotional-statement web search, the leaked reasoning
@@ -856,6 +869,11 @@ turn for turn, plus eight new probes written specifically to attack the new
 defences and one cross-session memory probe. The mandatory set is frozen so
 the two runs are comparable; the new probes live in a separate file so they
 cannot contaminate that comparison.
+
+**Round 4** — round 3 found ten more defects (F29-F38), including two of
+its own making. The same twenty conversations again, plus the probes again,
+against the code with those fixed. Four rounds was not the plan; it is what
+the evidence asked for each time.
 
 **Why the run log matters as much as the transcript.** Three of the worst
 findings are invisible in the transcript alone:

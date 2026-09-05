@@ -370,3 +370,58 @@ class TestEnforceableRules(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestSeveredReplies(unittest.TestCase):
+    """A brevity cap that truncates mid-sentence trades one flaw for another.
+
+    MEASURED, M04 round 4. The in-session brevity fix worked -- the reply
+    after "Arre itna bada answer kyun de raha hai?" went from 40 words to
+    13 -- and then the 35-token cap cut the NEXT one mid-word:
+
+        "API bas ek interface hai jo ek software ko dusre se connect karta
+         hai, jaise tum fridge ka door khola kar bhi andar ka food nahi
+         dekh"
+
+    trim_to_sentences could not help: there was no complete sentence in
+    there to keep.
+    """
+
+    def test_a_severed_clause_is_closed_at_the_last_boundary(self):
+        from pai.orchestrator import trim_to_sentences
+        out = trim_to_sentences(
+            "API bas ek interface hai jo ek software ko dusre se connect "
+            "karta hai, jaise tum fridge ka door khola kar bhi andar ka "
+            "food nahi dekh", 2)
+        self.assertEqual(
+            out, "API bas ek interface hai jo ek software ko dusre se "
+                 "connect karta hai.")
+
+    def test_a_trailing_connective_is_dropped(self):
+        from pai.orchestrator import trim_to_sentences
+        self.assertEqual(
+            trim_to_sentences("Yeh kaam thoda mushkil hai lekin", 2),
+            "Yeh kaam thoda mushkil hai.")
+        self.assertEqual(
+            trim_to_sentences("I think the answer is probably yes because", 2),
+            "I think the answer is probably yes.")
+
+    def test_a_finished_reply_is_untouched(self):
+        """ANTI-FALSE-GREEN: this must not rewrite normal output."""
+        from pai.orchestrator import trim_to_sentences
+        for text in ["Good, just chilling. What's up with you?",
+                     "Bas chill raha hu, koi news nahi.",
+                     "No, you didn't. The data shows passkeys."]:
+            self.assertEqual(trim_to_sentences(text, 2), text, text)
+
+    def test_a_fragment_too_short_to_save_is_left_alone(self):
+        """ANTI-FALSE-GREEN: "API bas ek" -> "API." helps nobody."""
+        from pai.orchestrator import trim_to_sentences
+        self.assertEqual(trim_to_sentences("API bas ek", 2), "API bas ek")
+
+    def test_the_sentence_limit_still_applies(self):
+        """ANTI-FALSE-GREEN: closing a severed clause must not disable the
+        limit it exists to make safe."""
+        from pai.orchestrator import trim_to_sentences
+        self.assertEqual(trim_to_sentences("One. Two. Three. Four.", 2),
+                         "One. Two.")

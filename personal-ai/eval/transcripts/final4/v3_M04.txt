@@ -1,0 +1,41 @@
+TEST #M04
+Scenario:
+  explicit brevity correction, then does it hold
+
+USER:
+  Explain what an API is.
+AI:  [route=fast lang=en 33w/1s ttft=11561ms 5.9tok/s]
+  An API is basically a set of rules that lets different software talk to each other, like a middleman handing you the coffee instead of making you walk over to the kitchen yourself.
+
+USER:
+  Arre itna bada answer kyun de raha hai?
+AI:  [route=fast lang=hinglish 13w/2s ttft=14377ms 6.1tok/s]
+  Arre, sorry! Main toh bina context ke bas general definition de raha tha.
+
+USER:
+  Simple bol.
+AI:  [route=fast lang=hinglish 27w/1s ttft=15948ms 5.7tok/s]
+  API bas ek interface hai jo ek software ko dusre se connect karta hai, jaise tum fridge ka door khola kar bhi andar ka food nahi dekh
+
+USER:
+  Ab batao, cache kya hota hai?
+AI:  [route=fast lang=hinglish 25w/1s ttft=17577ms 5.6tok/s]
+  Cache wahi hai jahan tumara phone ya browser baar-baar use hone wale data ko chhota sa space mein store kar leta hai taaki agle
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         24.5
+  p90 words                27
+  max words                33
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 4 scorable turns)
+  cross-turn repetition    0.03
+  opener variety           100%

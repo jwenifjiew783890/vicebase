@@ -10,8 +10,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from eval.recompute_metrics import summarise
 
-A = "eval/transcripts/final2/v3_results.json"
-B = "eval/transcripts/final3/v3_results.json"
+# Defaults compare round 2 with round 3; pass two paths to compare any two.
+A = sys.argv[1] if len(sys.argv) > 2 else "eval/transcripts/final2/v3_results.json"
+B = sys.argv[2] if len(sys.argv) > 2 else "eval/transcripts/final3/v3_results.json"
 
 PREDICTIONS = [
     ("1", "M10 t1/t2 and M11 t3 emit no acknowledgement"),
@@ -39,8 +40,11 @@ def main():
     b = json.load(open(os.path.join(ROOT, B)))
     ka, kb = summarise(os.path.join(ROOT, A)), summarise(os.path.join(ROOT, B))
 
+    import os as _os
+    na = _os.path.basename(_os.path.dirname(A))
+    nb = _os.path.basename(_os.path.dirname(B))
     print("### Aggregate, same twenty conversations\n")
-    print("| metric | round 2 | round 3 |")
+    print(f"| metric | {na} | {nb} |")
     print("|---|---|---|")
     for k in ka:
         print(f"| {k} | {ka[k]} | {kb[k]} |")

@@ -376,6 +376,15 @@ MUTATIONS = [
      "        run_before = self._recent_questions.get(session_id, 0)",
      "        run_before = 99  # MUTANT: always at the cap"),
 
+    ("orchestrator: severed replies are left severed", "pai/orchestrator.py",
+     "    return _finish(out) if out else text",
+     "    return out if out else text  # MUTANT"),
+
+    ("orchestrator: trailing connectives are not dropped",
+     "pai/orchestrator.py",
+     "    while len(tokens) > 5 and tokens[-1].strip(\".,;:!?\").lower() in _DANGLING:",
+     "    while False:"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

@@ -177,7 +177,58 @@ def trim_to_sentences(text: str, limit: int) -> str:
     # off; drop it, unless dropping would leave nothing.
     if kept and not re.search(r"[.!?।]\s*$", kept[-1]) and len(kept) > 1:
         kept = kept[:-1]
-    return " ".join(kept).strip()
+    out = " ".join(kept).strip()
+    return _finish(out) if out else text
+
+
+# Words a sentence cannot end on. Trailing these is the clearest signal
+# that the generation was cut off rather than finished.
+# Deliberately conservative: only words that genuinely cannot END a
+# sentence. "hai", "kuch bhi", "phir" and "toh" all can, colloquially, and
+# stripping them turned "...store kar leta hai." into "...store kar leta."
+_DANGLING = {
+    "taaki", "jaise", "aur", "ya", "ki", "ke", "ka", "ko", "se",
+    "mein", "jo", "agle", "agla", "agli", "kyunki", "lekin",
+    "that", "so", "because", "and", "or", "to", "the", "a", "an", "of",
+    "for", "with", "which", "when", "while", "but", "if", "as", "at", "in",
+    "on", "by", "from", "into", "than", "like",
+}
+
+
+def _finish(text: str) -> str:
+    """Close off a reply that the token cap severed mid-sentence.
+
+    MEASURED, M04 round 4. The in-session brevity fix (F30) worked -- the
+    reply after "Arre itna bada answer kyun de raha hai?" went from 40 words
+    to 13 -- and then the 35-token cap cut the NEXT one mid-word:
+
+        "API bas ek interface hai jo ek software ko dusre se connect karta
+         hai, jaise tum fridge ka door khola kar bhi andar ka food nahi dekh"
+
+    trim_to_sentences could not help: there is no complete sentence in
+    there to keep. So the fix that made replies shorter made some of them
+    unfinished, which is its own kind of worse.
+
+    Cut back to the last clause boundary and close it. Only when what
+    survives is still a real reply -- five words or more -- because
+    truncating "API bas ek" to "API." helps nobody.
+    """
+    if re.search(r"[.!?।]\s*$", text):
+        return text
+    head = re.split(r"\s*[,;:—-]\s+", text)
+    if len(head) > 1:
+        candidate = head[0].strip()
+        if len(re.findall(r"[\w\u0900-\u097f]+", candidate)) >= 5:
+            return candidate.rstrip(",;:—- ") + "."
+    # No clause boundary. Walk back over trailing connectives and
+    # determiners instead: a reply cut after "taaki agle" ("so that the
+    # next") reads as an error, and "...store kar leta hai." does not.
+    tokens = text.split()
+    while len(tokens) > 5 and tokens[-1].strip(".,;:!?").lower() in _DANGLING:
+        tokens.pop()
+    out = " ".join(tokens).rstrip(",;:—- ")
+    words = re.findall(r"[\w\u0900-\u097f]+", out)
+    return out + "." if len(words) >= 5 else text
 
 
 BASE_PERSONA_V1 = """You are Muaz's personal assistant. You talk like a sharp,

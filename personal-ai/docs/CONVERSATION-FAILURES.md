@@ -1074,3 +1074,42 @@ Eight probes written specifically to attack the defences added after round
 R1 is the first measured instance of the cancellation actually cancelling
 something: a real `file.delete` was pending at the gateway and the
 retraction cleared it.
+
+---
+
+## F39 — The brevity fix produced unfinished sentences  ·  FIXED
+
+F30 worked. Round 4, M04:
+
+```
+        round 3                    round 4
+  t1    33 words                   33 words
+  t2    22 words                   13 words   <- the correction lands
+  t3    27 words                   27 words
+  t4    40 words                   25 words   <- and it holds
+```
+
+And then the 35-token cap cut two of those replies off mid-word:
+
+```
+"API bas ek interface hai jo ek software ko dusre se connect karta hai,
+ jaise tum fridge ka door khola kar bhi andar ka food nahi dekh"
+
+"Cache wahi hai jahan tumara phone ya browser baar-baar use hone wale
+ data ko chhota sa space mein store kar leta hai taaki agle"
+```
+
+`trim_to_sentences` exists precisely to stop this and could not help: there
+is no complete sentence in either reply to keep. The fix that made replies
+shorter made some of them unfinished, which is its own kind of worse and is
+arguably more annoying than the verbosity it replaced.
+
+**Fix.** `_finish()` closes a severed reply: cut back to the last clause
+boundary, or failing that walk back over trailing connectives ("taaki",
+"jaise", "because", "which") that a sentence cannot end on, then add a full
+stop. Only when at least five words survive — turning "API bas ek" into
+"API." helps nobody.
+
+The dangling-word list is deliberately conservative. The first version
+included "hai", which can perfectly well end a Hindi sentence, and turned
+*"...store kar leta hai."* into *"...store kar leta."*

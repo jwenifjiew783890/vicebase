@@ -143,6 +143,25 @@ s("web_07", "web", ["current price of bitcoin"], path="web")
 s("web_08", "web", ["latest release notes for llama.cpp"], path="web")
 s("web_09", "web", ["what happened in 2026 with gemma"], path="web")
 
+# ---- regression: volatile marker in a personal statement (found in live
+# ---- conversation test 002, where "aaj bahut thak gaya hoon" triggered a
+# ---- web search with "ek sec, let me check")
+s("volstate_01", "web", ["aaj bahut thak gaya hoon"], path="fast")
+# These two also match the test vault spuriously under the stand-in TF-IDF
+# embedder, so they land on "grounded". The invariant under test is that a
+# personal statement must never trigger a WEB SEARCH -- assert that, not an
+# artifact of the placeholder retriever.
+s("volstate_02", "web", ["main aaj bore ho raha hoon"], not_path="web")
+s("volstate_03", "web", ["aaj main office gaya tha"], not_path="web")
+s("volstate_04", "web", ["aaj mera birthday hai"], path="fast")
+s("volstate_05", "web", ["i'm exhausted today"], path="fast")
+# ---- and the noun-phrase queries the first fix wrongly suppressed
+s("volquery_01", "web", ["current price of bitcoin"], path="web")
+s("volquery_02", "web", ["latest release notes for llama.cpp"], path="web")
+s("volquery_03", "web", ["today's top news"], path="web")
+s("volquery_04", "web", ["mujhe aaj ka news chahiye"], path="web")
+s("volquery_05", "web", ["i want the latest nextjs version"], path="web")
+
 # -------------------------------------------------- no-retrieval basics
 s("basic_01", "internal", ["what does am and pm mean"], path="fast")
 s("basic_02", "internal", ["how many days in a week"], path="fast")

@@ -65,6 +65,58 @@ PERSONAL = re.compile(
     r"|मेरा|मेरी|हमारा|अपना",
     re.IGNORECASE | re.UNICODE)
 
+# A temporal word alone does not mean the user wants information.
+# Found in conversation test 002: "aaj bahut thak gaya hoon" ("I'm very
+# tired today") matched VOLATILE on "aaj" and triggered a WEB SEARCH with
+# "ek sec, let me check". The user shared how they felt and the assistant
+# went to Google. Volatility now requires the turn to actually be seeking
+# information -- a question, an interrogative, or an explicit request.
+# Requiring an explicit interrogative was too strict: "current price of
+# bitcoin" and "latest release notes for llama.cpp" are noun-phrase queries
+# with no question mark and no wh-word, and they are exactly what people
+# say. So the logic is inverted -- a volatile marker counts UNLESS the turn
+# is clearly the user talking about themselves.
+REQUEST_VERB = re.compile(
+    r"\?"
+    r"|^\s*(what|who|when|where|which|how|why|is|are|was|were|do|does|did|"
+    r"can|could|will|would|should)\b"
+    r"|\b(tell me|show me|find|look up|search|give me|i want|i need|"
+    r"any news|check)\b"
+    r"|\b(kya|kaun|kab|kahan|kaise|kyun|kyu|batao|bata|dhundo|chahiye|"
+    r"pata karo|dekho|check karo)\b"
+    r"|क्या|कौन|कब|कहाँ|कैसे|क्यों|बताओ|ढूंढो|चाहिए",
+    re.IGNORECASE | re.UNICODE)
+
+FIRST_PERSON = re.compile(
+    r"\b(i|i'?m|i'?ve|me|my|mine|we|our)\b"
+    r"|\b(main|mai|maine|mujhe|mera|meri|mere|hum|humne|hamara)\b"
+    r"|मैं|मुझे|मेरा|मेरी|हम",
+    re.IGNORECASE | re.UNICODE)
+
+# Statements about the speaker's own state are never search triggers, even
+# when they contain a temporal word.
+SELF_STATE = re.compile(
+    r"\b(i'?m|i am|i feel|feeling|i'?ve been|im)\s+\w*\s*"
+    r"(tired|exhausted|bored|sad|happy|angry|stressed|fine|ok|good|bad|done)"
+    r"|\b(thak gaya|thak gayi|thak|bore ho|bored ho|pareshan|khush|udaas|"
+    r"mood nahi|mann nahi|neend|so raha|so rahi)\b"
+    r"|थक गया|थक गयी|बोर हो|परेशान|खुश|उदास",
+    re.IGNORECASE | re.UNICODE)
+
+
+def _is_information_request(text: str) -> bool:
+    """Does a volatile marker in this turn mean the user wants a lookup?
+
+    No when the user is describing their own state or narrating something
+    about themselves without asking for anything.
+    """
+    if SELF_STATE.search(text):
+        return False
+    if FIRST_PERSON.search(text) and not REQUEST_VERB.search(text):
+        return False
+    return True
+
+
 # Explicit user overrides. These always win over any heuristic.
 FORCE_WEB = re.compile(
     r"\b(search (the )?(web|internet|online)|google (it|this)|look (it|this) up online)\b"
@@ -243,7 +295,7 @@ class Router:
             r.reasons.append("smalltalk fast path")
             return r
 
-        # 3. Common-knowledge questions answer from the model's own weights.
+        # 4. Common-knowledge questions answer from the model's own weights.
         #    Checked before retrieval gating so a definitional question never
         #    drags in a vault note.
         volatile_now = bool(VOLATILE.search(user_text))
@@ -254,7 +306,7 @@ class Router:
             r.reasons.append("general knowledge, answered internally")
             return r
 
-        # 4. Action / delegation intent.
+        # 5. Action / delegation intent.
         if DELEGATE_INTENT.search(user_text):
             r.path, r.delegate = Path.ACTION, True
             r.reasons.append("delegation intent")
@@ -262,7 +314,7 @@ class Router:
             r.path = Path.ACTION
             r.reasons.append("action intent")
 
-        # 5. Vault injection by RELEVANCE THRESHOLD, not by model judgement.
+        # 6. Vault injection by RELEVANCE THRESHOLD, not by model judgement.
         confident = [h for h in vault_hits
                      if h.dense_raw >= self.cfg.min_dense
                      or h.bm25_raw >= self.cfg.min_bm25]
@@ -278,8 +330,10 @@ class Router:
             r.reasons.append(
                 f"vault weak (dense={best_dense:.2f} bm25={best_bm25:.2f}), not injected")
 
-        # 6. Web gating.
-        volatile = volatile_now
+        # 7. Web gating. A temporal word only counts when the turn is
+        #    actually asking for information and is not the user describing
+        #    their own state.
+        volatile = volatile_now and _is_information_request(user_text)
         personal = personal_now
         strong_vault = (best_dense >= self.cfg.strong_dense
                         or best_bm25 >= self.cfg.strong_bm25)
@@ -300,7 +354,7 @@ class Router:
         if r.needs_web:
             r.path = Path.WEB
 
-        # 7. Acknowledgement. Only when the wait is long enough to notice.
+        # 8. Acknowledgement. Only when the wait is long enough to notice.
         if r.needs_web or r.delegate:
             r.needs_ack = True
             # Delegation is "on it", retrieval is "checking". Using the wrong

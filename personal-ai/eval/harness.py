@@ -119,13 +119,17 @@ def run(verbose=False) -> Result:
                     f"got {got or 'NONE'}, expected {want or 'NONE'} for {text!r}")
 
         # --- routing
-        if "path" in exp or "delegate" in exp:
+        if "path" in exp or "delegate" in exp or "not_path" in exp:
             router = Router()
             hits = vault.search(text, k=4, expand_links=False)
             r = router.route(text, hits)
             if "path" in exp:
                 res.add(sid, cat, "path", r.path.value == exp["path"],
                         f"got {r.path.value!r}, expected {exp['path']!r} "
+                        f"({r.why()}) for {text!r}")
+            if "not_path" in exp:
+                res.add(sid, cat, "not_path", r.path.value != exp["not_path"],
+                        f"got {r.path.value!r}, must not be {exp['not_path']!r} "
                         f"({r.why()}) for {text!r}")
             if "delegate" in exp:
                 res.add(sid, cat, "delegate", r.delegate == exp["delegate"],

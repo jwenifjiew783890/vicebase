@@ -108,7 +108,8 @@ class TestAckDiscipline(unittest.TestCase):
         r = Router()
         acks = []
         for i in range(30):
-            route = r.route(f"what's the latest on topic {i}", [], turn_index=i)
+            route = r.route(f"what's the latest version of package{i}?", [],
+                            turn_index=i)
             if route.ack_text:
                 acks.append(route.ack_text)
         self.assertGreaterEqual(len(acks), 20, "acks stopped firing")
@@ -117,8 +118,8 @@ class TestAckDiscipline(unittest.TestCase):
 
     def test_ack_uses_more_than_one_phrase(self):
         r = Router()
-        acks = {r.route(f"latest thing {i}", [], turn_index=i).ack_text
-                for i in range(12)}
+        acks = {r.route(f"what's the latest release of tool{i}?", [],
+                        turn_index=i).ack_text for i in range(12)}
         acks.discard("")
         self.assertGreaterEqual(len(acks), 2, f"only used {acks}")
 

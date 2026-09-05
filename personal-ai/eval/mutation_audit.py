@@ -251,8 +251,8 @@ MUTATIONS = [
 
     ("orchestrator: claimed-but-unrun actions allowed through",
      "pai/orchestrator.py",
-     "                and ACTION_CLAIM.search(res.text) \\",
-     "                and False \\"),
+     "                and _claims_an_action(res.text):",
+     "                and False:"),
 
     # NOTE, and it is the point of the whole tool: the first version of
     # this mutation was `res.text = res.text` -- a no-op. It "survived",

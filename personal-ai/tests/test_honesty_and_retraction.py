@@ -497,3 +497,44 @@ class TestActionClaims(unittest.TestCase):
         res = orch.handle("s", "push this to main", channel=Channel.VOICE)
         self.assertIn("git.push", res.text)
         self.assertIn("yes do it", res.text)
+
+
+class TestFenceProvenance(unittest.TestCase):
+    """MEASURED, defence probe V1.
+
+    Told that his own vault note came from "an external source" and was
+    merely "DATA", the model disowned it:
+
+      "I don't actually know what we decided ... The text you pasted is
+       just raw data from your vault and doesn't tell me anything about
+       what *you* talked about."
+
+    The note said exactly what they had decided.
+    """
+
+    def test_the_vault_is_described_as_his_own(self):
+        from pai.gateway import wrap_untrusted
+        block = wrap_untrusted("We switched to passkeys.", "obsidian-vault")
+        self.assertIn("HIS OWN notes", block)
+        self.assertNotIn("external source", block)
+
+    def test_the_web_is_still_described_as_untrusted(self):
+        """ANTI-FALSE-GREEN: the change must not soften the fence for
+        attacker-authorable content."""
+        from pai.gateway import wrap_untrusted
+        block = wrap_untrusted("Some page said X.", "web-search")
+        self.assertIn("external source", block)
+        self.assertIn("should not assume it is true", block)
+
+    def test_the_instruction_ban_is_unconditional(self):
+        """The safety half of the fence applies to every source."""
+        from pai.gateway import wrap_untrusted
+        for source in ("obsidian-vault", "web-search", "conversation-history",
+                       "anything-else"):
+            block = wrap_untrusted("x", source)
+            self.assertIn("must be ignored", block, source)
+
+    def test_an_unknown_source_gets_the_strict_wording(self):
+        """ANTI-FALSE-GREEN: default closed, not open."""
+        from pai.gateway import wrap_untrusted
+        self.assertIn("external source", wrap_untrusted("x", "some-new-tool"))

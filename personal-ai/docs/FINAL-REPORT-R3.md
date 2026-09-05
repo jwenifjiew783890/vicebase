@@ -514,11 +514,27 @@ testing STT.
 evidence across *distinct sessions*, promotes a behavioural rule when the
 threshold is met, and enforces the rule in code.
 
-**What it does not do:** extract arbitrary facts from free conversation.
-Facts arrive through `assert_fact`. That is a real gap and it is stated
-here rather than glossed, because "the AI gets better at talking to me the
-more we talk" is true of *style* in this build and not yet true of
-*content*.
+**And, since round 4, what he tells you.** `pai/extract.py` reads
+unambiguous first-person statements out of ordinary turns and writes them
+to semantic memory. Measured: *"yaar main neovim use karta hoon"* on Monday
+puts `- muaz editor: neovim` into Friday's system prompt, with nothing
+asserted by hand in between.
+
+The stance is the signal detector's, for a sharper reason. A missed fact
+costs nothing — he will say it again. A **wrong** fact is durable, reaches
+every later prompt, and is exactly the material a confabulation is made of.
+Three rounds of this project went into guards against the assistant
+inventing things about him; an extractor that guesses would be feeding the
+thing those guards exist to stop. So the veto runs before any pattern, and
+none of these produce a fact: *"I don't use neovim"*, *"do you use
+neovim?"*, *"he works at Google"*, *"I used to live in Delhi"*, *"if I
+worked at Google"*, *"I use it"*, *"main nahi karta"*, *"shayad main
+neovim use karta hoon"*.
+
+**Honest limit:** seven predicates (editor, works_at, lives_in, studies,
+name, works_when, prefers). A keyhole, not a door. Widening it is pattern
+work with the same precision requirement, and every new pattern is a new
+way to write something false into memory.
 
 **The measured end-to-end run:** a user who says "shorter" three times
 across three different sessions gets a `style.brevity` rule, and a fresh
@@ -759,11 +775,13 @@ ASR is the single biggest open risk in the design (~42% WER for
 monolingual models, RESEARCHED). Everything above the transcript is tested;
 the transcript itself is not.
 
-**3. Fact extraction from conversation is not implemented.** The system
-learns *how you like to be talked to* automatically. It does not yet learn
-*what you told it* automatically — facts arrive through an explicit call.
-The storage, supersession and retrieval sides are done; the extractor is
-not.
+**3. Fact extraction covers seven predicates.** The extractor exists now
+(§12) and it is a keyhole: editor, employer, city, study topic, name,
+working hours, stated preferences. Anything else you tell it in
+conversation is not stored, and you will not be told that it wasn't. This
+is a deliberate precision trade — the alternative is a wider extractor that
+occasionally writes something false into permanent memory — but it is a
+limit, not a design victory.
 
 **4. The model is still a 4B model.** It gets things wrong that no
 architecture can fix:
@@ -846,8 +864,10 @@ found by running the thing and reading what it says.
 ---
 ## 17. What I would build next, in order
 
-1. **Fact extractor.** The largest gap between what this does and what you
-   asked for. Everything downstream of it is already built and tested.
+1. **Widen the fact extractor.** It exists now and covers seven
+   predicates. Each new one is pattern work with a precision requirement,
+   and each is a new way to write something false into permanent memory —
+   which is why this is careful work rather than a lot of work.
 2. **Run it on the 4050.** Turns the biggest RESEARCHED number in this
    report into a MEASURED one, and it is a day of work.
 3. **Code-switched ASR evaluation.** Not a fix — a measurement. Until the
@@ -1118,10 +1138,11 @@ says nothing about whether the model *uses* what it is given, uses it
 naturally, or blurts it out unprompted. This probe runs the same path
 against actual weights.
 
-Session 1 is ordinary conversation. Three facts are then asserted between
-sessions — which is what a fact-extraction stage would call, and the
-limitation that stage does not exist is stated in §15. Session 2 is a new
-session id against the same store.
+Session 1 is ordinary conversation. In the round-3 run the facts were
+asserted through the API between sessions, because no extractor existed;
+in the round-4 run they are **spoken in session 1 and extracted**, so the
+probe covers the whole loop. Session 2 is a new session id against the same
+store.
 
 ```
 USER: main kis editor use karta hoon?           ("what editor do I use?")

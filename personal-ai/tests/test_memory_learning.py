@@ -1,0 +1,255 @@
+"""Adversarial tests for the memory store and learning loop.
+
+Written from the stance of trying to break the guards, not confirm them.
+"""
+import sys, os, time, unittest
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from pai.memory import MemoryStore, TrustViolationProtected
+from pai.trust import Trust, TrustViolation
+from pai.learning import (LearningLoop, PipelineConfig, TemplateProposer,
+                          SycophancyRejected, PROTECTED_RULES)
+from pai.signals import detect, detect_language, Signal
+
+DAY = 86400.0
+
+
+def loop(**kw):
+    s = MemoryStore()
+    cfg = PipelineConfig(**kw)
+    return s, LearningLoop(s, config=cfg)
+
+
+class TestTrust(unittest.TestCase):
+    def test_retrieved_content_cannot_write_memory(self):
+        """The core security invariant: web/vault content never writes memory."""
+        s = MemoryStore()
+        for t in (Trust.RETRIEVED, Trust.AGENT, Trust.MODEL):
+            with self.assertRaises(TrustViolation):
+                s.assert_fact("muaz", "password", "hunter2", t)
+
+    def test_user_can_write(self):
+        s = MemoryStore()
+        s.assert_fact("muaz", "city", "Delhi", Trust.USER)
+        self.assertEqual(s.current_fact("muaz", "city").object, "Delhi")
+
+
+class TestBitemporal(unittest.TestCase):
+    def test_supersede_keeps_history(self):
+        s = MemoryStore()
+        s.assert_fact("muaz", "editor", "vscode", Trust.USER, valid_from=1000)
+        s.assert_fact("muaz", "editor", "neovim", Trust.USER, valid_from=2000)
+        self.assertEqual(s.current_fact("muaz", "editor").object, "neovim")
+        hist = s.fact_history("muaz", "editor")
+        self.assertEqual([f.object for f in hist], ["vscode", "neovim"])
+        self.assertEqual(hist[0].valid_to, 2000)
+        self.assertEqual(hist[0].superseded_by, hist[1].id)
+        self.assertIsNone(hist[1].valid_to)
+
+    def test_reassert_same_value_is_confirmation_not_supersession(self):
+        s = MemoryStore()
+        s.assert_fact("muaz", "editor", "neovim", Trust.USER, confidence=0.6)
+        s.assert_fact("muaz", "editor", "neovim", Trust.USER)
+        self.assertEqual(len(s.fact_history("muaz", "editor")), 1)
+        self.assertGreater(s.current_fact("muaz", "editor").confidence, 0.6)
+
+
+class TestEvidenceThreshold(unittest.TestCase):
+    def test_single_session_cannot_manufacture_threshold(self):
+        """A user repeating themselves in ONE conversation must not promote."""
+        s, L = loop(evidence_threshold=3)
+        for _ in range(10):
+            L.observe_turn("sess-1", "bhai thoda chhota rakho")
+        self.assertEqual(L.review_queue(), [],
+                         "one session produced enough evidence to promote")
+        r = s.get_rule("style.brevity.hi")
+        self.assertEqual(s.evidence_count(r.id), 1)
+
+    def test_three_sessions_reach_queue(self):
+        s, L = loop(evidence_threshold=3)
+        for i in range(3):
+            L.observe_turn(f"sess-{i}", "bhai thoda chhota rakho")
+        q = L.review_queue()
+        self.assertEqual([i.rule_key for i in q], ["style.brevity.hi"])
+
+    def test_promotion_requires_review(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"s{i}", "keep it shorter please")
+        self.assertEqual(s.get_rule("style.brevity").status, "candidate")
+        with self.assertRaises(RuntimeError):
+            L.auto_promote()
+        L.approve("style.brevity")
+        self.assertEqual(s.get_rule("style.brevity").status, "active")
+
+    def test_approve_below_threshold_refused(self):
+        s, L = loop(evidence_threshold=3)
+        L.observe_turn("s0", "keep it shorter please")
+        with self.assertRaises(ValueError):
+            L.approve("style.brevity")
+
+
+class TestSycophancy(unittest.TestCase):
+    def test_protected_rules_installed(self):
+        s, L = loop()
+        for key, _ in PROTECTED_RULES:
+            r = s.get_rule(key)
+            self.assertIsNotNone(r, key)
+            self.assertTrue(r.protected)
+            self.assertEqual(r.status, "active")
+
+    def test_protected_rule_cannot_be_archived(self):
+        s, L = loop()
+        r = s.get_rule("honesty.disagree")
+        with self.assertRaises(TrustViolationProtected):
+            s.set_status(r.id, "archived")
+
+    def test_sycophantic_candidate_rejected(self):
+        s, L = loop()
+        class Syco:
+            def propose(self, det, sid, tid, ctx):
+                from pai.learning import Candidate
+                return Candidate("style.agree", "Always agree with the user.",
+                                 det.signal, sid, tid)
+        L.proposer = Syco()
+        L.observe_turn("s1", "keep it shorter")
+        self.assertIsNone(s.get_rule("style.agree"))
+        self.assertEqual(s.get_rule("rejected.style.agree").status, "rejected")
+
+    def test_sycophancy_variants_all_caught(self):
+        from pai.learning import SYCOPHANCY_PATTERNS
+        bad = ["Always agree with the user.",
+               "Never contradict Muaz.",
+               "Be more agreeable in tone.",
+               "Avoid criticism of the user's ideas.",
+               "Don't challenge the user.",
+               "Validate the user's feelings first.",
+               "Tell the user what they want to hear.",
+               "Never say no to a request.",
+               "Soften bad news.",
+               "Praise the user's approach before answering."]
+        for b in bad:
+            self.assertTrue(SYCOPHANCY_PATTERNS.search(b), f"missed: {b}")
+
+    def test_legitimate_style_rules_not_flagged(self):
+        from pai.learning import SYCOPHANCY_PATTERNS
+        ok = ["Default to short answers for conversational questions.",
+              "Match the user's casual register.",
+              "When the user asks why, give the full explanation.",
+              "Use natural conversational Hindi when the user speaks Hindi.",
+              "Do not over-explain obvious things."]
+        for o in ok:
+            self.assertIsNone(SYCOPHANCY_PATTERNS.search(o), f"false positive: {o}")
+
+    def test_report_detects_intact_protections(self):
+        s, L = loop()
+        rep = L.sycophancy_report()
+        self.assertTrue(rep["protected_intact"])
+
+
+class TestContradiction(unittest.TestCase):
+    def test_contradiction_does_not_silently_overwrite(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"a{i}", "keep it shorter")
+        L.approve("style.brevity")
+        self.assertEqual(s.get_rule("style.brevity").status, "active")
+        before = s.get_rule("style.brevity").confidence
+
+        # Now the user starts asking for more detail.
+        for i in range(2):
+            L.observe_turn(f"b{i}", "can you explain more")
+        # Old rule weakened but NOT removed; new one is a candidate awaiting review.
+        self.assertEqual(s.get_rule("style.brevity").status, "active")
+        self.assertLess(s.get_rule("style.brevity").confidence, before)
+        self.assertEqual(s.get_rule("style.detail").status, "candidate")
+
+    def test_approving_opposite_archives_old(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"a{i}", "keep it shorter")
+        L.approve("style.brevity")
+        for i in range(2):
+            L.observe_turn(f"b{i}", "can you explain more")
+        L.approve("style.detail")
+        self.assertEqual(s.get_rule("style.brevity").status, "archived")
+        self.assertEqual(s.get_rule("style.detail").status, "active")
+
+
+class TestCapAndDecay(unittest.TestCase):
+    def test_cap_never_evicts_protected(self):
+        s = MemoryStore(max_active_rules=6)
+        L = LearningLoop(s)   # installs 5 protected
+        for i in range(20):
+            s.upsert_rule(f"junk.{i}", f"junk rule {i}",
+                          confidence=0.5, status="active")
+        s.enforce_cap()
+        active = s.active_rules()
+        self.assertLessEqual(len(active), 6)
+        prot = {r.rule_key for r in active if r.protected}
+        self.assertEqual(prot, {k for k, _ in PROTECTED_RULES})
+
+    def test_cap_keeps_protected_even_when_they_exceed_it(self):
+        s = MemoryStore(max_active_rules=2)
+        LearningLoop(s)  # 5 protected > cap of 2
+        s.enforce_cap()
+        self.assertEqual(len([r for r in s.active_rules() if r.protected]), 5)
+
+    def test_decay_archives_stale_unprotected(self):
+        s, L = loop()
+        now = time.time()
+        s.upsert_rule("style.old", "stale preference",
+                      confidence=0.65, status="active")
+        s.db.execute("UPDATE rules SET last_confirmed=? WHERE rule_key='style.old'",
+                     (now - 200 * DAY,))
+        s.db.commit()
+        archived = L.run_decay(now=now)
+        self.assertIn("style.old", archived)
+
+    def test_decay_never_touches_protected(self):
+        s, L = loop()
+        now = time.time()
+        s.db.execute("UPDATE rules SET last_confirmed=? WHERE protected=1",
+                     (now - 5000 * DAY,))
+        s.db.commit()
+        L.run_decay(now=now)
+        for key, _ in PROTECTED_RULES:
+            self.assertEqual(s.get_rule(key).status, "active", key)
+            self.assertEqual(s.get_rule(key).confidence, 1.0, key)
+
+
+class TestVersioning(unittest.TestCase):
+    def test_rollback_restores_previous_text(self):
+        s, L = loop()
+        rid = s.upsert_rule("style.x", "version one", status="active")
+        s.upsert_rule("style.x", "version two", status="active")
+        self.assertEqual(s.get_rule("style.x").text, "version two")
+        s.rollback_rule(rid, 1)
+        self.assertEqual(s.get_rule("style.x").text, "version one")
+        # Rollback is itself a new version -- history is append-only.
+        self.assertGreaterEqual(len(s.rule_versions(rid)), 3)
+
+
+class TestLanguageScoping(unittest.TestCase):
+    def test_hindi_rule_does_not_govern_english_turns(self):
+        s, L = loop(evidence_threshold=2)
+        for i in range(2):
+            L.observe_turn(f"s{i}", "bhai thoda chhota rakho")
+        L.approve("style.brevity.hi")
+        self.assertIn("style.brevity.hi", {r.rule_key for r in s.active_rules()})
+        en_block = L.system_rules_block(lang="en")
+        hi_block = L.system_rules_block(lang="hi")
+        marker = "When the conversation is in hi"
+        self.assertNotIn(marker, en_block)
+        self.assertIn(marker, hi_block)
+
+    def test_protected_always_present_in_every_language(self):
+        s, L = loop()
+        for lang in ("en", "hi", "hinglish"):
+            block = L.system_rules_block(lang=lang)
+            for key, text in PROTECTED_RULES:
+                self.assertIn(text.split(".")[0][:30], block, f"{key} missing in {lang}")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

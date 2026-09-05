@@ -1354,3 +1354,17 @@ because it ran the search itself — the model does not get to contradict it.
 claims the system cannot reach that source, the reply is replaced. Guarded
 so that *"Nothing in your notes about that"* — which is the correct answer
 and contains "notes" and "can't" — is untouched.
+
+**And it happened again on the memory path**, in the same probe run (B1
+t3): *"Maine record nahi rakh sakta tumhare baaton ka"* — "I can't keep a
+record of what you say" — on a turn that had just searched the store. The
+guard now covers memory questions too.
+
+That extension needed care, and the care is the interesting part. The
+obvious Hindi pattern for "no record" catches *"Mere paas iska koi record
+nahi hai"* — which is the guard's **own replacement text**, and the honest
+answer. A pattern that caught it would have replaced a correct reply with
+itself, in every future run, silently. The distinction the pattern has to
+draw is between "there is no record *of that*" (true, about one thing) and
+"I *cannot keep* records" (false, about the system). There is a test
+asserting the guard never fires on any of its own replacement strings.

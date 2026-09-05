@@ -544,8 +544,13 @@ CAPABILITY_DENIAL = re.compile(
     r"\b(?:access|reach|see|read|look at|check)\b[^.!?]{0,30}"
     r"\b(?:obsidian|vault|notes?|web|internet)\b"
     r"|\b(?:i )?(?:don'?t|do not) have (?:access to|the ability to)\b"
+    r"|\b(?:i )?(?:can'?t|cannot) (?:keep|store|remember|recall)\b"
+    # NOT "record"/"koi ... nahi hai" here: "Mere paas iska koi record
+    # nahi hai" is the HONEST reply about one missing thing, and is what
+    # this guard's own replacement text says. The capability claim is
+    # "nahi rakh sakta" -- cannot keep -- which the next line catches.
     r"|\b(?:meri|mere|mujhe) paas .{0,20}(?:access|pahunch) nahi\b"
-    r"|\bmain .{0,20}(?:access|dekh|check) nahi (?:kar )?sakta\b",
+    r"|\bmain(?:e)? .{0,24}(?:access|dekh|check|record|yaad) nahi (?:rakh |kar )?sakta\b",
     re.IGNORECASE | re.UNICODE)
 
 NO_MEMORY_REPLY = {
@@ -1067,7 +1072,7 @@ class Orchestrator:
         # all on the web and vault paths; this covers the fast path too,
         # which is speculative and is flagged as such. Round 3 watches for
         # the guard firing on a reply that did not deserve it.
-        if (route.vault_forced or route.needs_web) \
+        if (route.vault_forced or route.needs_web or route.memory_query) \
                 and CAPABILITY_DENIAL.search(res.text):
             # It searched. Saying it cannot search is false, whether or not
             # the search found anything.

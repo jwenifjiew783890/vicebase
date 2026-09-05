@@ -349,3 +349,37 @@ class TestLockedLanguageEnforcement(unittest.TestCase):
         store, vault, _, orch = build(model)
         res = orch.handle("s", "Acha ab Hindi mein bol.")
         self.assertFalse(res.language_retry)
+
+
+class TestDenyingMemory(unittest.TestCase):
+    """MEASURED, defence probe B1 t3 in round 4.
+
+        USER: arre wahi jo maine kal bola tha
+        AI:   "...Maine record nahi rakh sakta tumhare baaton ka."
+              ("I can't keep a record of what you say.")
+
+    It can. The turn routed as a memory question and the store was
+    searched; there was simply nothing in it. Saying "there is no record of
+    that" is honest and saying "I cannot keep records" is not.
+    """
+
+    def test_denying_the_memory_after_searching_it_is_replaced(self):
+        model = Says("Maine record nahi rakh sakta tumhare baaton ka.")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "arre wahi jo maine kal bola tha")
+        self.assertTrue(res.route.memory_query)
+        self.assertEqual(res.guard_tripped, "denied_a_capability_it_has")
+
+    def test_the_honest_no_record_reply_survives(self):
+        """ANTI-FALSE-GREEN, and a sharp one: the guard's OWN replacement
+        text says "Mere paas iska koi record nahi hai". A pattern that
+        caught that would replace an honest answer with itself and would
+        have caught the correct reply in every future run."""
+        from pai.orchestrator import NO_MEMORY_REPLY, NO_EVIDENCE_REPLY
+        from pai.orchestrator import CAPABILITY_DENIAL
+        for text in (list(NO_MEMORY_REPLY.values())
+                     + list(NO_EVIDENCE_REPLY.values())
+                     + ["Nahi yaad hai, maine yeh baat chat history mein "
+                        "nahi dekhi.",
+                        "Nothing in your notes about that."]):
+            self.assertIsNone(CAPABILITY_DENIAL.search(text), text)

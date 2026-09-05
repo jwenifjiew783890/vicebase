@@ -268,3 +268,44 @@ class TestTakingItBack(unittest.TestCase):
         store, model, orch = build()
         res = orch.handle("s", "forget where I work")
         self.assertEqual(res.learned, [])
+
+    def test_a_schedule_retraction_does_not_close_the_employer(self):
+        """F46. "I no longer work at night" and "I no longer work at Acme"
+        are the same six words about different predicates. The workplace
+        pattern used to match both, so changing his hours retired his
+        employer -- a fact he never took back, gone."""
+        from pai.extract import extract_retractions
+        self.assertEqual(extract_retractions("I no longer work at night"),
+                         ["works_when"])
+        self.assertEqual(extract_retractions("i don't work nights anymore"),
+                         ["works_when"])
+        self.assertEqual(extract_retractions("main ab raat ko kaam nahi karta"),
+                         ["works_when"])
+
+    def test_an_employer_retraction_still_closes_the_employer(self):
+        """The other half: narrowing the workplace pattern must not have
+        narrowed it out of existence."""
+        from pai.extract import extract_retractions
+        for text in ["I no longer work at Acme", "i don't work for Google",
+                     "main ab wahan kaam nahi karta", "forget where i work",
+                     "i left my job"]:
+            self.assertEqual(extract_retractions(text), ["works_at"], text)
+
+    def test_a_schedule_can_actually_be_taken_back_end_to_end(self):
+        """works_when was extractable but had no retraction pattern at all,
+        so the store could learn a schedule it could never be told to
+        forget. Through the orchestrator, not the regex."""
+        store, model, orch = build()
+        orch.handle("s", "I work best at night")
+        self.assertEqual(store.current_fact("muaz", "works_when").object,
+                         "at night")
+        orch.handle("s", "I no longer work at night")
+        self.assertIsNone(store.current_fact("muaz", "works_when"))
+
+    def test_the_employer_survives_a_schedule_retraction_end_to_end(self):
+        """The defect this pair exists to catch, at the level it hurt."""
+        store, model, orch = build()
+        orch.handle("s", "I work at Acme")
+        orch.handle("s", "I work best at night")
+        orch.handle("s", "I no longer work at night")
+        self.assertEqual(store.current_fact("muaz", "works_at").object, "Acme")

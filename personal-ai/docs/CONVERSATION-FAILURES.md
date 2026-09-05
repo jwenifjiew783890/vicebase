@@ -1486,10 +1486,16 @@ right to: it could not run the experiment. Repaired, and it kills.
 
 Re-run on just those four: **4/4 killed.**
 
-The composite is 86/86, and it is a composite: 82 from the full pass, 4
-from a targeted re-run with two tests added. Adding a test cannot un-kill a
-mutation, so the two compose soundly — but it is not one clean run of 86,
-and it is reported as what it is.
+That composite was 86/86: 82 from the full pass, 4 from a targeted re-run
+with two tests added. Adding a test cannot un-kill a mutation, so the two
+compose soundly — but a composite is not one clean run, so a confirming
+pass was run against the committed code and the committed suite.
+
+**It finished 86/86: 86 applied, 86 killed, 0 survived, 0 anchors
+drifted, in one uninterrupted run.** That is the result now; the composite
+is only how it was reached. The two agree, which a sound composite should
+predict and does not guarantee — added tests can shift which mutations the
+other anchors still match.
 
 This is the third time this project has hit defence masking (F18, F40 and
 now this), and the lesson has sharpened each time: **it is not enough for
@@ -1521,3 +1527,59 @@ audit that had just cleanly finished.
 **The rule that was missing:** during an audit, do not edit source *and do
 not commit*. `git add -A` is not safe when something else is rewriting
 tracked files, however careful you are being about the editor.
+
+---
+
+## F46 — a schedule retraction erased his employer  ·  FIXED  ·  memory
+
+Found by an adversarial probe that existed only to check something else.
+
+The extractor sweep over all 373 real user turns reported **0 retractions**.
+Zero is exactly the shape of a false green — a sweep reports zero when
+nothing retracts *and* when the call is broken — so before citing it I ran
+`extract_retractions` on strings that should fire. Four of five behaved.
+The fifth:
+
+```
+'I no longer work at night'  ->  ['works_at']
+```
+
+`works_at` is his **employer**. The pattern was
+`\bi (?:don'?t|do not|no longer) work (?:at|for)\b`, and "work at night" is
+the same six words as "work at Acme" with a time where the company goes.
+So a user changing his hours would silently retire the fact that he works
+at Acme — a memory he never took back, closed with a `valid_to` he never
+asked for. The bitemporal store would preserve the history perfectly, which
+is precisely what makes it invisible: nothing is corrupted, the current
+value is just gone.
+
+The second defect is the one behind it. `works_when` is one of the seven
+extractable predicates but had **no retraction pattern at all**. The system
+could learn a schedule it could never be told to forget, and the only
+phrase a person would naturally use to forget it hit the workplace rule
+instead. One predicate had no path to supersession by retraction, and the
+gap was filled by the wrong predicate.
+
+**The fix** splits them: the workplace pattern now refuses a time object
+via a negative lookahead, and `works_when` gets its own retraction covering
+English, Hinglish, and "forget my schedule".
+
+**Two mutations, not one** — F44's lesson applied on the way in rather than
+after the fact. A defence with two halves needs a test that fails when
+either half alone is removed, so each half is mutated separately:
+
+```
+KILLED  extract: a schedule retraction closes the employer again (F46)
+        (2 tests fail, e.g. test_the_employer_survives_a_schedule_retraction_end_to_end)
+KILLED  extract: a schedule can never be taken back (F46)
+        (2 tests fail, e.g. test_a_schedule_can_actually_be_taken_back_end_to_end)
+```
+
+Different tests kill them. Neither is masking the other.
+
+**What this says about the other 372 turns.** Nothing reassuring. The sweep
+found no retraction in any real transcript, which means **no conversation I
+ever ran would have caught this.** It was reachable only by asking the
+question the sweep could not answer about itself: *would this report zero if
+it were broken?* The measurement that found the bug was the one I ran to
+check the measurement.

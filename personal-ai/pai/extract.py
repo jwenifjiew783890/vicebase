@@ -143,6 +143,13 @@ def extract_facts(text: str, subject: str = "muaz") -> list[Candidate]:
 # Taking something back. The extractor's veto refuses to read a fact out of
 # a negation, which is right -- and leaves the OLD fact standing forever.
 # These patterns close it.
+# Times a person can "work at". The works_at retraction below asks about a
+# *place*; "I no longer work at night" is the same six words about a
+# schedule, and closing an employer because someone changed their hours is
+# a memory the user never retracted disappearing.
+_WHEN_OBJECT = (r"(?:late |early )?(?:at )?(?:night|nights|mornings?|evenings?|"
+                r"weekends?|the weekend|late|early)")
+
 _RETRACT = [
     ("editor", re.compile(
         r"\b(?:i )?(?:don'?t|do not|no longer) (?:use|code in)\b"
@@ -150,10 +157,14 @@ _RETRACT = [
         r"|\bmain (?:ab )?.{0,20}use nahi karta\b"
         r"|\bforget (?:my|about my) (?:editor|ide)\b", re.IGNORECASE)),
     ("works_at", re.compile(
-        r"\bi (?:don'?t|do not|no longer) work (?:at|for)\b"
+        r"\bi (?:don'?t|do not|no longer) work (?:at|for) (?!" + _WHEN_OBJECT + r"\b)"
         r"|\bi (?:left|quit) (?:my job|the company)\b"
         r"|\bmain (?:ab )?wahan kaam nahi karta\b"
         r"|\bforget where i work\b", re.IGNORECASE)),
+    ("works_when", re.compile(
+        r"\bi (?:don'?t|do not|no longer) work " + _WHEN_OBJECT + r"\b"
+        r"|\bmain (?:ab )?(?:raat ko|subah|late night|din me(?:in)?) kaam nahi karta\b"
+        r"|\bforget (?:when i work|my schedule|my hours)\b", re.IGNORECASE)),
     ("lives_in", re.compile(
         r"\bi (?:don'?t|do not|no longer) live in\b"
         r"|\bi moved (?:out|away)\b"

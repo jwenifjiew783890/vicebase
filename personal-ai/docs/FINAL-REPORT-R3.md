@@ -135,12 +135,12 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **370** (3 skipped: opt-in live network) | MEASURED |
+| Unit tests | **374** (3 skipped: opt-in live network) | MEASURED |
 | Frozen scenario checks | **183 / 183** | MEASURED |
-| Mutation audit | **86 mutations** — see §31c | MEASURED |
+| Mutation audit | **88 mutations**, see §31c — 86/86 in one pass, plus two added after it | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
-| Real conversations with the model | **106 transcripts, 361 user turns** | MEASURED |
-| Documented failures found + fixed | **45** | MEASURED |
+| Real conversations with the model | **110 transcripts, 373 user turns** | MEASURED |
+| Documented failures found + fixed | **46** | MEASURED |
 | Planner → gateway reach | **0/12 → 11/12** | MEASURED |
 | Tool calls actually reaching the gateway | **0 → 6** on the frozen set | MEASURED |
 
@@ -599,7 +599,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **86 mutations** now, covering trust, gateway, memory, learning,
+defence. **88 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once
@@ -664,8 +664,8 @@ favour. So each defence is paired with a test proving it can still be
 | Marker list | technical English ("push this to main", "check the log file") stays English |
 | Vault command | a populated vault still answers normally |
 | Question restraint | a statement reply clears the run |
-| Fact extraction | 361 real user turns → zero facts invented |
-| Fact retraction | the same 361 turns → zero facts erased |
+| Fact extraction | 373 real user turns → zero facts invented |
+| Fact retraction | the same 373 turns → zero facts erased |
 | Severed-reply repair | a finished reply is untouched; a fragment too short to save is left alone |
 
 Two of those are worth singling out.
@@ -676,7 +676,7 @@ record nahi hai"* — which is what the memory guard *writes*. That version
 would have replaced a correct reply with itself, in every future run,
 silently.
 
-**"361 real user turns → zero"** is the strongest negative test in the
+**"373 real user turns → zero"** is the strongest negative test in the
 project. Sixteen hand-written cases prove the extractor's veto works on the
 failures I thought of; running it across every user turn in every committed
 transcript proves it on the ones I did not.
@@ -1873,14 +1873,32 @@ distinction is why the audit prints the reason.
 
 Re-run on those four with isolating tests: **4/4 killed**.
 
-**The composite result is 86/86, and it is a composite.** 82 came from the
-full pass, measured against the correct code on disk; 4 came from a
-targeted re-run with two tests added. Adding a test cannot un-kill a
-mutation — a mutation dies if *any* test fails — so the two results compose
-soundly. But it is not one clean run of 86, and saying "86/86" without that
-sentence would be the same kind of small dishonesty this whole report is
-about. A confirming single pass was running when this work concluded; the
-suite it runs against is the one committed here.
+That gave a composite of 86/86 — 82 from the full pass, 4 from a targeted
+re-run with two tests added. Adding a test cannot un-kill a mutation (a
+mutation dies if *any* test fails), so the two compose soundly, but a
+composite is not one clean run, and this report reported it as a composite
+while a confirming pass was still going.
+
+**The confirming pass has since finished: 86 applied, 86 killed, 0
+survived, 0 anchors drifted, in one uninterrupted run.** MEASURED. It
+re-applied every mutation in the catalogue to the code committed here,
+against the suite committed here (370 tests, 3 skipped, green immediately
+before and after). **That single number — 86/86 — is now the result, and
+the composite is only how it was reached.**
+
+The two agree, which is what a sound composite is supposed to predict and
+is not what you always get: a re-run adds tests, and added tests can shift
+which mutations the *other* 82 anchors still match. They didn't here, and
+that was worth measuring rather than assuming.
+
+**Then the catalogue grew to 88.** F46 (§31d) was found after that pass and
+added two mutations, so the clean 86/86 describes a catalogue that is no
+longer the current one. Both new mutations were verified killed, by
+different tests, in a targeted run. A full 88-mutation pass over the
+committed code is the number this section will carry; until it is quoted
+here as a single figure, the honest statement is 86/86 in one pass plus two
+verified separately — which is a composite again, for the ordinary reason
+that finding a bug late is better than not finding it.
 
 **The lesson, sharpened by its third repetition:** it is not enough for
 every defence to have a test. **Every defence needs a test that fails when
@@ -1888,7 +1906,24 @@ that defence alone is removed.** A green suite cannot tell you which of
 those you have. Only a mutation audit can, and only if its anchors are kept
 honest.
 
-### 31d. The audit also caught me committing a mutation
+### 31d. The measurement that checked itself
+
+The extractor sweep (`eval/extractor_sweep.py`, all 373 real user turns)
+reported **0 retractions**. Zero is the shape a false green takes: a sweep
+reports zero when nothing retracts and when the call is broken, and the two
+look identical. Checking which one it was — running `extract_retractions`
+on strings that *should* fire — found F46: `"I no longer work at night"`
+returned `works_at`, his **employer**, because "work at night" is "work at
+Acme" with a time where the company goes. Changing his hours would have
+retired where he works.
+
+No conversation in this project would have caught it. **373 real turns
+contain no fact retraction at all**, so the sweep's zero was true and
+uninformative, and the defect sat entirely inside the gap between those two
+things. The bug was found by asking what the measurement would look like if
+it were broken, and getting the same answer either way.
+
+### 31e. The audit also caught me committing a mutation
 
 §13.3 records that killing an audit mid-run leaves a mutated file on disk,
 and the rule that came out of it: do not edit source while the audit runs.
@@ -1943,11 +1978,11 @@ Thirty-two requirements. Each row carries the evidence, not an opinion.
 | 24 | Memory contradictions handled | **YES** | Supersession, not overwrite; history stays queryable |
 | 25 | Preferences superseded | **YES** | `valid_to` / `superseded_by`; the prompt carries only the current value |
 | 26 | T3 bounded | **YES** | Peak 10 of a cap of 40 over a simulated 180 days; protected rules exempt |
-| 27 | Regression passes | **YES** | 368 tests + 183 scenarios + 86 mutations |
-| 28 | Real conversational tests | **YES** | 106 transcripts, 361 user turns, four rounds plus a verification pass, all committed |
+| 27 | Regression passes | **YES** | 374 tests + 183 scenarios + 88 mutations |
+| 28 | Real conversational tests | **YES** | 110 transcripts, 373 user turns, four rounds plus a verification pass, all committed |
 | 29 | Transcripts reviewed | **YES** | Every failure in `docs/CONVERSATION-FAILURES.md` is quoted from one |
-| 30 | Every major failure repaired + retested | **YES** | 43 documented, 43 addressed, each with a regression test and a mutation. Four of them were found by the round that verified the previous four |
-| 31 | Independent adversarial tests | **YES** | 8 defence probes, the mutation audit, the planner-reliability harness, the before/after replay, and the extractor run over all 361 real turns |
+| 30 | Every major failure repaired + retested | **YES** | 46 documented, 46 addressed, each with a regression test and a mutation. Five of them were found by the rounds that verified the previous ones, and the last (F46) by a check on a measurement rather than on the system |
+| 31 | Independent adversarial tests | **YES** | 8 defence probes, the mutation audit, the planner-reliability harness, the before/after replay, and `eval/extractor_sweep.py` over all 373 real turns |
 | 32 | Better than the baseline | **YES** | Measured on register, brevity, tells, variety, honesty and safety reachability |
 
 **28 YES · 3 PARTIAL/UNVERIFIED · 0 NO.**

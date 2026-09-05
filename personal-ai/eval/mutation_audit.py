@@ -393,6 +393,21 @@ MUTATIONS = [
      "            if not _usable(value):",
      "            if False:"),
 
+    # F46. The works_at/works_when split has two halves -- a narrowed
+    # workplace pattern and a schedule pattern that did not exist. F44's
+    # lesson is that a two-half defence needs a test that fails when either
+    # half alone is removed, so each half is mutated separately.
+    ("extract: a schedule retraction closes the employer again (F46)",
+     "pai/extract.py",
+     r'''        r"\bi (?:don'?t|do not|no longer) work (?:at|for) (?!" + _WHEN_OBJECT + r"\b)"''',
+     r'''        r"\bi (?:don'?t|do not|no longer) work (?:at|for)\b"'''),
+
+    ("extract: a schedule can never be taken back (F46)", "pai/extract.py",
+     r'''    ("works_when", re.compile(
+        r"\bi (?:don'?t|do not|no longer) work " + _WHEN_OBJECT + r"\b"''',
+     r'''    ("works_when", re.compile(
+        r"(?!x)x\bi (?:don'?t|do not|no longer) work " + _WHEN_OBJECT + r"\b"'''),
+
     ("orchestrator: conversation facts are never stored",
      "pai/orchestrator.py",
      "        res.learned = self._extract_facts(user_text, turn_id)",

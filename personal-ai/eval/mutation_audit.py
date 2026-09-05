@@ -176,6 +176,22 @@ MUTATIONS = [
      "    if not words:\n        return text",
      "    if False:\n        return text"),
 
+    ("voice: endpointing ignores incomplete tails", "pai/voice.py",
+     "        if _INCOMPLETE_TAIL.search(text.strip()):",
+     "        if False:  # MUTANT"),
+
+    ("voice: clause chunking disabled", "pai/voice.py",
+     "        if len(buf) >= min_chars:",
+     "        if False:  # MUTANT"),
+
+    ("voice: barge-in does not clear pending speech", "pai/voice.py",
+     "        self.pending_chunks = []\n        self.state = TurnState.INTERRUPTED",
+     "        self.state = TurnState.INTERRUPTED"),
+
+    ("voice: voice identity varies by language", "pai/voice.py",
+     'VOICE_BY_LANG = {"en": "primary_female", "hi": "primary_female",\n                 "hinglish": "primary_female"}',
+     'VOICE_BY_LANG = {"en": "en_female", "hi": "hi_female",\n                 "hinglish": "mixed_female"}'),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

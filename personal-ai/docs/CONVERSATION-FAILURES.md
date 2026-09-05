@@ -1486,6 +1486,11 @@ right to: it could not run the experiment. Repaired, and it kills.
 
 Re-run on just those four: **4/4 killed.**
 
+The composite is 86/86, and it is a composite: 82 from the full pass, 4
+from a targeted re-run with two tests added. Adding a test cannot un-kill a
+mutation, so the two compose soundly — but it is not one clean run of 86,
+and it is reported as what it is.
+
 This is the third time this project has hit defence masking (F18, F40 and
 now this), and the lesson has sharpened each time: **it is not enough for
 every defence to have a test. Every defence needs a test that fails when

@@ -1871,9 +1871,16 @@ mutation's find-string. **An audit whose anchor has drifted reports
 "survived", and is right to** — it could not run the experiment. That
 distinction is why the audit prints the reason.
 
-Re-run on those four with isolating tests: **4/4 killed**. A full
-confirming pass over all 86 then ran on the repaired suite; its result is
-at the end of this section.
+Re-run on those four with isolating tests: **4/4 killed**.
+
+**The composite result is 86/86, and it is a composite.** 82 came from the
+full pass, measured against the correct code on disk; 4 came from a
+targeted re-run with two tests added. Adding a test cannot un-kill a
+mutation — a mutation dies if *any* test fails — so the two results compose
+soundly. But it is not one clean run of 86, and saying "86/86" without that
+sentence would be the same kind of small dishonesty this whole report is
+about. A confirming single pass was running when this work concluded; the
+suite it runs against is the one committed here.
 
 **The lesson, sharpened by its third repetition:** it is not enough for
 every defence to have a test. **Every defence needs a test that fails when

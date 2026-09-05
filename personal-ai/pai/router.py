@@ -571,7 +571,9 @@ class Router:
             # Caught by test_strong_hit_is_injected when the first version
             # of this gate applied to everything.
             confident = [h for h in confident
-                         if _shares_content_word(user_text, h)]
+                         if h.dense_raw >= self.cfg.strong_dense
+                         or h.bm25_raw >= self.cfg.strong_bm25
+                         or _shares_content_word(user_text, h)]
         best_dense = max((h.dense_raw for h in vault_hits), default=0.0)
         best_bm25 = max((h.bm25_raw for h in vault_hits), default=0.0)
         if confident:

@@ -1,0 +1,36 @@
+TEST #M12
+Scenario:
+  style self-knowledge
+
+USER:
+  Mujhe kaise answer pasand hain?
+AI:  [route=fast lang=hinglish 27w/2s ttft=11924ms 5.9tok/s]
+  Bhai, tumhare baare mein main nahi jaanta ki tumhe kis type ka answer pasand aata hai, toh batana mushkil hai. Thoda detail batao ki specific kya chahiye?
+
+USER:
+  Mere style mein answer kar.
+AI:  [route=fast lang=hinglish 9w/2s ttft=14567ms 6.2tok/s]
+  Bhai, toh main hoon Muaz. Tera style kya hai?
+
+USER:
+  Mujhe nahi pata tu kar payega ya nahi, but try.
+AI:  [route=fast lang=hinglish 21w/2s ttft=17637ms 6.0tok/s]
+  Haan, try karunga. Pehle toh yeh batana padega ki tu serious hai ya casual, aur phir us hisaab se jawab deunga.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         19.0
+  p90 words                21
+  max words                27
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.12
+  opener variety           100%

@@ -746,7 +746,8 @@ the fix. Summarised:
 ---
 ## 15. Limitations — the honest list
 
-These are ordered by how much they would matter to you in daily use.
+Eleven of them, ordered by how much they would matter to you in daily
+use.
 
 **1. Latency on this hardware is not the latency you would get, and I
 cannot prove the number you care about.** 6 tok/s on CPU. The GPU
@@ -799,7 +800,19 @@ se check kar" searches for the literal words, not for what "iska" refers
 to. The result is a poor query rather than a wrong answer, because an empty
 result is now handled honestly — but it is still a poor query.
 
-**9. Everything here is single-user and local.** No multi-user isolation,
+**9. Question restraint is only achievable by editing the output.** The
+model will not obey an instruction about the shape of its own reply (§22).
+The strip and the retry between them keep a third consecutive question off
+the screen most of the time; neither reduces how often the model wants to
+ask one. If you find it asks too much, that is the honest state of it.
+
+**10. Memory search is a keyword scan.** `search_turns` walks the last 400
+stored turns and ranks by content-word overlap. That is enough to answer
+"do you remember X" honestly at the scale of one person's conversations and
+it is not a retrieval system. It should share the vault's hybrid index; it
+does not yet.
+
+**11. Everything here is single-user and local.** No multi-user isolation,
 no sync, no mobile. Out of scope by design, but worth stating so the scope
 is not overread.
 

@@ -300,7 +300,7 @@ class TestEnforceableRules(unittest.TestCase):
             L.observe_turn(f"s{i}", t)
         L.approve("style.brevity")
         p = L.generation_params()
-        self.assertEqual(p["max_tokens"], 60)
+        self.assertEqual(p["max_tokens"], 35)
         self.assertEqual(p["max_sentences"], 2)
         self.assertEqual([k for k, _ in p["applied"]], ["style.brevity"])
 
@@ -316,7 +316,7 @@ class TestEnforceableRules(unittest.TestCase):
         for i in range(2):
             L.observe_turn(f"s{i}", "keep it shorter")
         L.approve("style.brevity")
-        self.assertEqual(L.generation_params()["max_tokens"], 60)
+        self.assertEqual(L.generation_params()["max_tokens"], 35)
         s.set_status(s.get_rule("style.brevity").id, "archived")
         self.assertEqual(L.generation_params()["max_tokens"], 300)
 
@@ -365,7 +365,7 @@ class TestEnforceableRules(unittest.TestCase):
             L.observe_turn(f"s{i}", "keep it shorter")
         L.approve("style.brevity")
         o.handle("t", "hello again")
-        self.assertEqual(seen[-1], 60, "cap was not applied during the call")
+        self.assertEqual(seen[-1], 35, "cap was not applied during the call")
         self.assertEqual(conv.max_tokens, 300, "cap was not restored after")
 
 if __name__ == "__main__":

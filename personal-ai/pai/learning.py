@@ -376,7 +376,11 @@ class LearningLoop:
     # the last complete sentence -- deterministic, and it yields clean short
     # output rather than a severed one.
     RULE_EFFECTS: dict[str, dict] = {
-        "style.brevity": {"max_tokens": 60, "max_sentences": 2,
+        # Calibrated against what the model itself produced when it DID obey
+        # the correction in-session: 18 and 25 words. 60 tokens was still
+        # ~55 words -- a cap set above the observed target does not enforce
+        # anything. 35 tokens lands around 25-30 words.
+        "style.brevity": {"max_tokens": 35, "max_sentences": 2,
                           "reason": "learned: prefers short answers"},
         "style.detail":  {"max_tokens": 420, "max_sentences": None,
                           "reason": "learned: prefers detail"},

@@ -376,9 +376,84 @@ counter-hypothesis. **Untested.**
 
 ---
 
-## 6. Learning loop, end to end
+## 6. Learning loop, end to end — MEASURED
 
-*Filled in from `eval/transcripts/learning/`.*
+This is the test that mattered most, and it is the one that produced the
+sharpest finding.
+
+### The run
+
+```
+STEP 1  USER: explain what a database index is
+        AI (45w): An index is basically a lookup table that helps the
+                  database find rows faster...
+
+STEP 2  USER: arre nahi, itna bada answer mat do. simple bol.
+        AI (25w): Arre, index bas ek fast-lookup system hai jaise phone ki
+                  address book...                    <- obeyed IN-session
+
+STEP 3  candidate created: style.brevity, evidence 1          ✅
+STEP 5  5 more corrections in the SAME session -> review queue []   ✅
+        (the single-session guard holds)
+STEP 4  corrections in sessions B and C -> evidence 3         ✅
+STEP 6  approved                                              ✅
+STEP 7  rule present in the system prompt                     ✅
+STEP 8  USER: explain what a database index is   (fresh session)
+        AI (30w): Think of a database index like the index at the back of
+                  a book; instead of flipping through pages, it lets you
+                  jump straight to the specific data you need.
+
+        BEFORE 45 words -> AFTER 30 words   -33%   BEHAVIOUR CHANGED  ✅
+```
+
+**The learning loop works end to end against real weights.**
+
+### But it only works because the rule is *enforced*, not *stated*
+
+The first three runs of this test **failed at step 8**. Everything through
+step 7 was correct — the rule was in the prompt, verbatim, saying *"Default
+to short answers for conversational questions."* The model read it and
+answered in **55 words**, longer than its own 45-word pre-correction
+baseline.
+
+That is the whole conversational phase in one data point: **a promoted
+behavioural rule delivered into the system prompt does not reliably change
+a 4B model's behaviour.** The pipeline was never the problem.
+
+The fix applies the architecture's own principle to its own learned rules:
+if a rule describes a measurable output property, enforce it in code rather
+than asking. `style.brevity` now sets a generation cap and trims the reply
+to complete sentences.
+
+**Two calibration iterations were needed, and both are instructive:**
+
+| attempt | cap | result |
+|---|---|---|
+| 1 | 90 tokens | **No effect.** The offending 55-word answer was only ~70 tokens. A cap above the observed output is not enforcement. |
+| 2 | 60 tokens | **No effect.** 55 words fits in almost exactly 60 tokens. Still above target. |
+| 3 | 35 tokens + 2-sentence trim | **45w → 30w, clean complete sentence.** |
+
+The cap was calibrated against what the model produced *when it did obey*
+the correction in-session: 18 and 25 words. A tight cap alone truncates
+mid-sentence, which reads worse than the verbosity it replaces — hence the
+sentence trim, which makes the cap safe.
+
+### What this means
+
+**T3 procedural memory as originally designed — rules rendered into the
+system prompt — is insufficient on its own at 4B.** Rules split into two
+kinds:
+
+| kind | example | mechanism |
+|---|---|---|
+| **Enforceable** | length, verbosity, response format | apply in code as generation parameters |
+| **Judgement** | when to disagree, when to admit ignorance, tone | prompt, and eventually weights |
+
+The judgement rules demonstrably work (case 009: disagreement held 3/3;
+case 008: abstention 3/3). The enforceable ones need code. Splitting them is
+a design change this testing produced, not one the architecture had.
+
+---
 
 ---
 

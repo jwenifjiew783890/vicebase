@@ -1,7 +1,7 @@
 {
   "probe": "explain what a database index is",
   "before_words": 45,
-  "after_words": 55,
+  "after_words": 30,
   "promoted": [
     "style.brevity"
   ],
@@ -47,10 +47,10 @@
     {
       "session": "D",
       "user": "explain what a database index is",
-      "ai": "Think of a database index like the index at the back of a book; instead of flipping through pages, it lets you jump straight to the specific data you need. Basically, it speeds up searches by keeping sorted copies of key columns so the database doesn't have to scan every single row every time.",
-      "words": 55
+      "ai": "Think of a database index like the index at the back of a book; instead of flipping through pages, it lets you jump straight to the specific data you need.",
+      "words": 30
     }
   ],
-  "changed": false,
-  "delta_pct": 0.2222222222222222
+  "changed": true,
+  "delta_pct": -0.3333333333333333
 }

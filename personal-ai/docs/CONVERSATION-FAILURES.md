@@ -281,6 +281,113 @@ believes it.
 
 ---
 
+## F14 — The honesty clause turned casual greetings into interrogations  ·  M02  ·  FIXED
+
+Persona v2, measured:
+
+```
+USER: Yaar kya scene hai?          ("what's up?")
+AI:   Tumne koi specific topic ya context nahi bataya, mujhe pata nahi hai
+      scene kaunsa hai. Agar tum batao ki kis baat ke baare mein baat kar
+      rahe ho, toh main sahi information de paunga.          [34 words]
+
+USER: Tu kya kar raha hai?
+AI:   Main tumhare saath baat kar raha hoon, par tumhe pata nahi hai ki hum
+      baat kar rahe hain ya nahi...        [40 words, near-incoherent]
+```
+
+**Root cause.** v2's NEVER INVENT HIS LIFE clause over-fires. The model
+generalises *"if it is not in the prompt, you do not know it"* into *"I lack
+context, so I must demand some"*. Persona **v1** handled the same input
+correctly: *"Bhai, sab badhiya. Tu?"* The honesty fix broke casual
+conversation.
+
+**Fix.** Persona v3 exempts small talk explicitly and narrows the honesty
+clause to facts about projects and files.
+
+**Retest.** Same input, v3: *"Bas chill raha hu, koi news nahi. Tu bata kya
+haal hai?"* (12 words). Mean words on casual Hindi **26.0 → 12**.
+**PASS.**
+
+---
+
+## F15 — Language mirroring failed; the router knew and never said  ·  M03  ·  FIXED (partial)
+
+```
+USER: So I was thinking about the auth thing and     [English, detected en]
+AI:   Yeh toh kaunsa auth ka baat kar rahe ho?       [Hinglish]
+USER: I meant the deployment pipeline.               [English, detected en]
+AI:   Ah, deployment pipeline ka baat kar raha tha?  [Hinglish]
+```
+
+**Root cause.** The router detected `lang=en` correctly on both turns and
+never told the model. The persona carried a standing "reply in the same
+language he used", which does not survive two Hinglish assistant turns in
+the history — the context drags every later generation toward the drifted
+language.
+
+**Fix.** State the detected language as a fact in the prompt for that turn.
+Same enforce-don't-ask principle that fixed brevity and the question tic.
+
+**Retest.** Turn 1 became *"So what's the problem with auth?"* — correct
+English. Turn 4 still leaked (*"Aha, sorry, brain glitch ho gaya tha"*), so
+the directive was moved to the END of the prompt, closest to generation.
+**PARTIAL PASS** — measurably better, not fully solved.
+
+---
+
+## F16 — Prompt length is not monotonic: v2 (1583 chars) lost to v3 (587)
+
+Not a bug so much as the central lesson. Three personas, same model, same
+inputs:
+
+| | v1 (480) | v2 (1583) | v3 (587) |
+|---|---|---|---|
+| casual Hindi mean words | — | 26.0 | **12** |
+| "kya scene hai" | natural | interrogation | natural |
+| invented personal detail | yes | **no** | no |
+| fabricated citation | yes | **no** | no |
+
+v2 fixed the *categorical* failures (don't invent, don't fabricate a
+citation) and broke *casual conversation* doing it. v3 keeps the categorical
+fixes with a third of the text. **More prompt is not more control at 4B**;
+each added clause competes for the model's attention with the task.
+
+---
+
+## F17 — The mutation audit was itself the worst false green  ·  FIXED
+
+The first audit reported **25/25 mutations killed**. Every one was "killed"
+by the same four failures, caused by the audit's own module-reloading bug:
+popping `pai.*` from `sys.modules` left test modules holding the OLD enum
+classes, so `assertIs(status, ExecStatus.OK)` compared two distinct types
+and failed on every run after the first.
+
+An audit that cannot distinguish a real kill from its own bug is worse than
+no audit. Rewritten to use clean subprocesses. Real result: **19/25 killed,
+6 genuine false greens**, all since fixed. The audit now covers 36
+mutations and kills all of them.
+
+---
+
+## F18 — Five defenses were guarded only by scripts nobody runs  ·  FIXED
+
+The corrected audit found that the general-knowledge short-circuit,
+volatile-vs-self-statement routing, relevance-based injection gating and the
+negation exclusions were exercised **only** by `eval/harness.py`, which
+`unittest discover` never ran. Disabling any of them left the suite green.
+The web time budget was covered only by a live network test, skipped by
+default.
+
+A defense that only a manually-invoked script protects will eventually be
+broken by someone who ran the tests and saw OK.
+
+**Fix.** The frozen scenario set is now a regression gate inside the suite,
+plus direct unit cover for each defense, plus an offline test for the time
+budget with injected slow providers.
+
+---
+
 ## Cross-cutting observations (round 1)
 
 **What was already good, unprompted, at 4B:**

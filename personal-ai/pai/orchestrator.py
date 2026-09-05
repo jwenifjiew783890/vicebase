@@ -298,19 +298,24 @@ class Orchestrator:
         rules = _second_person(self.learning.system_rules_block(lang=lang))
         facts = self._memory_header()
         parts = [self.persona]
+        # The language directive goes early, right after the persona.
+        #
+        # TESTED AND REVERTED: moving it to the END of the prompt, closest to
+        # the generation point, was the obvious hypothesis and it lost. On
+        # M03 turn 4 ("I meant the deployment pipeline"):
+        #   directive early -> "Aha, sorry, brain glitch ho gaya tha."
+        #                      (mostly English)
+        #   directive last  -> "Arre, deployment pipeline? Thee bas 'auth'
+        #                      bolne laga tha par asli baat ye hai?"
+        #                      (fully Hinglish -- worse)
+        # Recency did not win. Keeping the measured-better placement.
+        directive = self.LANG_DIRECTIVE.get(lang)
+        if directive:
+            parts.append(directive)
         if rules:
             parts.append("How to talk to him:\n" + rules)
         if facts:
             parts.append("What you know about him:\n" + facts)
-        # The language directive goes LAST, closest to the generation point.
-        #
-        # Placed mid-prompt it only partly held: M03 turn 1 switched to
-        # correct English, but turn 4 still leaked ("Aha, sorry, brain glitch
-        # ho gaya tha") because two Hinglish assistant turns sat in the
-        # history between the directive and the generation.
-        directive = self.LANG_DIRECTIVE.get(lang)
-        if directive:
-            parts.append(directive)
         return "\n\n".join(parts)
 
     def _memory_header(self, limit: int = 12) -> str:

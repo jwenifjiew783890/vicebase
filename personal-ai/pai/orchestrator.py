@@ -298,13 +298,19 @@ class Orchestrator:
         rules = _second_person(self.learning.system_rules_block(lang=lang))
         facts = self._memory_header()
         parts = [self.persona]
-        directive = self.LANG_DIRECTIVE.get(lang)
-        if directive:
-            parts.append(directive)
         if rules:
             parts.append("How to talk to him:\n" + rules)
         if facts:
             parts.append("What you know about him:\n" + facts)
+        # The language directive goes LAST, closest to the generation point.
+        #
+        # Placed mid-prompt it only partly held: M03 turn 1 switched to
+        # correct English, but turn 4 still leaked ("Aha, sorry, brain glitch
+        # ho gaya tha") because two Hinglish assistant turns sat in the
+        # history between the directive and the generation.
+        directive = self.LANG_DIRECTIVE.get(lang)
+        if directive:
+            parts.append(directive)
         return "\n\n".join(parts)
 
     def _memory_header(self, limit: int = 12) -> str:

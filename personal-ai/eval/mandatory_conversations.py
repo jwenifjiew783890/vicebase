@@ -122,8 +122,11 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
-    from pai.orchestrator import BASE_PERSONA, BASE_PERSONA_V1, BASE_PERSONA_V3
-    persona = {"v1": BASE_PERSONA_V1, "v2": BASE_PERSONA, "v3": BASE_PERSONA_V3}[a.persona]
+    # v3 is now the default (BASE_PERSONA). v1 and v2 are kept for A/B.
+    from pai.orchestrator import (BASE_PERSONA, BASE_PERSONA_V1,
+                                  BASE_PERSONA_V2)
+    persona = {"v1": BASE_PERSONA_V1, "v2": BASE_PERSONA_V2,
+               "v3": BASE_PERSONA}[a.persona]
 
     backend = LlamaBackend(a.model, n_ctx=4096, n_threads=4)
     conv = LlamaConversation(backend, max_tokens=a.max_tokens)

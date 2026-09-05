@@ -49,6 +49,7 @@ class Turn:
     lang_obeyed: bool = True
     q_retry: bool = False
     q_obeyed: bool = True
+    learned: list = field(default_factory=list)
     cancelled: list = field(default_factory=list)
 
 
@@ -84,6 +85,9 @@ class Transcript:
             if t.q_retry:
                 meta.append("q-retry="
                             + ("obeyed" if t.q_obeyed else "STILL ASKED"))
+            if t.learned:
+                meta.append("learned=" + ",".join(
+                    f"{p}={o}" if o else f"{p}=RETIRED" for _, p, o in t.learned))
             meta.append(f"{t.words}w/{t.sentences}s")
             meta.append(f"ttft={t.ttft_ms:.0f}ms")
             meta.append(f"{t.tok_s:.1f}tok/s")
@@ -165,7 +169,8 @@ class Harness:
                 lang_retry=res.language_retry,
                 lang_obeyed=res.language_obeyed,
                 q_retry=res.question_retry,
-                q_obeyed=res.question_obeyed))
+                q_obeyed=res.question_obeyed,
+                learned=list(res.learned)))
         return tr
 
     # convenience for memory/learning tests

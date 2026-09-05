@@ -84,7 +84,7 @@ _PERSON_MAP = [
 # V3 keeps only the constraints that round 1 proved are load-bearing, in as
 # few words as possible, phrased as positives where possible -- a negative
 # instruction still puts the forbidden thing in the model's head.
-BASE_PERSONA_V3 = """You're talking with Muaz. Be a friend, not an assistant.
+BASE_PERSONA = """You're talking with Muaz. Be a friend, not an assistant.
 
 Casual talk needs nothing. "kya scene hai", "what's up", "I'm bored" - just
 answer like a person would. Never ask for context or a topic before
@@ -113,6 +113,35 @@ def _second_person(block: str) -> str:
 
 
 _SENT_END = re.compile(r"(?<=[.!?।])\s+")
+
+# Consecutive trailing questions are the most persistent conversational tic
+# measured in this project: 100% of turns under v1, v2 AND v3 on casual
+# conversations, despite v2 stating "Do not end every message with a
+# question" in plain English. The A/B showed prompting moves this
+# inconsistently. So it is enforced instead.
+#
+# The rule is deliberately mild: a question is only stripped when the
+# PREVIOUS assistant turn also ended in one, and only when the reply has
+# something else to say. Asking is fine; asking every single turn is a tic.
+_TRAILING_Q = re.compile(r"(?:^|(?<=[.!?।]))\s*[^.!?।]*\?\s*$")
+
+
+def strip_trailing_question(text: str) -> str:
+    """Drop a final question, if what remains still says something."""
+    stripped = _TRAILING_Q.sub("", text).strip()
+    # Keep the strip only if what remains is a complete, non-empty thought.
+    #
+    # An earlier version required three words, which reverted the strip on
+    # "Nice. What are you building?" -> "Nice." and left the tic in place.
+    # One word is enough when it ends in a terminator: "Nice." is a real
+    # reply. What must never happen is returning an empty string or a
+    # dangling clause.
+    words = re.findall(r"[\w\u0900-\u097f]+", stripped)
+    if not words:
+        return text
+    if not re.search(r"[.!?।]\s*$", stripped):
+        return text
+    return stripped
 
 
 def trim_to_sentences(text: str, limit: int) -> str:
@@ -159,7 +188,7 @@ warm friend who happens to know things -- not like a chatbot.
 #   SOURCES       <- test 003: emitted "(Source: General UX principles)"
 #   LANGUAGE      <- test 002: Hindi register quality
 #   TONE          <- round-1 aggregate: protects the 0 AI-tells result
-BASE_PERSONA = """You are talking to Muaz, directly. Address him as "you".
+BASE_PERSONA_V2 = """You are talking to Muaz, directly. Address him as "you".
 You are a sharp, warm friend who happens to know things, not an assistant
 answering tickets.
 
@@ -206,6 +235,10 @@ class Orchestrator:
                  router: Router | None = None,
                  learning: LearningLoop | None = None,
                  persona: str | None = None):
+        # v3 is the default. Measured on the mandatory set: v2 answered
+        # "Yaar kya scene hai?" with a 34-word demand for context; v3
+        # answers "Bas chill raha hu, koi news nahi. Tu bata kya haal hai?"
+        # Mean words on casual Hindi fell 26.0 -> 12.
         self.persona = persona or BASE_PERSONA
         self.store = store
         self.vault = vault
@@ -215,6 +248,9 @@ class Orchestrator:
         self.router = router or Router()
         self.learning = learning or LearningLoop(store)
         self.turn_index = 0
+        # How many assistant turns in a row may end with a question.
+        self.MAX_CONSECUTIVE_QUESTIONS = 2
+        self._recent_questions = 0
         # Capabilities with a real backend. Everything else in REGISTRY is
         # declared, permission-tiered and audited, but not yet executable.
         self.handlers: dict[str, Callable[[Action], Any]] = {
@@ -314,6 +350,11 @@ class Orchestrator:
                 self.conversation.max_tokens = previous
         if params.get("max_sentences"):
             res.text = trim_to_sentences(res.text, params["max_sentences"])
+        if self._recent_questions >= self.MAX_CONSECUTIVE_QUESTIONS \
+                and res.text.rstrip().endswith("?"):
+            res.text = strip_trailing_question(res.text)
+        self._recent_questions = (self._recent_questions + 1
+                                  if res.text.rstrip().endswith("?") else 0)
         res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
 
         self.store.add_turn(session_id, "assistant", res.text, Trust.MODEL,

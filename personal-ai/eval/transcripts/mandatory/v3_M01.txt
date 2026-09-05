@@ -1,0 +1,41 @@
+TEST #M01
+Scenario:
+  casual EN opener, statements not questions
+
+USER:
+  Hey, how are you?
+AI:  [route=fast lang=en 12w/2s ttft=10557ms 5.5tok/s]
+  Suno, main theek hoon, bas busy hoon. Tu kya kar raha hai?
+
+USER:
+  What are you doing?
+AI:  [route=fast lang=en 9w/2s ttft=11728ms 6.0tok/s]
+  Just hanging out, trying to kill time. Nothing specific.
+
+USER:
+  I'm bored.
+AI:  [route=fast lang=en 13w/1s ttft=13241ms 5.6tok/s]
+  Bhai, bas sunn aur bata kya kar raha hai ya kisi kaam pe?
+
+USER:
+  Guess what happened.
+AI:  [route=fast lang=en 4w/2s ttft=14157ms 6.0tok/s]
+  Kya scene hai? Bata.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         9.5
+  p90 words                12
+  max words                13
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            75%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           25%
+  cross-turn repetition    0.07
+  opener variety           100%

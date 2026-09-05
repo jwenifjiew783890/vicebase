@@ -1,0 +1,36 @@
+TEST #A08
+Scenario:
+  over-explaining trap: obvious question
+
+USER:
+  is 14:00 pm?
+AI:  [route=grounded lang=en vault=1 14w/2s ttft=14845ms 6.0tok/s]
+  No, that's probably a typo. "14 November" is the date, not the time.
+
+USER:
+  aur 02:00?
+AI:  [route=fast lang=hi 29w/2s ttft=13033ms 5.6tok/s]
+  Haan, 02:00 bhi ek typo lag raha hai, shayad tumne date aur time mix kar diye. Date ko 14 November aur time ko 14:00 PM banana chahiye.
+
+USER:
+  thanks
+AI:  [route=fast lang=en 6w/1s ttft=15160ms 6.2tok/s]
+  Arre baadchi, kabhi aur kuch bata?
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         16.3
+  p90 words                14
+  max words                29
+  AI-tell phrases          0  []
+  filler turn rate         67%
+  over-used filler         -
+  question rate            33%
+  hedge rate               67%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67%
+  cross-turn repetition    0.10
+  opener variety           100%

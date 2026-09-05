@@ -55,10 +55,27 @@ class Chunk:
 @dataclass
 class Hit:
     chunk: Chunk
-    score: float
+    score: float           # RRF fusion score -- ORDERING ONLY, see below
     why: str = ""          # 'bm25' | 'dense' | 'fused' | 'link-expansion'
     rank_bm25: Optional[int] = None
     rank_dense: Optional[int] = None
+    bm25_raw: float = 0.0  # relevance-bearing
+    dense_raw: float = 0.0 # relevance-bearing (cosine, 0..1)
+
+    @property
+    def is_confident(self) -> bool:
+        """Whether this hit is good enough to put in front of the model.
+
+        IMPORTANT: `score` (RRF) must NOT be used for this. RRF is a rank
+        fusion: any chunk ranked #1 by both retrievers scores 2/(60+1) =
+        0.0328 whether it is a perfect match or the least-bad of three
+        irrelevant notes. An earlier version gated injection on the RRF
+        score and consequently treated a garbage top hit as a confident
+        answer -- which then suppressed a web search the user needed.
+
+        Relevance gating uses the RAW scores. RRF is only for ordering.
+        """
+        return self.dense_raw >= 0.25 or self.bm25_raw >= 1.5
 
     def as_context(self) -> Tainted:
         """Render for injection into the prompt. Always tainted."""
@@ -299,10 +316,13 @@ class VaultIndex:
                 fused[cid] *= 1.0 + 0.10 * math.exp(-age_days / 180.0)
 
         ordered = sorted(fused.items(), key=lambda x: -x[1])[:k]
+        raw_bm = dict(bm)
+        raw_dn = dict(dn)
         hits = [Hit(chunk=self.chunks[cid], score=score,
                     why="fused" if cid in rank_bm and cid in rank_dn
                         else ("bm25" if cid in rank_bm else "dense"),
-                    rank_bm25=rank_bm.get(cid), rank_dense=rank_dn.get(cid))
+                    rank_bm25=rank_bm.get(cid), rank_dense=rank_dn.get(cid),
+                    bm25_raw=raw_bm.get(cid, 0.0), dense_raw=raw_dn.get(cid, 0.0))
                 for cid, score in ordered]
 
         if expand_links:

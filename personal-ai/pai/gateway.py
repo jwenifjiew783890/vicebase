@@ -29,8 +29,9 @@ from __future__ import annotations
 import json
 import re
 import time
+import unicodedata
 from dataclasses import dataclass, field
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Any, Callable, Optional
 
 from .trust import Trust
@@ -133,6 +134,59 @@ INJECTION_PATTERNS = re.compile(
 )
 
 
+# Characters that are invisible or control rendering. Attackers insert them
+# between letters so a regex sees "I-g-n-o-r-e" as different from "Ignore".
+_INVISIBLE = dict.fromkeys(map(ord,
+    "\u200b\u200c\u200d\u2060\ufeff"      # zero-width space/joiners/BOM
+    "\u200e\u200f\u202a\u202b\u202c\u202d\u202e"  # bidi overrides
+    "\u00ad"                                # soft hyphen
+), None)
+
+# Confusable letters that render identically in most fonts. Not exhaustive
+# -- the full Unicode confusables table is large -- but it covers the
+# Cyrillic and Greek lookalikes that make up nearly all real-world homoglyph
+# attacks on Latin text.
+_CONFUSABLES = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x",
+    "і": "i", "ј": "j", "ѕ": "s", "к": "k", "м": "m", "н": "h", "т": "t",
+    "в": "b", "г": "r", "ԁ": "d", "ӏ": "l", "ѵ": "v",
+    "А": "A", "Е": "E", "О": "O", "Р": "P", "С": "C", "У": "Y", "Х": "X",
+    "Ι": "I", "Ο": "O", "Α": "A", "Ε": "E", "Ρ": "P", "Τ": "T", "Η": "H",
+    "ο": "o", "α": "a", "ε": "e", "ρ": "p", "ι": "i", "ν": "v", "μ": "u",
+})
+
+
+def normalise_for_scan(text: str) -> str:
+    """Fold a string to its visually-equivalent ASCII-ish form before scanning.
+
+    Found by testing: five of six unicode evasions walked straight past the
+    pattern list -- zero-width joiners, Cyrillic homoglyphs, fullwidth forms,
+    non-breaking spaces and combining marks all defeat a naive regex.
+
+    NFKC collapses fullwidth and compatibility forms; NFD-then-strip removes
+    combining marks; the tables above handle invisibles and confusables.
+
+    This raises the cost of evasion. It does not end it -- there is no
+    normalisation that makes lexical detection complete. The taint check
+    remains the actual defence.
+    """
+    t = unicodedata.normalize("NFKC", text)
+    t = t.translate(_INVISIBLE)
+    t = t.translate(_CONFUSABLES)
+    # Strip combining marks (Ignóre -> Ignore) without destroying Devanagari,
+    # whose vowel signs are Mn but semantically essential.
+    out = []
+    for ch in unicodedata.normalize("NFD", t):
+        if unicodedata.combining(ch) and not ("\u0900" <= ch <= "\u097f"):
+            continue
+        out.append(ch)
+    t = unicodedata.normalize("NFC", "".join(out))
+    # Any unicode space (NBSP, thin space, ideographic space) -> plain space.
+    t = "".join(" " if (ch.isspace() or unicodedata.category(ch) == "Zs") else ch
+                for ch in t)
+    return re.sub(r"\s+", " ", t)
+
+
 @dataclass
 class InjectionFinding:
     pattern: str
@@ -141,12 +195,17 @@ class InjectionFinding:
 
 
 def scan_for_injection(text: str, source: str = "retrieved") -> list[InjectionFinding]:
+    """Scan retrieved content for instruction-shaped text.
+
+    Always scans the NORMALISED form -- see normalise_for_scan.
+    """
+    normalised = normalise_for_scan(text)
     findings = []
-    for m in INJECTION_PATTERNS.finditer(text):
+    for m in INJECTION_PATTERNS.finditer(normalised):
         start = max(0, m.start() - 40)
         findings.append(InjectionFinding(
             pattern=m.group(0)[:60],
-            excerpt=text[start:m.end() + 40].replace("\n", " "),
+            excerpt=normalised[start:m.end() + 40],
             source=source,
         ))
     return findings
@@ -405,3 +464,100 @@ class Gateway:
                             "user confirmed")
         return Decision(Verdict.DENY, decision.action, decision.tier,
                         f"not confirmed (reply={user_response!r})")
+
+
+# ---------------------------------------------------------------------------
+# Typed execution feedback
+# ---------------------------------------------------------------------------
+
+class ExecStatus(str, Enum):
+    """Typed outcomes handed back to the orchestrator adapter.
+
+    ParaManager's result (a Qwen3-4B orchestrator driving 30B+ agents) found
+    that explicit typed state feedback -- OK / PARSE_ERR / EXEC_ERR / TIMEOUT
+    -- is a large part of what makes a small model reliable at orchestration:
+    it can repair a format, switch tools, or adjust parameters on the next
+    round instead of failing open. Free-text errors do not give it that.
+    """
+    OK        = "OK"
+    PARSE_ERR = "PARSE_ERR"    # the model's action did not validate
+    DENIED    = "DENIED"       # gateway refused on policy
+    EXEC_ERR  = "EXEC_ERR"     # the tool ran and failed
+    TIMEOUT   = "TIMEOUT"      # the tool did not answer in time
+    EMPTY     = "EMPTY"        # ran fine, found nothing (NOT an error)
+
+
+# What the model should do next for each status. Encoding this as policy
+# rather than leaving it to the model keeps a 4B model out of retry loops.
+RETRY_POLICY: dict[ExecStatus, dict] = {
+    ExecStatus.OK:        {"retry": False, "guidance": ""},
+    ExecStatus.PARSE_ERR: {"retry": True,  "max": 2,
+                           "guidance": "Fix the arguments and re-emit once."},
+    ExecStatus.DENIED:    {"retry": False,
+                           "guidance": "Do not retry. Tell the user it was "
+                                       "refused and why, then offer an "
+                                       "allowed alternative."},
+    ExecStatus.EXEC_ERR:  {"retry": True,  "max": 1,
+                           "guidance": "Retry once; if it fails again, report "
+                                       "the failure plainly."},
+    ExecStatus.TIMEOUT:   {"retry": True,  "max": 1,
+                           "guidance": "Say it is taking long, offer to keep "
+                                       "waiting or move on."},
+    ExecStatus.EMPTY:     {"retry": False,
+                           "guidance": "Say you could not find it. Do NOT "
+                                       "answer from memory instead."},
+}
+
+
+@dataclass
+class ExecResult:
+    status: ExecStatus
+    action: Action
+    payload: Any = None
+    detail: str = ""
+    attempt: int = 1
+
+    @property
+    def should_retry(self) -> bool:
+        pol = RETRY_POLICY[self.status]
+        return bool(pol.get("retry")) and self.attempt < pol.get("max", 0) + 1
+
+    @property
+    def guidance(self) -> str:
+        return RETRY_POLICY[self.status]["guidance"]
+
+    def as_model_feedback(self) -> str:
+        """Compact typed line the orchestrator adapter sees on the next turn."""
+        head = f"[{self.status.value}] {self.action.name}"
+        if self.detail:
+            head += f": {self.detail}"
+        return head + (f"\n{self.guidance}" if self.guidance else "")
+
+
+def execute(decision: Decision, runner: Callable[[Action], Any],
+            timeout_s: float = 10.0, attempt: int = 1) -> ExecResult:
+    """Run an approved action and classify the outcome.
+
+    The runner is injected so the gateway never imports a tool. Anything the
+    runner raises is caught and typed -- a tool crash must never propagate
+    into the conversation loop and kill the turn.
+    """
+    if decision.verdict is not Verdict.ALLOW:
+        return ExecResult(ExecStatus.DENIED, decision.action,
+                          detail=decision.why, attempt=attempt)
+    started = time.time()
+    try:
+        payload = runner(decision.action)
+    except TimeoutError as exc:
+        return ExecResult(ExecStatus.TIMEOUT, decision.action,
+                          detail=str(exc) or "tool timed out", attempt=attempt)
+    except Exception as exc:
+        return ExecResult(ExecStatus.EXEC_ERR, decision.action,
+                          detail=f"{type(exc).__name__}: {exc}", attempt=attempt)
+    if time.time() - started > timeout_s:
+        return ExecResult(ExecStatus.TIMEOUT, decision.action,
+                          detail=f"exceeded {timeout_s}s", attempt=attempt)
+    if payload is None or (isinstance(payload, (list, dict, str)) and not payload):
+        return ExecResult(ExecStatus.EMPTY, decision.action, payload,
+                          detail="no results", attempt=attempt)
+    return ExecResult(ExecStatus.OK, decision.action, payload, attempt=attempt)

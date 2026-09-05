@@ -81,6 +81,12 @@ _HI_MARKERS = {
     "diya", "kiya", "gaya", "liya", "hua", "hui", "wo", "woh", "ye", "yeh",
     "isko", "usko", "iska", "uska", "mere", "tere", "unka", "jab", "tab",
     "agar", "lekin", "magar", "aur", "ya", "par", "sab", "kabhi", "hamesha",
+    # greetings / courtesies -- these are whole turns on their own, so
+    # missing them meant an entire class of Hindi smalltalk read as English
+    # and would have been spoken by the English voice.
+    "namaste", "namaskar", "shukriya", "dhanyavaad", "alvida", "haal",
+    "khol", "kholo", "band", "chahta", "chahti", "sakta", "sakti",
+    "hona", "hone", "milega", "milegi", "dena", "lena", "yaad",
 }
 
 # Romanised Hindi that COLLIDES with common English words. These count as
@@ -185,7 +191,9 @@ TOO_SHORT = _p(
 
 TOO_FORMAL = _p(
     r"\b(be |talk |speak )?(more )?casual(ly)?\b", r"\bless formal\b",
-    r"\bdon'?t be so formal\b", r"\brelax\b(?!ing)",
+    r"\b(don'?t|stop|quit) (be|being|sounding|talking) (so |too )?formal\b",
+    r"\bstop (being|sounding) like (a|an) (robot|ai|assistant)\b",
+    r"\brelax\b(?!ing)",
     r"\bnormal (baat|se) (karo|bolo)\b", r"\bitna formal (mat|nahi)\b",
     r"\bdost ki tarah\b", r"\bsimple bolo\b",
     r"इतना formal", r"आम भाषा",

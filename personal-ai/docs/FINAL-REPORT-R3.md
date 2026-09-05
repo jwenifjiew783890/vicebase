@@ -127,7 +127,7 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **332** (3 skipped: opt-in live network) | MEASURED |
+| Unit tests | **352** (3 skipped: opt-in live network) | MEASURED |
 | Frozen scenario checks | **176 / 176** | MEASURED |
 | Mutation audit | see §31 | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
@@ -531,6 +531,18 @@ neovim?"*, *"he works at Google"*, *"I used to live in Delhi"*, *"if I
 worked at Google"*, *"I use it"*, *"main nahi karta"*, *"shayad main
 neovim use karta hoon"*.
 
+**And he can take it back.** The veto refuses to read a *new* fact out of a
+negation, which is right, and on its own it would leave the *old* one
+standing forever — *"I don't use neovim any more"* changing nothing while
+`editor: neovim` goes into every future prompt. Retraction closes the fact;
+retiring is not deleting, so the row keeps its history.
+
+Over-triggering there is worse than under-triggering: erasing something he
+told the system is a loss he has to notice before he can report it. So both
+the extraction and the retraction patterns were run over **every user turn
+in every committed transcript — 263 turns, four rounds, three languages**.
+Neither fires on any of them, and that check is a test rather than a note.
+
 **Honest limit:** seven predicates (editor, works_at, lives_in, studies,
 name, works_when, prefers). A keyhole, not a door. Widening it is pattern
 work with the same precision requirement, and every new pattern is a new
@@ -579,7 +591,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **74 mutations** now, covering trust, gateway, memory, learning,
+defence. **80 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once

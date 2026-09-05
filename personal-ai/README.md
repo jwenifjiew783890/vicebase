@@ -22,6 +22,7 @@ version of it.
     pai/llm.py            llama.cpp adapters + planner parsing
     pai/web.py            web search with a hard time budget
     pai/opencode.py       deterministic task briefs
+    pai/extract.py        facts out of ordinary conversation
     pai/voice.py          endpointing, clause chunking, barge-in
 
 Stdlib only (Python 3.11, sqlite3 + FTS5) for the deterministic core. No

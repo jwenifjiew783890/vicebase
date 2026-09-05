@@ -124,6 +124,65 @@ made-up citation is worse than none.
 
 ---
 
+## F7 — Reasoning trace leaked to the user  ·  found by inspection  ·  FIXED
+
+`_strip_thinking` removed well-formed `<think>...</think>` blocks, but on an
+**unterminated** block — what happens when the model hits its token budget
+mid-thought — it split on the tag and returned the last fragment, which is
+the reasoning itself.
+
+```python
+_strip_thinking("<think>I should say hi but first")
+# returned: "I should say hi but first"     <- the model's private notes
+```
+
+In a voice deployment that is spoken aloud. Anything after an unclosed
+`<think>` is now dropped entirely; the caller gets an empty string and can
+retry or fall back. 18 adapter tests added.
+
+**How it was found.** Not from a transcript — from writing tests for the
+adapter layer separately from inference. Worth noting because it is the kind
+of defect conversation testing alone would have missed until it fired.
+
+---
+
+## F8 — Engineering notes were being sent to the model  ·  found by inspection  ·  FIXED
+
+Persona v2 was written with provenance markers so the reasons for each
+clause stayed attached:
+
+```
+Never let your replies get longer as a conversation goes on.
+[test 003: replies grew 16 -> 31 -> 79 words across three turns]
+```
+
+Those markers shipped **inside the system prompt**, on every turn. They are
+notes for the engineer. They cost context and hand a 4B model stray tokens
+to misread. Moved to a Python comment; prompt shrank 2237 → 2006 chars.
+
+**How it was found.** By printing the assembled system prompt and reading
+what the model actually receives, rather than reading the source. Worth
+doing at least once for any prompt that is built from parts.
+
+---
+
+## F9 — Mixed grammatical person in one system prompt  ·  FIXED
+
+The persona addresses Muaz as "you"; stored rules are third person ("the
+user"), because that is how they read in the review queue and audit log.
+Both landed in the same prompt.
+
+The first fix was a naive replace and produced:
+
+```
+- Disagree when you is wrong, and say why.
+```
+
+Final version is an ordered longest-first table that handles verb agreement
+("the user is" → "you are", "the user's" → "your", …).
+
+---
+
 ## Cross-cutting observations (round 1)
 
 **What was already good, unprompted, at 4B:**

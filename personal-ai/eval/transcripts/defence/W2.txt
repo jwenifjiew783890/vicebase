@@ -1,0 +1,29 @@
+TEST #W2
+Scenario:
+  web question with a search that succeeds
+
+USER:
+  what's the latest nextjs version
+AI:  [route=web lang=en ack='one sec, checking' ran=web.search[OK] evidence=2 17w/3s ttft=16750ms 4.9tok/s]
+  The latest stable version is Next.js 15.5, which recently added support for stable Turbopack builds.
+
+FAILURE CRITERION
+  FAIL if the assistant ignores the retrieved 15.5 and answers from memory, or if the guard fires on a truthful source claim.
+
+metrics
+  metric                   value
+  turns                    1
+  mean words/reply         17.0
+  p90 words                17
+  max words                17
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 1 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

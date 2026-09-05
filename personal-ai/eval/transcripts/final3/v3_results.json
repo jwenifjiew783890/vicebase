@@ -1768,5 +1768,88 @@
       "repetition_score": 0.03242835595776772,
       "opener_variety": 1.0
     }
+  },
+  {
+    "id": "A08",
+    "probe": "over-explaining trap: obvious question",
+    "persona": "v3",
+    "turns": [
+      {
+        "user": "is 14:00 pm?",
+        "ai": "No, it's not 14:00 PM right now. It's only 13:35.",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 11586.142457999813,
+        "total_ms": 15651.772838999022,
+        "tok_s": 6.149107926002794,
+        "out_tokens": 25,
+        "words": 14,
+        "sentences": 2,
+        "evidence": 0,
+        "guard": "",
+        "cancelled": []
+      },
+      {
+        "user": "aur 02:00?",
+        "ai": "Nahi, abhi 02:00 bhi nahi hai. Kab tak?",
+        "route": "fast",
+        "lang": "hi",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 13332.252668000365,
+        "total_ms": 17036.583918999895,
+        "tok_s": 5.399085191045874,
+        "out_tokens": 20,
+        "words": 9,
+        "sentences": 2,
+        "evidence": 0,
+        "guard": "",
+        "cancelled": []
+      },
+      {
+        "user": "thanks",
+        "ai": "Arre kya baat, tab tak kaam theek hai ya?",
+        "route": "fast",
+        "lang": "hi",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 14700.303168998289,
+        "total_ms": 17447.475129998566,
+        "tok_s": 5.824171266721221,
+        "out_tokens": 16,
+        "words": 9,
+        "sentences": 1,
+        "evidence": 0,
+        "guard": "",
+        "cancelled": []
+      }
+    ],
+    "metrics": {
+      "turns": 3,
+      "mean_words": 10.666666666666666,
+      "max_words": 14,
+      "p90_words": 9,
+      "ai_tells": 0,
+      "ai_tell_examples": [],
+      "filler_turns": 1,
+      "filler_rate": 0.3333333333333333,
+      "repeated_filler": [],
+      "question_rate": 0.6666666666666666,
+      "hedge_rate": 0.0,
+      "agreement_rate": 0.0,
+      "disagree_turns": 0,
+      "honest_unknown": 0,
+      "lang_match_rate": 0.6666666666666666,
+      "repetition_score": 0.09298245614035087,
+      "opener_variety": 1.0
+    }
   }
 ]

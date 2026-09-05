@@ -950,3 +950,40 @@ too easy to hit inside English text.
 narrow to catch the obvious regression is not much of a defence. The
 anti-false-green case list now includes the git and logging vocabulary this
 project is full of.
+
+---
+
+## F36 — The question directive did nothing  ·  FIXED  ·  negative result
+
+Round 3 was supposed to show the pre-generation question restraint (F27)
+holding the cap. It did not.
+
+| | round 2 | round 3 |
+|---|---|---|
+| question marks per reply | 0.78 | **0.80** |
+| replies with more than one question | 9 | **12** |
+| replies ending in a question | 37 | 31 |
+| conversations exceeding the cap | 3 | 2 |
+| longest run | 3 | **3** |
+
+The directive fired exactly twice (M03 t3, A01 t8) and was **disobeyed both
+times**. The only number that improved is the one the post-hoc strip
+manipulates directly. Question *density* did not move at all.
+
+**This refines the project's central finding rather than contradicting
+it.** Categorical prohibitions hold when they are about CONTENT — do not
+invent a detail, do not fabricate a citation, do not refer to him in the
+third person, all measured 1→0 or 3/3. This one is about the FORM of the
+reply, and form instructions regress to the model's habits exactly the way
+calibrated ones do. "Do not end with a question" turns out to be closer to
+"keep it short" than to "do not make things up".
+
+**Fix.** One retry with a much louder directive when the strip would
+otherwise have to mangle a reply, bounded to a single extra generation, with
+the strip kept as the backstop behind it. Whether the retry is obeyed is
+recorded per turn (`q-retry=obeyed` / `q-retry=STILL ASKED`) so the next
+round measures it instead of assuming it.
+
+If the retry also fails, the honest conclusion will be that question
+restraint at 4B is achievable only by editing the output, and the directive
+should be deleted rather than left in the prompt looking useful.

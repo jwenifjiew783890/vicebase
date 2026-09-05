@@ -289,9 +289,9 @@ MUTATIONS = [
     ("orchestrator: question runs counted globally, not per session",
      "pai/orchestrator.py",
      "        self._recent_questions[session_id] = (\n"
-     "            self._recent_questions.get(session_id, 0) + 1",
+     "            run_before + 1 if res.text.rstrip().endswith(\"?\") else 0)",
      "        self._recent_questions[\"GLOBAL\"] = (\n"
-     "            self._recent_questions.get(session_id, 0) + 1"),
+     "            run_before + 1 if res.text.rstrip().endswith(\"?\") else 0)"),
 
     ("orchestrator: source claims allowed on the fast path",
      "pai/orchestrator.py",
@@ -364,6 +364,17 @@ MUTATIONS = [
     ("orchestrator: an empty query is searched anyway", "pai/orchestrator.py",
      "        if not query:",
      "        if False:"),
+
+    ("orchestrator: a third consecutive question is not retried",
+     "pai/orchestrator.py",
+     "        elif (run_before >= self.MAX_CONSECUTIVE_QUESTIONS\n"
+     "                and res.text.rstrip().endswith(\"?\")):",
+     "        elif False:"),
+
+    ("orchestrator: the question run is read after it is updated",
+     "pai/orchestrator.py",
+     "        run_before = self._recent_questions.get(session_id, 0)",
+     "        run_before = 99  # MUTANT: always at the cap"),
 
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',

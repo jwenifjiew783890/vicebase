@@ -66,6 +66,9 @@ class TurnResult:
     # Set when an explicit language order was disobeyed and retried.
     language_retry: bool = False
     language_obeyed: bool = True
+    # Set when a third consecutive question was retried.
+    question_retry: bool = False
+    question_obeyed: bool = True
 
 
 # Ordered longest-first. Verb agreement has to be handled explicitly: a
@@ -344,6 +347,27 @@ _HYPOTHETICAL = re.compile(
 QUESTION_RESTRAINT = ("Your last two replies both ended with a question. "
                       "Do NOT end this reply with a question. Say something "
                       "of your own instead.")
+
+# The same instruction, louder, used on the one retry.
+#
+# MEASURED, round 3, and this is a negative result worth stating plainly:
+# QUESTION_RESTRAINT alone did nothing. It fired twice (M03 t3, A01 t8) and
+# was disobeyed both times. Across the twenty conversations the question
+# DENSITY did not move at all -- 0.78 marks per reply in round 2, 0.80 in
+# round 3 -- and replies carrying more than one question went UP, 9 to 12.
+# The only number that improved, 37 ending in a question down to 31, is the
+# one the post-hoc strip manipulates directly.
+#
+# That refines the project's central finding rather than contradicting it.
+# Categorical prohibitions hold when they are about CONTENT -- do not
+# invent a detail, do not fabricate a citation, do not use the third
+# person. This one is about the FORM of the reply, and form instructions
+# regress to the model's habits exactly the way calibrated ones do.
+QUESTION_RESTRAINT_HARD = (
+    "CRITICAL: your last two replies both ended with a question, and he "
+    "will find a third one exhausting. This reply must NOT contain a "
+    "question at all. No question mark anywhere. Say something of your own "
+    "and stop.")
 
 # What counts as obeying an explicit language order. A Hindi order is
 # satisfied by Hindi or Hinglish -- a spoken-Hindi reply with an English
@@ -769,14 +793,12 @@ class Orchestrator:
                 self.conversation.max_tokens = previous
         if params.get("max_sentences"):
             res.text = trim_to_sentences(res.text, params["max_sentences"])
-        if self._recent_questions.get(session_id, 0) >= \
-                self.MAX_CONSECUTIVE_QUESTIONS \
-                and res.text.rstrip().endswith("?"):
-            res.text = strip_trailing_question(res.text)
-        self._recent_questions[session_id] = (
-            self._recent_questions.get(session_id, 0) + 1
-            if res.text.rstrip().endswith("?") else 0)
-        res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
+
+        # The question run as it stood BEFORE this reply. Both the retry and
+        # the strip are decided on this value; updating the counter first
+        # (which an earlier version did) made every turn look like it was
+        # already at the cap.
+        run_before = self._recent_questions.get(session_id, 0)
 
         # An explicit language order is the one place where a wrong language
         # is unambiguous rather than a judgement call, so it is worth one
@@ -786,6 +808,7 @@ class Orchestrator:
         # standing finding (§5 of the report) is that language directives
         # are the unreliable kind; this bounds the cost of that unreliability
         # to the case where the user said it out loud.
+        # At most ONE retry per turn, whatever the reason.
         if route.lang_locked:
             got = detect_language(res.text, default=route.lang)
             if got not in LANG_ACCEPTS.get(route.lang, {route.lang}):
@@ -795,6 +818,26 @@ class Orchestrator:
                     harder, history, user_text, context)
                 res.language_obeyed = detect_language(
                     res.text, default=route.lang) in LANG_ACCEPTS[route.lang]
+        elif (run_before >= self.MAX_CONSECUTIVE_QUESTIONS
+                and res.text.rstrip().endswith("?")):
+            # The soft directive was already in the prompt and did not work
+            # (see QUESTION_RESTRAINT_HARD). One louder attempt, then the
+            # strip below takes what it can.
+            res.question_retry = True
+            harder = system + "\n\n" + QUESTION_RESTRAINT_HARD
+            retry = self.conversation.respond(harder, history, user_text,
+                                              context)
+            if retry.strip():
+                res.text = retry
+            res.question_obeyed = not res.text.rstrip().endswith("?")
+
+        # The strip is the backstop for when the retry is ignored too.
+        if run_before >= self.MAX_CONSECUTIVE_QUESTIONS \
+                and res.text.rstrip().endswith("?"):
+            res.text = strip_trailing_question(res.text)
+        self._recent_questions[session_id] = (
+            run_before + 1 if res.text.rstrip().endswith("?") else 0)
+        res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
 
         # Honesty guard. If nothing was retrieved, a claim to have consulted
         # a source is false by construction -- there is no source. The

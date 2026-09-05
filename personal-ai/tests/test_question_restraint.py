@@ -80,13 +80,36 @@ class TestOrchestratorRestraint(unittest.TestCase):
         self.assertTrue(o.handle("s", "hi").text.endswith("?"))
         self.assertTrue(o.handle("s", "hi").text.endswith("?"))
 
-    def test_third_consecutive_question_is_stripped(self):
+    def test_a_third_consecutive_question_never_reaches_the_user(self):
+        """The invariant. HOW it is prevented changed in round 4.
+
+        It used to be the strip alone. The strip is now the backstop behind
+        one retry with a harder directive, so the reply the user sees on
+        this turn is the RETRY's, not a trimmed version of the first
+        attempt. What must not change is that the third question does not
+        arrive.
+        """
         o = orch(self.QUESTIONING)
         for _ in range(2):
             o.handle("s", "hi")
-        third = o.handle("s", "hi").text
-        self.assertFalse(third.endswith("?"), f"tic not restrained: {third!r}")
-        self.assertIn("Nice", third)
+        res = o.handle("s", "hi")
+        self.assertFalse(res.text.endswith("?"),
+                         f"tic not restrained: {res.text!r}")
+        self.assertTrue(res.question_retry)
+
+    def test_the_strip_still_catches_a_retry_that_asks_again(self):
+        """ANTI-FALSE-GREEN: the backstop must still be wired.
+
+        Every scripted reply here is a question, so the retry cannot help
+        and the strip is the only thing left.
+        """
+        o = orch(["A? Really?", "B? Sure?", "Nice. What are you building?",
+                  "Cool. Want to talk it through?"])
+        for _ in range(2):
+            o.handle("s", "hi")
+        res = o.handle("s", "hi")
+        self.assertFalse(res.text.endswith("?"), res.text)
+        self.assertIn("Cool", res.text)
 
     def test_counter_resets_after_a_non_question(self):
         o = orch(["A? ", "B?", "Plain statement.", "C?", "D?"])
@@ -97,8 +120,14 @@ class TestOrchestratorRestraint(unittest.TestCase):
         self.assertTrue(o.handle("s", "x").text.endswith("?"))
 
     def test_pure_question_replies_survive_the_restraint(self):
-        """Clarifying questions must not be destroyed by the tic guard."""
-        o = orch(["Sure?", "Ok?", "Which one?"])
+        """Clarifying questions must not be destroyed by the tic guard.
+
+        Every reply here is a bare question with nothing else in it, so
+        neither the retry nor the strip can produce anything better. A
+        clarifying question the assistant genuinely needs to ask must reach
+        the user intact rather than being mangled into a fragment.
+        """
+        o = orch(["Sure?", "Ok?", "Which one?", "Which one?"])
         o.handle("s", "x"); o.handle("s", "x")
         self.assertEqual(o.handle("s", "x").text, "Which one?")
 
@@ -216,3 +245,69 @@ class TestPreGenerationRestraint(unittest.TestCase):
         orch.handle("a", "hi"); orch.handle("a", "hi")
         orch.handle("b", "hi")
         self.assertNotIn(QUESTION_RESTRAINT, seen[-1])
+
+
+class TestQuestionRetry(unittest.TestCase):
+    """One louder attempt when the soft directive is ignored.
+
+    MEASURED negative result, round 3: QUESTION_RESTRAINT alone did
+    nothing. It fired twice and was disobeyed both times, question density
+    did not move (0.78 -> 0.80 marks per reply) and replies carrying more
+    than one question went up. The retry exists because the directive did
+    not earn its place on its own.
+    """
+
+    class Twice:
+        max_tokens = 300
+        def __init__(self, first, second):
+            self.first, self.second = first, second
+            self.systems = []
+        def respond(self, system, history, user, context):
+            self.systems.append(system)
+            return self.first if len(self.systems) <= 3 else self.second
+
+    def _orch(self, model):
+        from pai.memory import MemoryStore
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s = MemoryStore(); v = VaultIndex(TfidfEmbedder())
+        v.add_note("n.md", "# N\nnothing"); v.build_vectors()
+        return Orchestrator(s, v, model)
+
+    def test_a_third_question_triggers_one_retry(self):
+        from pai.orchestrator import QUESTION_RESTRAINT_HARD
+        model = self.Twice("So what happened?", "Fair enough.")
+        orch = self._orch(model)
+        orch.handle("s", "hi"); orch.handle("s", "hi")
+        res = orch.handle("s", "hi")
+        self.assertTrue(res.question_retry)
+        self.assertTrue(res.question_obeyed)
+        self.assertEqual(res.text, "Fair enough.")
+        self.assertIn(QUESTION_RESTRAINT_HARD, model.systems[-1])
+
+    def test_only_one_retry_happens(self):
+        """ANTI-FALSE-GREEN: a retry loop would be worse than the tic."""
+        model = self.Twice("So what happened?", "And then what?")
+        orch = self._orch(model)
+        orch.handle("s", "hi"); orch.handle("s", "hi")
+        before = len(model.systems)
+        res = orch.handle("s", "hi")
+        self.assertEqual(len(model.systems) - before, 2)
+        self.assertFalse(res.question_obeyed)
+
+    def test_no_retry_below_the_cap(self):
+        """ANTI-FALSE-GREEN: two questions in a row is fine."""
+        model = self.Twice("So what happened?", "x")
+        orch = self._orch(model)
+        orch.handle("s", "hi")
+        res = orch.handle("s", "hi")
+        self.assertFalse(res.question_retry)
+        self.assertEqual(len(model.systems), 2)
+
+    def test_no_retry_when_the_reply_is_not_a_question(self):
+        """ANTI-FALSE-GREEN."""
+        model = self.Twice("Fair enough.", "x")
+        orch = self._orch(model)
+        for _ in range(3):
+            res = orch.handle("s", "hi")
+        self.assertFalse(res.question_retry)

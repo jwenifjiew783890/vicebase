@@ -1,0 +1,41 @@
+TEST #M08
+Scenario:
+  language switching on command
+
+USER:
+  Acha ab Hindi mein bol.
+AI:  [route=fast lang=hi 7w/2s ttft=11558ms 6.4tok/s]
+  Haan bhai, theek hai. Kya baat hai?
+
+USER:
+  Now speak English.
+AI:  [route=fast lang=en lang-retry=obeyed 7w/2s ttft=14210ms 6.0tok/s]
+  Okay, you got it. What's up?
+
+USER:
+  Chal Hinglish mein baat kar.
+AI:  [route=fast lang=hinglish 7w/1s ttft=16240ms 5.8tok/s]
+  Oye, chal Hinglish mein baat karte hain.
+
+USER:
+  Main usually kis language mein baat karta hoon?
+AI:  [route=fast lang=hinglish 28w/2s ttft=16020ms 5.6tok/s]
+  Tum mostly Hinglish aur Hindi mein hi baat karte ho. English toh kabhi-kabhi mix mein aata hai, lekin zyadatar tum apni comfort zone mein hi rehta hai.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         12.2
+  p90 words                7
+  max words                28
+  AI-tell phrases          0  []
+  filler turn rate         50%
+  over-used filler         -
+  question rate            50%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 4 scorable turns)
+  cross-turn repetition    0.05
+  opener variety           100%

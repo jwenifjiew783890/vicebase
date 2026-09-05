@@ -52,7 +52,7 @@ crash mid-mutation would otherwise leave a defence silently disabled.
 | file | what it is |
 |---|---|
 | `docs/FINAL-REPORT-R3.md` | the report |
-| `docs/CONVERSATION-FAILURES.md` | all 38 failures, each quoted from the transcript that produced it |
+| `docs/CONVERSATION-FAILURES.md` | all 39 failures, each quoted from the transcript that produced it |
 | `docs/conversational-llm-architecture.md` | the original R&D answer |
 | `docs/personal-ai-architecture.md` | the system design |
 | `eval/transcripts/` | every conversation, verbatim |
@@ -60,7 +60,7 @@ crash mid-mutation would otherwise leave a defence silently disabled.
 ## The one-paragraph version
 
 Almost nothing that was wrong with this system was wrong with the model.
-Of 38 documented failures, 33 were fixed in deterministic code outside the
+Of 39 documented failures, 34 were fixed in deterministic code outside the
 weights. Three defences — the permission gateway, the web path, and the
 voice confirmation rule — were fully implemented, unit-tested, green, and
 **never once reached at runtime**; the only thing that found them was

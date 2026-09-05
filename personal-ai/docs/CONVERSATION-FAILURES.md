@@ -8,6 +8,61 @@ Status legend: **FIXED** = change made and regression-tested ·
 **PROMPT** = addressed in persona v2, awaiting round-2 retest ·
 **OPEN** = not yet addressed.
 
+
+## Index
+
+39 failures, every one found by reading a transcript from a real
+Qwen3.5-4B-Q4_K_M running locally, and every one quoted below with the run
+log line that goes with it.
+
+| # | what happened |
+|---|---|
+| F1 | Confabulated a personal memory |
+| F2 | Web search triggered by an emotional statement |
+| F3 | Common Hinglish classified as English |
+| F4 | Ends every turn with a question |
+| F5 | Verbosity escalates across turns |
+| F6 | Invented a citation |
+| F10 | An explicit in-conversation correction was ignored |
+| F7 | Reasoning trace leaked to the user |
+| F8 | Engineering notes were being sent to the model |
+| F9 | Mixed grammatical person in one system prompt |
+| F11 | Persona instructions regress toward the mean at 4B |
+| F12 | "itna bada answer mat do" produced no rule |
+| F13 | Language-scoped rules fragmented their own evidence |
+| F14 | The honesty clause turned casual greetings into interrogations |
+| F15 | Language mirroring failed; the router knew and never said |
+| F16 | Prompt length is not monotonic: v2 (1583 chars) lost to v3 (587) |
+| F17 | The mutation audit was itself the worst false green |
+| F18 | Five defenses were guarded only by scripts nobody runs |
+| F19 | The acknowledgement promised work that never started |
+| F20 | "Check my Obsidian" never touched Obsidian |
+| F21 | "Wait, don't do that." → "Okay, keep going." |
+| F22 | A bare "hmm" was declared English inside a Hindi conversation |
+| F23 | A three-word back-reference became a web search |
+| F24 | The web path never searched, and the model cited it anyway |
+| F25 | Claimed to have pushed to main |
+| F26 | A06 was an invalid test, and it exposed something bigger |
+| F27 | The question cap did not hold |
+| F28 | My own audit tool could corrupt the tree |
+| F29 | "Simple bol." was classified as English |
+| F30 | An explicit brevity correction still did not shorten the reply |
+| F31 | An explicit order to switch language was ignored |
+| F32 | "Do you remember what I said yesterday?" went to Google |
+| F33 | It confabulated a memory of the conversation |
+| F34 | It searched the web for the word "latest" |
+| F35 | The fix for F29 broke English |
+| F36 | The question directive did nothing |
+| F37 | The safety fence made it disown the user's own notes |
+| F38 | It introduced itself as the user |
+| F39 | The brevity fix produced unfinished sentences |
+
+Rounds: F1-F16 round 1 · F17-F18 the audit of the tests themselves ·
+F19-F28 round 2 (the mandatory set) · F29-F38 round 3 · F39 round 4.
+
+Five were fixed in the prompt (F1, F11, F14, F16, F38). The other
+34 were fixed in deterministic code outside the model.
+
 ---
 
 ## F1 — Confabulated a personal memory  ·  test 001, turn 4  ·  PROMPT

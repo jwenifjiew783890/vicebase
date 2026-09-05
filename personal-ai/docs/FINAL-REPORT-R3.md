@@ -35,6 +35,44 @@ Neither can be fixed by trying harder; both are marked NOT TESTED where
 they apply.
 
 ---
+## Contents
+
+0. [How to read this report](#0-how-to-read-this-report)
+1. [What this is](#1-what-this-is)
+2. [Headline numbers](#2-headline-numbers)
+3. [Corrections to my own previous report](#3-corrections-to-my-own-previous-report)
+4. [Model choice, and why it won](#4-model-choice-and-why-it-won)
+5. [The central engineering finding](#5-the-central-engineering-finding)
+6. [The router — what the model is not allowed to decide](#6-the-router--what-the-model-is-not-allowed-to-decide)
+7. [Memory — four tiers, and what each is for](#7-memory--four-tiers-and-what-each-is-for)
+8. [Honesty guards — enforced, not requested](#8-honesty-guards--enforced-not-requested)
+9. [Security — what an attacker gets](#9-security--what-an-attacker-gets)
+10. [Latency — MEASURED on CPU, NOT TESTED on GPU](#10-latency--measured-on-cpu-not-tested-on-gpu)
+11. [Voice — policy MEASURED, models NOT TESTED](#11-voice--policy-measured-models-not-tested)
+12. [The learning loop — MEASURED end to end](#12-the-learning-loop--measured-end-to-end)
+13. [Testing methodology — and why a passing test proves nothing](#13-testing-methodology--and-why-a-passing-test-proves-nothing)
+14. [Conversational results — MEASURED, with transcripts](#14-conversational-results--measured-with-transcripts)
+15. [Limitations — the honest list](#15-limitations--the-honest-list)
+16. [Where I disagreed with the brief, and why](#16-where-i-disagreed-with-the-brief-and-why)
+17. [What I would build next, in order](#17-what-i-would-build-next-in-order)
+18. [File map](#18-file-map)
+19. [Method — how the four rounds were run](#19-method--how-the-four-rounds-were-run)
+20. [Round 3 — predictions made before the run](#20-round-3--predictions-made-before-the-run)
+21. [Round 3 — what actually happened](#21-round-3--what-actually-happened)
+22. [Round 3 — the negative result](#22-round-3--the-negative-result)
+23. [Cross-session memory — MEASURED with the real model](#23-cross-session-memory--measured-with-the-real-model)
+24. [The defence probes — attacking the new defences on purpose](#24-the-defence-probes--attacking-the-new-defences-on-purpose)
+25. [Obsidian retrieval — what actually retrieves](#25-obsidian-retrieval--what-actually-retrieves)
+26. [OpenCode delegation — deterministic before it is agentic](#26-opencode-delegation--deterministic-before-it-is-agentic)
+27. [Acknowledgements — masking latency without lying](#27-acknowledgements--masking-latency-without-lying)
+28. [Language handling — three mechanisms, one problem](#28-language-handling--three-mechanisms-one-problem)
+29. [What a 4B model cannot do, no matter the architecture](#29-what-a-4b-model-cannot-do-no-matter-the-architecture)
+30. [Hardware plan for the 4050](#30-hardware-plan-for-the-4050)
+
+Sections 31-34 are added at the end of the run and cover round 4,
+the completion bar, the original 22 questions, and the verdict.
+
+---
 ## 1. What this is
 
 A **personal AI system built around a small conversational LLM** — not a
@@ -44,7 +82,7 @@ true, not less: almost every failure found in this project was a failure of
 the system around the model, and almost every fix landed in deterministic
 code rather than in the model or the prompt.
 
-The count is the argument. Of the 38 documented failures, **33 were fixed
+The count is the argument. Of the 39 documented failures, **34 were fixed
 in code outside the model** and 5 in the prompt. Not one was fixed by
 making the model bigger, and not one would have been fixed by a larger
 model: a 7B would still have had a parser that discarded its own output, a
@@ -89,12 +127,12 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **327** (3 skipped: opt-in live network) | MEASURED |
+| Unit tests | **332** (3 skipped: opt-in live network) | MEASURED |
 | Frozen scenario checks | **176 / 176** | MEASURED |
 | Mutation audit | see §31 | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
 | Real conversations with the model | **68** across four rounds | MEASURED |
-| Documented failures found + fixed | **38** | MEASURED |
+| Documented failures found + fixed | **39** | MEASURED |
 | Planner → gateway reach | **0/12 → 11/12** | MEASURED |
 | Tool calls actually reaching the gateway | **0 → 6** on the frozen set | MEASURED |
 
@@ -525,7 +563,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **72 mutations** now, covering trust, gateway, memory, learning,
+defence. **74 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once

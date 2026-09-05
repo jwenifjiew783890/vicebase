@@ -1409,3 +1409,28 @@ written after the previous one let a phrasing through. The pattern is not
 that the gates are wrong; it is that "is this a question about the world"
 is being decided by a list, and lists have holes. A classifier would not
 have holes in the same places, and this is where one would earn its keep.
+
+---
+
+## Round 4b — verifying round 4's own findings
+
+F39 through F43 landed *after* round 4 had started, so none of them was
+exercised by the run that found them. A round is not finished until its own
+output has been re-run.
+
+| finding | verified how |
+|---|---|
+| F39 severed replies | **live** — M04 t3/t4 are complete sentences, and the brevity still holds (34 → 17 → 16 → 22 words) |
+| F40 completion claim followed by a question | **unit test only** — the failure did not recur, so this run does not exercise the fix |
+| F41 evidence dropped after one turn | **live** — *"The codename is Thornbury."* where round 4 said *"Project Shield"* |
+| F42 denying a capability it had just used | **live, and the guard fired** — the model reproduced the failure and `GUARD=denied_a_capability_it_has` replaced it |
+| F43 address term as a searchable subject | **live** — *"yaar aaj bahut kaam tha"* routes fast, not web |
+
+Four of five confirmed in conversation. The fifth is labelled for what it
+is rather than counted as one of them.
+
+F42 is the best single piece of evidence produced in the whole project, and
+it is better than a passing test: **the model made the same mistake again
+and the deterministic layer caught it in a live conversation.** A test
+proves a defence works on input you chose. That transcript proves it works
+on input the model chose.

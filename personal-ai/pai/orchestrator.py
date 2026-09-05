@@ -270,6 +270,24 @@ class Orchestrator:
 
     # ------------------------------------------------------------ prompt
 
+    # The router already knows the turn's language deterministically. Telling
+    # the model is strictly better than asking it to infer.
+    #
+    # Measured failure (mandatory test M03, persona v3): the user wrote
+    # "So I was thinking about the auth thing and" and "I meant the
+    # deployment pipeline" -- both plainly English, both correctly detected
+    # as lang=en -- and the model replied in Hinglish both times. Once two
+    # Hinglish assistant turns are in the history the context drags every
+    # later generation toward Hinglish, and a standing "match his language"
+    # instruction does not pull it back.
+    LANG_DIRECTIVE = {
+        "en": "This message is in English. Reply in English only.",
+        "hi": "This message is in Hindi. Reply in natural spoken Hindi "
+              "(roman script is fine). Do not answer in English.",
+        "hinglish": "This message mixes Hindi and English. Reply in the same "
+                    "mix, the way he wrote it.",
+    }
+
     def build_system_prompt(self, lang: str) -> str:
         """Assemble the always-on header. This is what gets prompt-cached.
 
@@ -280,6 +298,9 @@ class Orchestrator:
         rules = _second_person(self.learning.system_rules_block(lang=lang))
         facts = self._memory_header()
         parts = [self.persona]
+        directive = self.LANG_DIRECTIVE.get(lang)
+        if directive:
+            parts.append(directive)
         if rules:
             parts.append("How to talk to him:\n" + rules)
         if facts:

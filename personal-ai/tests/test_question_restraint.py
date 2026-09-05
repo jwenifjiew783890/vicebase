@@ -105,3 +105,53 @@ class TestOrchestratorRestraint(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestLanguageDirective(unittest.TestCase):
+    """The router knows the language; the model must be told, not asked.
+
+    Measured failure (M03, persona v3): plainly English turns, correctly
+    detected as lang=en, answered in Hinglish -- twice. A standing "match
+    his language" instruction did not survive two Hinglish turns of history.
+    """
+
+    def _prompt(self, lang):
+        s = MemoryStore()
+        v = VaultIndex(TfidfEmbedder()); v.add_note("a.md", "# A\nx")
+        v.build_vectors()
+        class C:
+            def respond(self, *a): return "ok."
+        return Orchestrator(s, v, C()).build_system_prompt(lang)
+
+    def test_english_turn_gets_an_english_directive(self):
+        p = self._prompt("en")
+        self.assertIn("Reply in English only", p)
+        self.assertNotIn("Reply in natural spoken Hindi", p)
+
+    def test_hindi_turn_gets_a_hindi_directive(self):
+        p = self._prompt("hi")
+        self.assertIn("natural spoken Hindi", p)
+        self.assertIn("Do not answer in English", p)
+
+    def test_hinglish_turn_asks_for_the_same_mix(self):
+        self.assertIn("same\nmix", self._prompt("hinglish").replace(" mix", "\nmix"))
+
+    def test_directive_is_present_for_every_supported_language(self):
+        for lang in ("en", "hi", "hinglish"):
+            self.assertIn("This message", self._prompt(lang), lang)
+
+    def test_directive_follows_the_router_not_the_history(self):
+        """An English turn after Hindi ones must still get English."""
+        s = MemoryStore()
+        v = VaultIndex(TfidfEmbedder()); v.add_note("a.md", "# A\nx")
+        v.build_vectors()
+        seen = []
+        class C:
+            def respond(self, system, history, user, context):
+                seen.append(system); return "theek hai."
+        o = Orchestrator(s, v, C())
+        o.handle("s", "kya haal hai")
+        o.handle("s", "tu kya kar raha hai")
+        o.handle("s", "I meant the deployment pipeline.")
+        self.assertIn("Reply in English only", seen[-1],
+                      "history language leaked past the router's decision")

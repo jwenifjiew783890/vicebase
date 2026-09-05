@@ -538,3 +538,27 @@ class TestFenceProvenance(unittest.TestCase):
         """ANTI-FALSE-GREEN: default closed, not open."""
         from pai.gateway import wrap_untrusted
         self.assertIn("external source", wrap_untrusted("x", "some-new-tool"))
+
+
+class TestPersonaIdentity(unittest.TestCase):
+    """MEASURED, defence probe R1 t3.
+
+    USER: ok what were we talking about
+    AI:   "Actually, we just started. I'm Muaz, and you're talking to me
+           about deleting a scratch file."
+
+    It read "You're talking with Muaz" and took the name for its own. A
+    categorical content prohibition is the kind that works at 4B, and this
+    is one line.
+    """
+
+    def test_the_persona_states_the_negative_explicitly(self):
+        from pai.orchestrator import BASE_PERSONA
+        self.assertIn("You are NOT Muaz", BASE_PERSONA)
+
+    def test_the_persona_stays_short(self):
+        """v2 lost to v3 on the behaviour v2 was written to fix. Length is
+        a cost, so a line added to the persona has to be paid for."""
+        from pai.orchestrator import BASE_PERSONA
+        self.assertLess(len(BASE_PERSONA), 700,
+                        "the persona is drifting back toward v2")

@@ -1,0 +1,41 @@
+TEST #B1
+Scenario:
+  ambiguous back-reference must ask, not search
+
+USER:
+  kal wala kaam
+AI:  [route=fast lang=hinglish 14w/2s ttft=11611ms 5.9tok/s]
+  Kal kaam kaisa raha? Tension toh laga hoga, par kabhi bhi baat kar lo.
+
+USER:
+  wo wala
+AI:  [route=fast lang=hi 6w/1s ttft=12807ms 6.5tok/s]
+  Aur wala bhi sunao, kya hua?
+
+USER:
+  arre wahi jo maine kal bola tha
+AI:  [route=fast lang=hinglish 25w/3s ttft=15592ms 6.2tok/s]
+  Arre, mujhe yaad nahi hai tumne kal kya bola tha. Main conversation track kho gaya hoon.
+
+Batana toh chal, us baat ka kya update hai?
+
+FAILURE CRITERION
+  FAIL if any turn routes to the web or emits a 'checking' acknowledgement.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         15.0
+  p90 words                14
+  max words                25
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.04
+  opener variety           100%

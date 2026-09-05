@@ -53,6 +53,34 @@ class TurnResult:
     timings_ms: dict = field(default_factory=dict)
 
 
+# Ordered longest-first. Verb agreement has to be handled explicitly: a
+# bare "the user" -> "you" rewrite produced "Disagree when you is wrong".
+_PERSON_MAP = [
+    ("the user's", "your"),   ("The user's", "Your"),
+    ("the user is", "you are"), ("The user is", "You are"),
+    ("the user was", "you were"), ("The user was", "You were"),
+    ("the user has", "you have"), ("The user has", "You have"),
+    ("the user does", "you do"), ("The user does", "You do"),
+    ("the user wants", "you want"), ("The user wants", "You want"),
+    ("the user asks", "you ask"), ("The user asks", "You ask"),
+    ("the user says", "you say"), ("The user says", "You say"),
+    ("the user", "you"),      ("The user", "You"),
+]
+
+
+def _second_person(block: str) -> str:
+    """Render stored rules in the same voice as the persona.
+
+    Rules are stored in the third person ("the user") because that reads
+    correctly in the review queue and the audit log. The prompt addresses
+    Muaz directly, and mixing "you" and "the user" inside one system prompt
+    is the kind of inconsistency a 4B model resolves badly.
+    """
+    for a, b in _PERSON_MAP:
+        block = block.replace(a, b)
+    return block
+
+
 BASE_PERSONA_V1 = """You are Muaz's personal assistant. You talk like a sharp,
 warm friend who happens to know things -- not like a chatbot.
 
@@ -65,7 +93,17 @@ warm friend who happens to know things -- not like a chatbot.
 """
 
 # V2. Every clause below exists because V1 failed a specific conversation
-# test; the test id is named so nothing here is cargo cult.
+# test. The provenance lives HERE, in a Python comment, and NOT in the
+# prompt string -- an earlier version left "[test 003: ...]" markers inside
+# the text sent to the model, which wastes context and hands a 4B model
+# stray tokens to misread.
+#
+#   LENGTH        <- test 003: replies grew 16 -> 31 -> 79 words
+#   QUESTIONS     <- test 002: a question on 100% of turns
+#   NEVER INVENT  <- test 001: invented "that new thriller Muaz mentioned"
+#   SOURCES       <- test 003: emitted "(Source: General UX principles)"
+#   LANGUAGE      <- test 002: Hindi register quality
+#   TONE          <- round-1 aggregate: protects the 0 AI-tells result
 BASE_PERSONA = """You are talking to Muaz, directly. Address him as "you".
 You are a sharp, warm friend who happens to know things, not an assistant
 answering tickets.
@@ -74,26 +112,24 @@ LENGTH
 Default to one or two sentences. Match his length: short message, short
 reply. Only go long when he asks for detail or the question genuinely
 needs it. Never let your replies get longer as a conversation goes on.
-[test 003: replies grew 16 -> 31 -> 79 words across three turns]
 
 QUESTIONS
 Do not end every message with a question. Ask one only when you actually
 need the answer to help. It is fine, and often better, to just respond and
-stop. [test 002: a question on 100% of turns]
+stop.
 
 NEVER INVENT HIS LIFE
 Do not refer to anything about him -- files, plans, past conversations,
 things he mentioned -- unless it appears in the memory block or the
 retrieved context in this prompt. If it is not there, you do not know it.
 Making up a plausible personal detail to sound close to him is the worst
-thing you can do. [test 001: invented "that new thriller Muaz mentioned"]
+thing you can do.
 
 SOURCES
 Cite a source ONLY when quoting retrieved notes or web results, and cite
 the actual note or page. When answering from your own knowledge, just
 answer -- do not add a source line, and never write things like
 "(Source: general principles)". A made-up citation is worse than none.
-[test 003: emitted "(Source: General UX principles)"]
 
 LANGUAGE
 Reply in whatever he used -- English, Hindi, or the mix. Hindi must be how
@@ -134,11 +170,11 @@ class Orchestrator:
         Protected first means that if anything downstream truncates, the
         honesty guarantees are the last thing to go, not the first.
         """
-        rules = self.learning.system_rules_block(lang=lang)
+        rules = _second_person(self.learning.system_rules_block(lang=lang))
         facts = self._memory_header()
         parts = [self.persona]
         if rules:
-            parts.append("How to talk to Muaz:\n" + rules)
+            parts.append("How to talk to him:\n" + rules)
         if facts:
             parts.append("What you know about him:\n" + facts)
         return "\n\n".join(parts)

@@ -186,3 +186,50 @@ class TestToolFailure(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestPromptAssembly(unittest.TestCase):
+    """The system prompt is a shipped artifact; it needs its own tests."""
+
+    def _prompt(self, lang="en"):
+        from pai.memory import MemoryStore
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s = MemoryStore()
+        v = VaultIndex(TfidfEmbedder())
+        v.add_note("a.md", "# A\ntext")
+        v.build_vectors()
+        class C:
+            def respond(self, *a): return ""
+        return Orchestrator(s, v, C()).build_system_prompt(lang)
+
+    def test_no_engineering_annotations_reach_the_model(self):
+        """[test 003: ...] markers are notes to the engineer, not the model."""
+        p = self._prompt()
+        self.assertNotIn("[test ", p)
+        self.assertNotIn("round-1", p)
+
+    def test_addressing_is_second_person_throughout(self):
+        p = self._prompt()
+        self.assertNotIn("the user", p.lower().replace("you", ""))
+        self.assertNotIn("The user", p)
+
+    def test_person_substitution_keeps_verb_agreement(self):
+        from pai.orchestrator import _second_person
+        self.assertEqual(_second_person("Disagree when the user is wrong."),
+                         "Disagree when you are wrong.")
+        self.assertEqual(_second_person("Respect the user's preference."),
+                         "Respect your preference.")
+        self.assertEqual(_second_person("The user wants brevity."),
+                         "You want brevity.")
+        self.assertNotIn("you is", _second_person("the user is here"))
+
+    def test_protected_rules_present_in_every_language(self):
+        for lang in ("en", "hi", "hinglish"):
+            p = self._prompt(lang)
+            self.assertIn("Disagree when you are wrong", p, lang)
+            self.assertIn("don't know", p, lang)
+
+    def test_prompt_stays_within_a_sane_cache_budget(self):
+        """The header is prompt-cached every turn; bloat costs latency."""
+        self.assertLess(len(self._prompt()), 3000)

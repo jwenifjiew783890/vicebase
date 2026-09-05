@@ -215,11 +215,14 @@ def _finish(text: str) -> str:
     """
     if re.search(r"[.!?।]\s*$", text):
         return text
-    head = re.split(r"\s*[,;:—-]\s+", text)
-    if len(head) > 1:
-        candidate = head[0].strip()
+    # The LAST usable boundary, not the first: cutting "A, B, C-incomplete"
+    # back to "A." throws away B for no reason.
+    parts = re.split(r"(\s*[,;:—-]\s+)", text)
+    clauses = ["".join(parts[:i]) for i in range(1, len(parts), 2)]
+    for candidate in reversed(clauses):
+        candidate = candidate.strip().rstrip(",;:—- ")
         if len(re.findall(r"[\w\u0900-\u097f]+", candidate)) >= 5:
-            return candidate.rstrip(",;:—- ") + "."
+            return candidate + "."
     # No clause boundary. Walk back over trailing connectives and
     # determiners instead: a reply cut after "taaki agle" ("so that the
     # next") reads as an error, and "...store kar leta hai." does not.

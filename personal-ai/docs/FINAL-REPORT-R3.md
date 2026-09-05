@@ -720,8 +720,9 @@ Twenty conversations, 69 turns, persona v3, all with the real model.
 | routes | fast 53 · action 7 · grounded 5 · web 4 |
 
 Two of those are bad numbers and are treated as findings, not as noise:
-**language match 88%** (F22, fixed) and **54% question rate with runs of
-three** (F27, fixed).
+**language match 88%** (F22 and F29, fixed) and **54% question rate with
+runs of three** — F27 was the first attempt at that one and §22 is the
+measurement showing it did not work.
 
 ### 14.3 What was wrong, and is now fixed
 

@@ -49,6 +49,7 @@ class Turn:
     lang_obeyed: bool = True
     q_retry: bool = False
     q_obeyed: bool = True
+    q_complied: bool = True
     learned: list = field(default_factory=list)
     cancelled: list = field(default_factory=list)
 
@@ -83,8 +84,9 @@ class Transcript:
                 meta.append("lang-retry="
                             + ("obeyed" if t.lang_obeyed else "STILL WRONG"))
             if t.q_retry:
-                meta.append("q-retry="
-                            + ("obeyed" if t.q_obeyed else "STILL ASKED"))
+                meta.append("q-retry=" + ("obeyed" if t.q_complied
+                                          else "stripped" if t.q_obeyed
+                                          else "STILL ASKED"))
             if t.learned:
                 meta.append("learned=" + ",".join(
                     f"{p}={o}" if o else f"{p}=RETIRED" for _, p, o in t.learned))
@@ -170,6 +172,7 @@ class Harness:
                 lang_obeyed=res.language_obeyed,
                 q_retry=res.question_retry,
                 q_obeyed=res.question_obeyed,
+                q_complied=res.question_complied,
                 learned=list(res.learned)))
         return tr
 

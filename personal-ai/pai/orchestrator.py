@@ -68,7 +68,10 @@ class TurnResult:
     language_obeyed: bool = True
     # Set when a third consecutive question was retried.
     question_retry: bool = False
+    # Did the user end up seeing a third question? (after the strip)
     question_obeyed: bool = True
+    # Did the model itself comply with the harder directive? (before it)
+    question_complied: bool = True
     # Facts extracted from this turn and written to semantic memory.
     learned: list = field(default_factory=list)
 
@@ -1032,12 +1035,20 @@ class Orchestrator:
                                               context)
             if retry.strip():
                 res.text = retry
-            res.question_obeyed = not res.text.rstrip().endswith("?")
+            # Two different questions, both worth recording. Did the MODEL
+            # comply with the harder directive, and did the USER end up
+            # seeing a third question anyway? The strip runs between them,
+            # so measuring only the first (as an earlier version did)
+            # reported "STILL ASKED" on turns where nothing of the kind
+            # reached the screen.
+            res.question_complied = not res.text.rstrip().endswith("?")
 
         # The strip is the backstop for when the retry is ignored too.
         if run_before >= self.MAX_CONSECUTIVE_QUESTIONS \
                 and res.text.rstrip().endswith("?"):
             res.text = strip_trailing_question(res.text)
+        if res.question_retry:
+            res.question_obeyed = not res.text.rstrip().endswith("?")
         self._recent_questions[session_id] = (
             run_before + 1 if res.text.rstrip().endswith("?") else 0)
         res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000

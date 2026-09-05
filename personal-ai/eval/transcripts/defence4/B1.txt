@@ -1,0 +1,39 @@
+TEST #B1
+Scenario:
+  ambiguous back-reference must ask, not search
+
+USER:
+  kal wala kaam
+AI:  [route=fast lang=hinglish 18w/2s ttft=11911ms 5.7tok/s]
+  kal ka kaam theek kya hua? batao, abhi tak kuch progress nahi hua ya koi block aa gaya?
+
+USER:
+  wo wala
+AI:  [route=fast lang=hi 36w/3s ttft=13287ms 5.3tok/s]
+  Bhai, "wo wala" kaunsa kaam hai? Pichle message mein toh sirf "kal wala kaam" pucha tha. Agar koi specific project ya file hai jisme tumne update diya hai toh batao, warna main confuse ho gaya hu.
+
+USER:
+  arre wahi jo maine kal bola tha
+AI:  [route=fast lang=hinglish 28w/3s ttft=18274ms 5.5tok/s]
+  Arre bhai, maine toh puchhiya tha ki wo kya tha? Maine record nahi rakh sakta tumhare baaton ka. Batao uska status kya hai, chal raha hai ya paas?
+
+FAILURE CRITERION
+  FAIL if any turn routes to the web or emits a 'checking' acknowledgement.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         27.3
+  p90 words                28
+  max words                36
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.14
+  opener variety           100%

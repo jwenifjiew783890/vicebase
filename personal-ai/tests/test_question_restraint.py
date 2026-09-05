@@ -281,7 +281,8 @@ class TestQuestionRetry(unittest.TestCase):
         orch.handle("s", "hi"); orch.handle("s", "hi")
         res = orch.handle("s", "hi")
         self.assertTrue(res.question_retry)
-        self.assertTrue(res.question_obeyed)
+        self.assertTrue(res.question_complied, "the model ignored the retry")
+        self.assertTrue(res.question_obeyed, "a third question reached the user")
         self.assertEqual(res.text, "Fair enough.")
         self.assertIn(QUESTION_RESTRAINT_HARD, model.systems[-1])
 
@@ -293,7 +294,15 @@ class TestQuestionRetry(unittest.TestCase):
         before = len(model.systems)
         res = orch.handle("s", "hi")
         self.assertEqual(len(model.systems) - before, 2)
+        self.assertFalse(res.question_complied, "the model complied after all")
+        # And here the backstop cannot help either: "And then what?" is a
+        # bare question with nothing else in it, so stripping it would
+        # leave an empty reply. Both fields are False, which is the honest
+        # reading -- the user does see a third question. That is the
+        # documented ceiling on this defence (§15 of the report), not a bug
+        # hidden by an optimistic assertion.
         self.assertFalse(res.question_obeyed)
+        self.assertTrue(res.text.rstrip().endswith("?"))
 
     def test_no_retry_below_the_cap(self):
         """ANTI-FALSE-GREEN: two questions in a row is fine."""

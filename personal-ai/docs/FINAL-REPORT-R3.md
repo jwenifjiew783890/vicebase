@@ -1194,10 +1194,24 @@ closer to *"keep it short"* than to *"do not make things up"*.
 The response was not to argue with the measurement. It was to add one
 bounded retry with a much louder directive, keep the strip behind it as the
 backstop, and **record per turn whether the retry was obeyed**, so round 4
-measures the retry instead of assuming it. If it also fails, the honest
-conclusion is that question restraint at 4B is achievable only by editing
-the output, and the directive should be deleted rather than left in the
-prompt looking useful.
+measures the retry instead of assuming it. If it had also failed, the
+honest conclusion would be that question restraint at 4B is achievable only
+by editing the output, and the directive should be deleted rather than left
+in the prompt looking useful.
+
+**It did not fail.** Round 4: longest run of question-ending replies down
+from 3 to 2, conversations over the cap from 3 to 0, and the rate of
+replies ending in a question from 54% to 41%. Two retries fired across the
+twenty conversations — one for language, one for questions. The language
+one was obeyed. The question one was not, and the strip behind it caught
+what the model would not.
+
+That is the shape of the answer: a categorical instruction about the *form*
+of a reply does not work at 4B, a **louder** one on a second attempt
+sometimes does, and a deterministic edit is what actually holds the
+guarantee. The instruction is kept because it is nearly free and because it
+is what makes the second attempt available; nothing about the cap depends
+on it.
 
 ---
 ## 23. Cross-session memory — MEASURED with the real model

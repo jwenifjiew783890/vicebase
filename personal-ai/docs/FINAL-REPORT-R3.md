@@ -818,7 +818,7 @@ the fix. Summarised:
 ---
 ## 15. Limitations — the honest list
 
-Eleven of them, ordered by how much they would matter to you in daily
+Twelve of them, ordered by how much they would matter to you in daily
 use.
 
 **1. Latency on this hardware is not the latency you would get, and I
@@ -854,39 +854,49 @@ The first is wrong. The second is close to nonsense. Neither is a routing,
 gating or honesty failure — they are capacity failures, and the honest
 answer is that they will keep happening at this size.
 
-**5. Language identification is a wordlist.** ~90% on realistic mixed
+**5. The router decides "is this a question about the world" with a
+list, and lists have holes.** F2, F23 and F43 are one failure — a personal
+remark treated as a query — caught by three different gates, each written
+after the previous one let a phrasing through: *"aaj bahut thak gaya
+hoon"*, then *"kal wala kaam"*, then *"yaar aaj bahut kaam tha"*. The gates
+are individually correct and the approach has a ceiling. A small
+classifier would not have holes in the same places, and this is where one
+would earn its keep before it would anywhere else.
+
+**6. Language identification is a wordlist.** ~90% on realistic mixed
 input. It should be a small statistical LID model, or the conversational
 model should tag its own turn. The heuristic exists so the deterministic
 layer has an answer without a model round-trip.
 
-**6. The honesty guards are blunt.** When they fire, they replace the whole
+**7. The honesty guards are blunt.** When they fire, they replace the whole
 reply. If a reply contains one fabricated citation and three good
 sentences, all four go. This is a deliberate trade and it is the wrong
 trade in some cases.
 
-**7. One guard extension is speculative.** The source-claim check was
+**8. One guard extension is speculative.** The source-claim check was
 measured on the web and vault paths and then extended to the fast path by
 reasoning, not measurement. It is flagged in the code and watched in
 round 3.
 
-**8. Anaphora is not resolved before a web query.** "Iska latest answer web
-se check kar" searches for the literal words, not for what "iska" refers
-to. The result is a poor query rather than a wrong answer, because an empty
-result is now handled honestly — but it is still a poor query.
+**9. Anaphora resolution is one turn deep.** *"Iska latest answer web se
+check kar"* now falls back to the previous user turn (F34) and a short
+follow-up keeps the previous turn's evidence (F41). Neither reaches further
+back than one turn, and neither resolves *which* of several things "iska"
+refers to. It is a fallback, not a resolver.
 
-**9. Question restraint is only achievable by editing the output.** The
+**10. Question restraint is only achievable by editing the output.** The
 model will not obey an instruction about the shape of its own reply (§22).
 The strip and the retry between them keep a third consecutive question off
 the screen most of the time; neither reduces how often the model wants to
 ask one. If you find it asks too much, that is the honest state of it.
 
-**10. Memory search is a keyword scan.** `search_turns` walks the last 400
+**11. Memory search is a keyword scan.** `search_turns` walks the last 400
 stored turns and ranks by content-word overlap. That is enough to answer
 "do you remember X" honestly at the scale of one person's conversations and
 it is not a retrieval system. It should share the vault's hybrid index; it
 does not yet.
 
-**11. Everything here is single-user and local.** No multi-user isolation,
+**12. Everything here is single-user and local.** No multi-user isolation,
 no sync, no mobile. Out of scope by design, but worth stating so the scope
 is not overread.
 
@@ -929,10 +939,14 @@ found by running the thing and reading what it says.
 3. **Code-switched ASR evaluation.** Not a fix — a measurement. Until the
    WER on your actual speech is known, the voice design is built on a
    published number about somebody else's speech.
-4. **Anaphora resolution before web queries.** Small, well-scoped, and it
-   removes a class of poor queries.
-5. **Statistical LID.** Replaces the wordlist, and the interface for it
-   already exists.
+4. **A classifier for "is this a question about the world".** F2, F23 and
+   F43 are one failure caught by three list-based gates, each written after
+   the last let a phrasing through. This is where a small model earns its
+   keep before it does anywhere else, and it is a bounded, supervised
+   problem with a labelled corpus already sitting in `eval/transcripts/`.
+5. **Statistical LID.** Replaces the wordlist. The interface —
+   `detect_language(text, default)` — already exists, so nothing else has
+   to change.
 6. **Selective honesty guards.** Replace the offending sentence rather than
    the whole reply. Needs sentence-level attribution, which is why it is
    sixth and not first.

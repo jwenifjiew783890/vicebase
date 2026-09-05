@@ -1168,3 +1168,59 @@ stop. Only when at least five words survive — turning "API bas ek" into
 The dangling-word list is deliberately conservative. The first version
 included "hai", which can perfectly well end a Hindi sentence, and turned
 *"...store kar leta hai."* into *"...store kar leta."*
+
+---
+
+## G1 — The system never learned anything he told it  ·  BUILT
+
+Not a failure found in a transcript. A gap stated plainly in every earlier
+version of the report and never closed:
+
+> **What it does not do:** extract arbitrary facts from free conversation.
+> Facts arrive through `assert_fact`. That is a real gap and it is stated
+> here rather than glossed, because "the AI should get better at talking to
+> me the more we talk" is true of *style* in this build and not yet true of
+> *content*.
+
+It is now closed. `pai/extract.py` reads unambiguous first-person
+statements out of ordinary turns and writes them to semantic memory
+bitemporally:
+
+```
+session "monday"   USER: yaar main neovim use karta hoon
+                   learned: [("muaz", "editor", "neovim")]
+
+session "friday"   the system prompt now carries
+                   "- muaz editor: neovim"
+```
+
+**The design stance is signals.py's, and for a sharper reason.** A missed
+fact costs nothing — he will say it again. A *wrong* fact is durable,
+reaches every later prompt, and is exactly the material a confabulation is
+made of. This project spent three rounds building guards against the
+assistant inventing things about him (F1, F24, F33); an extractor that
+guesses would be feeding the thing those guards exist to stop.
+
+So the veto list is checked before any pattern runs, and none of these
+produce a fact:
+
+```
+"I don't use neovim"          "he works at Google"
+"do you use neovim?"          "I used to live in Delhi"
+"what editor do I use?"       "if I worked at Google I'd be richer"
+"I might use neovim"          "I use it"  /  "I use that thing"
+"main nahi karta"             "shayad main neovim use karta hoon"
+"agar main Google me kaam karta"
+```
+
+Twelve extraction cases pass, sixteen negative cases produce nothing, and
+four mutations cover the veto, the placeholder filter, the write, and the
+"do not re-assert what is already current" rule. A repeated statement does
+not fill the supersession chain with noise; a changed one supersedes and
+leaves the old value queryable.
+
+**What is still missing**, so this is not oversold: it reads a fixed set of
+seven predicates (editor, works_at, lives_in, studies, name, works_when,
+prefers). It is a keyhole, not a door. Widening it is pattern work with the
+same precision requirement, and every new pattern is a new way to write
+something false into memory.

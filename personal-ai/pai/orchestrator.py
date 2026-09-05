@@ -69,6 +69,8 @@ class TurnResult:
     # Set when a third consecutive question was retried.
     question_retry: bool = False
     question_obeyed: bool = True
+    # Facts extracted from this turn and written to semantic memory.
+    learned: list = field(default_factory=list)
 
 
 # Ordered longest-first. Verb agreement has to be handled explicitly: a
@@ -583,6 +585,8 @@ class Orchestrator:
             "code.delegate": self._delegate_code,
         }
         self.opencode_url = "http://127.0.0.1:4096"
+        # Who the facts extracted from conversation are about.
+        self.user = "muaz"
         # Per-session state the deterministic layer owns.
         self._pending: dict[str, list[Decision]] = {}
         self._lang: dict[str, str] = {}
@@ -592,6 +596,25 @@ class Orchestrator:
         self._lang_locked: dict[str, str] = {}
 
     # ------------------------------------------------------------ helpers
+
+    def _extract_facts(self, user_text: str, turn_id: int) -> list[tuple]:
+        """Store any unambiguous first-person fact this turn states.
+
+        Deliberately does NOT re-assert a fact already current: repeating
+        "I use neovim" every session should not write a new row every time,
+        and the supersession chain is worth keeping readable.
+        """
+        from .extract import extract_facts
+        learned: list[tuple] = []
+        for cand in extract_facts(user_text, subject=self.user):
+            current = self.store.current_fact(cand.subject, cand.predicate)
+            if current is not None and current.object.lower() == cand.object.lower():
+                continue
+            self.store.assert_fact(cand.subject, cand.predicate, cand.object,
+                                   Trust.USER, confidence=0.7,
+                                   source_turn=turn_id)
+            learned.append(cand.as_tuple())
+        return learned
 
     def _previous_user_turn(self, session_id: str) -> str:
         """The user turn before this one, for resolving back-references."""
@@ -699,6 +722,12 @@ class Orchestrator:
         res = TurnResult()
 
         turn_id = self.store.add_turn(session_id, "user", user_text, Trust.USER)
+
+        # Learn what he told you, not just how he likes to be told things.
+        # Extraction is deterministic and high-precision (see extract.py);
+        # the write is bitemporal, so a value that changes supersedes rather
+        # than overwrites and a wrong one stays visible and correctable.
+        res.learned = self._extract_facts(user_text, turn_id)
 
         # Retrieval runs on every turn. Injection is decided by threshold,
         # not by the model, and not by this call.

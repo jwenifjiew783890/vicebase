@@ -385,6 +385,24 @@ MUTATIONS = [
      "    while len(tokens) > 5 and tokens[-1].strip(\".,;:!?\").lower() in _DANGLING:",
      "    while False:"),
 
+    ("extract: negations and questions become facts", "pai/extract.py",
+     "        if not clause or _VETO.search(clause):",
+     "        if not clause:"),
+
+    ("extract: pronouns and placeholders become facts", "pai/extract.py",
+     "            if not _usable(value):",
+     "            if False:"),
+
+    ("orchestrator: conversation facts are never stored",
+     "pai/orchestrator.py",
+     "        res.learned = self._extract_facts(user_text, turn_id)",
+     "        res.learned = []  # MUTANT"),
+
+    ("orchestrator: a repeated fact is written every time",
+     "pai/orchestrator.py",
+     "            if current is not None and current.object.lower() == cand.object.lower():",
+     "            if False:"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

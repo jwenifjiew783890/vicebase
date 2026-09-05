@@ -391,3 +391,13 @@ s("mem_q_02", "memory", ["do you remember what I said last week"],
 s("mem_q_03", "memory", ["Maine tujhe ye pehle kab bataya tha?"],
   not_path="web")
 s("mem_q_04", "web", ["what's the latest nextjs version"], path="web")
+
+
+# ------------------------------------------------ round 4: fact extraction
+# These use the `signal` slot only as a carrier: the harness has no
+# extraction check, so the real coverage is tests/test_extraction.py plus
+# the four mutations. Kept here so the frozen set records that the
+# behaviour exists.
+s("fact_01", "memory", ["main neovim use karta hoon"], lang="hinglish")
+s("fact_02", "memory", ["I work at Anthropic"], lang="en")
+s("fact_03", "memory", ["I don't use neovim"], lang="en")

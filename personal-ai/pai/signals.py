@@ -87,6 +87,30 @@ _HI_MARKERS = {
     "namaste", "namaskar", "shukriya", "dhanyavaad", "alvida", "haal",
     "khol", "kholo", "band", "chahta", "chahti", "sakta", "sakti",
     "hona", "hone", "milega", "milegi", "dena", "lena", "yaad",
+    # Added after recomputing the language-match metric across every user
+    # turn and model reply in rounds 1-3. These are not exotic words; they
+    # are among the most common in the corpus, and every one of them was
+    # missing. "Simple bol." and "Chal Hinglish mein baat kar." were both
+    # classified as ENGLISH because of these gaps (F29, F31).
+    #
+    # Bare imperative stems -- how people actually give instructions.
+    "bol", "dekh", "chal", "soch", "likh", "padh", "samjha", "samjhao",
+    "bata", "sunn", "ruk", "ruko", "rakho", "utha", "laa", "de", "le",
+    # Pronouns and postpositions that carry real signal.
+    "main", "mai", "mein", "mujhse", "tujhe", "tujh", "unko", "inko",
+    "hamein", "humein", "tumhara", "tumhari", "tumhare", "kisko", "kiska",
+    "kis", "jis", "sabko",
+    # Extremely common verb forms.
+    "hoon", "hu", "hain", "hota", "hoti", "hote", "karta", "karti",
+    "karte", "karna", "kiya", "karunga", "karungi", "jaunga", "jaungi",
+    "bolunga", "bolungi", "dunga", "dungi", "lagta", "lagti", "lagte",
+    "milta", "milti", "chahta", "padta", "padti",
+    # Common nouns and adverbs.
+    "baat", "cheez", "chiz", "kaam", "waqt", "samay", "log", "aadmi",
+    "bhaiya", "didi", "khana", "paani", "ghar", "dost",
+    "abhi", "kabhi", "shayad", "zaroor", "bilkul", "waise", "aise",
+    "isliye", "kyunki", "matlab", "yaani", "phir", "wapas", "andar",
+    "bahar", "upar", "neeche", "saath", "bina", "tak", "liye",
 }
 
 # Romanised Hindi that COLLIDES with common English words. These count as
@@ -227,6 +251,14 @@ TOO_LONG = _p(
     # natural way this user actually asks for brevity.
     r"\bchh?ota (rakho|karo|kar|likho)\b",
     r"\bitna (lamba|bada|lamba-chauda|detail) (mat|nahi)\b",
+    # The QUESTION form. Round 2, M04 t2: "Arre itna bada answer kyun de
+    # raha hai?" produced no signal at all, because every Hindi pattern
+    # here assumed an imperative ("mat do") and he asked it as a complaint.
+    # It is one of the thirty mandatory probes and the detector was deaf to
+    # it -- the same shape of miss as F12, one phrasing over.
+    r"\bitna (lamba|bada|bda|lamba-chauda) (answer|jawab|reply)?\s*kyun\b",
+    r"\b(kyun|kyu) itna (lamba|bada)\b",
+    r"\bitna (lamba|bada)\b.{0,20}\?",
     r"\b(bada|lamba|lamba-chauda) (answer|jawab|reply)? ?mat (do|likho|bolo)\b",
     r"\bsimple (bol|bolo|batao|rakho|likho|karo)\b",
     r"\bshort (me|mein) (bol|batao|likho)\b",
@@ -242,6 +274,10 @@ TOO_SHORT = _p(
     r"\bmore detail\b", r"\bgo deeper\b", r"\btoo (short|brief|terse)\b",
     r"\bcan you expand\b", r"\bthoda (detail|vistaar) (me|mein)\b",
     r"\bdetail me batao\b", r"\bthoda aur\b", r"\bpoora batao\b",
+    # "isko detail mein explain kar" -- the natural Hinglish request for
+    # more, and the exact phrasing used in mandatory conversation M05.
+    r"\bdetail (me|mein) (explain|bata|batao|samjha|samjhao|likh)\b",
+    r"\b(vistaar|detail) (me|mein)\b", r"\baur (batao|bata|likho)\b",
     r"विस्तार से", r"थोड़ा और", r"पूरा बताओ",
 )
 

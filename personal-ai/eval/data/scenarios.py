@@ -372,3 +372,22 @@ s("bref_02", "web", ["wo wala"], not_path="web", ack=False)
 s("bref_03", "web", ["that thing"], not_path="web", ack=False)
 s("bref_04", "web", ["kal ka match kaun jeeta"], path="web")
 s("bref_05", "web", ["latest release notes for llama.cpp"], path="web")
+
+
+# ------------------------------------------------- round 4: language + memory
+# F29 -- markers the list was missing
+s("lang_01", "casual", ["Simple bol."], lang="hinglish")
+s("lang_02", "casual", ["Chal Hinglish mein baat kar."], lang="hinglish")
+s("lang_03", "casual", ["Main usually kis language mein baat karta hoon?"],
+  lang="hinglish")
+s("lang_04", "casual", ["I meant the deployment pipeline."], lang="en")
+s("lang_05", "casual", ["explain docker networking"], lang="en")
+
+# F32 -- a question about the shared history is not a web query
+s("mem_q_01", "memory", ["Kal maine jo bola tha yaad hai?"], not_path="web",
+  ack=False)
+s("mem_q_02", "memory", ["do you remember what I said last week"],
+  not_path="web", ack=False)
+s("mem_q_03", "memory", ["Maine tujhe ye pehle kab bataya tha?"],
+  not_path="web")
+s("mem_q_04", "web", ["what's the latest nextjs version"], path="web")

@@ -750,3 +750,158 @@ mechanism doing neither job well.
 This is the §5 rule applied to the most important failure in the set: the
 correction is detected deterministically and enforced by arithmetic, not
 requested in prose.
+
+---
+
+## F31 — An explicit order to switch language was ignored  ·  FIXED
+
+M08 is the mandatory probe for language switching on command. All four
+turns failed.
+
+```
+USER: Acha ab Hindi mein bol.            ("now speak Hindi")
+AI:   Bhai, main already English mein hi reply kar raha hoon taaki humara
+      mix bhi rahe...
+      -- it was not speaking English. It was speaking Hinglish, and it
+         said so in Hinglish.
+
+USER: Now speak English.
+AI:   Kya scene hai? Bhai, abhi thoda busy ho raha hoon, kaise ho?
+      -- answered an order to speak English, in Hindi.
+
+USER: Chal Hinglish mein baat kar.
+      [lang=en]  -- the detector missed it too: "chal", "baat" are not on
+                    the marker list
+```
+
+**Root cause, two independent bugs stacked.**
+
+1. The router detects the language the command *is written in*, not the
+   language it *asks for*. "Now speak English" is an English sentence, so
+   the directive said English — and then the model, dragged by four Hindi
+   turns of history, answered in Hindi anyway. The system had no concept of
+   a standing language preference at all; every turn was decided fresh.
+2. The marker list is missing very high-frequency words. Recomputing across
+   the round-2 corpus turned up "main", "mein", "baat", "chal", "bol",
+   "hoon", "kis", "karta" — all absent. F29 was the tip of this.
+
+**Fix.** `LANGUAGE_COMMAND` — a deterministic pattern that recognises an
+instruction to switch, in either language, and sets a **session-sticky
+override** that beats per-turn detection until the user changes it again.
+An order is categorical; treating it as one more data point for a heuristic
+was the mistake. Plus roughly forty additional markers, validated against
+every user turn and model reply in rounds 1-3.
+
+---
+
+## Measurement note — the language-match metric was scoring the wrong thing
+
+Found while investigating F29. `lang_match_rate` compared
+`is_hindi_ish(user_turn)` with `is_hindi_ish(reply)` on **every** turn,
+including bare fillers. Once "hmm" correctly inherits the conversation's
+language (F22), a Hindi reply to "hmm" is the right answer — and the old
+formula counted it as a mismatch.
+
+**The metric would have penalised the fix and rewarded the bug.**
+
+Corrected to score only turns where the user actually committed to a
+language. On round 2 this moves the number from 85% to 90%, and, far more
+usefully, reduces ten "failures" to six real ones — every one of which
+turned out to be F29 or F31.
+
+---
+
+## F32 — "Do you remember what I said yesterday?" went to Google  ·  FIXED
+
+```
+M07 t2  USER: Kal maine jo bola tha yaad hai?
+        ROUTE: web   ACK: "ruko, checking"   ran=web.search[EMPTY]
+```
+
+VOLATILE matched "kal". The turn is a question, it names things that look
+like subjects, and nothing in the router knew that a question about *the
+two of you* is never a question for a search engine.
+
+**Fix.** `MEMORY_QUERY` — a question that refers to the shared history
+("yaad hai", "maine bola tha", "you said", "we talked about", "pehle
+bataya tha") suppresses the web entirely and searches episodic and semantic
+memory instead.
+
+---
+
+## F33 — It confabulated a memory of the conversation  ·  FIXED
+
+The same turn, and much worse than the routing.
+
+```
+USER: Kal maine jo bola tha yaad hai?   ("remember what I said yesterday?")
+AI:   Haan yaad hai, kal tumne kaha tha ki tu project launch kar raha hai
+      aur team ko ek meeting call karwana hai.
+      ("Yes I remember, yesterday you said you're launching the project
+        and need to call a team meeting.")
+```
+
+He had said no such thing. There was no such conversation. The store was
+empty of it and the web search had just returned `EMPTY`.
+
+**Why both existing guards missed it.** `SOURCE_CLAIM` looks for claims
+about an *external* source — the web, the docs, your notes. "Haan yaad hai"
+claims no source at all. It claims a *memory*, which is a different kind of
+lie and, in a product whose entire premise is that it remembers you, a
+worse one. The empty-retrieval directive fired correctly and the model
+answered around it.
+
+Note the shape: this is F1 from round 1 — confabulating a personal detail —
+resurfacing through a door that had not been closed. That is the third time
+in this project that an honesty defence turned out to cover one phrasing of
+a failure and not its neighbour.
+
+**Fix.** `MEMORY_CLAIM`, a third guard in the same family: when the turn is
+a memory question and nothing was retrieved from episodic or semantic
+memory, an affirmative "yes I remember" is replaced with an honest one. And
+`route.memory_query` now actually searches the store, so when there IS a
+record the affirmation is true and passes through untouched.
+
+---
+
+## F34 — It searched the web for the word "latest"  ·  FIXED
+
+Visible only once the web path actually ran (F24), which is a pattern worth
+noting on its own: fixing a defect exposes the next one behind it.
+
+```
+M10 t4  USER: Iska latest answer web se check kar.
+        rewrite_query(...) -> "latest ."
+        ran=web.search[OK]  evidence=2
+AI:     "Is topic (Cheap Trick album) se related kuch nahi mila..."
+```
+
+`rewrite_query` strips conversational scaffolding, which is right, and then
+returns whatever is left even when what is left is nothing. "Iska latest
+answer web se check kar" is almost entirely scaffolding: the subject is
+"iska" — *this* — and what "this" refers to is in the previous turn.
+DuckDuckGo answered the query "latest" with an album by Cheap Trick, and
+two irrelevant results were injected as evidence.
+
+**Credit where it is due:** the model handled it correctly. It said the
+results were about a Cheap Trick album and unrelated, rather than trying to
+use them. But that is the model being sensible, not the system being right,
+and a weaker turn would have used them.
+
+**Fix**, two parts:
+
+1. `rewrite_query` returns **empty** when nothing contentful survives, and
+   an empty query is not searched — the turn goes straight to the
+   no-evidence directive, which is the honest state.
+2. The back-reference is resolved against the previous user turn before
+   giving up. "Iska latest answer web se check kar", after "Meri Obsidian
+   mein check kar auth ke baare mein kya likha hai", searches for the auth
+   question rather than for "latest".
+
+**Deliberately not fixed:** a relevance floor on web results, to mirror the
+one on vault chunks. The vault taught the opposite lesson — a lexical gate
+applied to everything rejects exactly the semantically-relevant,
+lexically-disjoint results retrieval exists to find (F18's over-correction).
+Fixing the query is the root cause; gating the results would be treating
+the symptom. Stated here so the asymmetry is a decision rather than an
+oversight.

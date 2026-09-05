@@ -1,0 +1,36 @@
+TEST #M09
+Scenario:
+  frustration and topic abandonment
+
+USER:
+  Yaar kya bakwaas hai ye.
+AI:  [route=fast lang=hinglish 10w/2s ttft=11376ms 5.9tok/s]
+  Arre yaar, abhi toh bas aaya message. Kya haal chaal?
+
+USER:
+  Actually mujhe kuch aur karna tha.
+AI:  [route=fast lang=hinglish 12w/2s ttft=13571ms 6.4tok/s]
+  Haan, batao kya plan hai? Kuch aur karne ka soch raha tha?
+
+USER:
+  Acha chhod, koi aur baat karte hain.
+AI:  [route=fast lang=hinglish 6w/1s ttft=16285ms 6.1tok/s]
+  Arre theek hai, baat chalati rahega.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         9.3
+  p90 words                10
+  max words                12
+  AI-tell phrases          0  []
+  filler turn rate         100%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.05
+  opener variety           100%

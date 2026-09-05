@@ -79,6 +79,23 @@ def is_hindi_ish(s: str) -> bool:
     return detect_language(s) in ("hi", "hinglish")
 
 
+def has_language_signal(s: str) -> bool:
+    """Does this turn commit to a language at all?
+
+    A bare "hmm", "ok" or "thanks" does not. Scoring those against the
+    reply's language is a measurement bug, not a model failure: once bare
+    fillers correctly inherit the conversation's language, a Hindi reply to
+    "hmm" is the RIGHT answer and the old formula counted it as a mismatch.
+    The metric would then have penalised the fix for F22 and rewarded the
+    bug.
+
+    Implemented by asking the detector twice with opposite defaults: a turn
+    with real evidence answers the same way both times.
+    """
+    from pai.signals import detect_language
+    return detect_language(s, default="hi") == detect_language(s, default="en")
+
+
 @dataclass
 class ConvMetrics:
     turns: int = 0
@@ -96,6 +113,7 @@ class ConvMetrics:
     disagree_turns: int = 0
     honest_unknown: int = 0
     lang_match_rate: float = 0.0
+    lang_scored_turns: int = 0
     repetition_score: float = 0.0
     opener_variety: float = 0.0
 
@@ -127,9 +145,12 @@ def analyse(user_turns: Sequence[str], ai_turns: Sequence[str]) -> ConvMetrics:
     m.disagree_turns = sum(1 for a in ai_turns if DISAGREE.search(a))
     m.honest_unknown = sum(1 for a in ai_turns if REFUSAL_HONEST.search(a))
 
+    # Only turns where the user actually chose a language can be scored.
     matches = [is_hindi_ish(u) == is_hindi_ish(a)
-               for u, a in zip(user_turns, ai_turns) if a.strip()]
-    m.lang_match_rate = sum(matches) / len(matches) if matches else 0.0
+               for u, a in zip(user_turns, ai_turns)
+               if a.strip() and has_language_signal(u)]
+    m.lang_match_rate = sum(matches) / len(matches) if matches else 1.0
+    m.lang_scored_turns = len(matches)
 
     # Cross-turn repetition: how much of each reply's vocabulary already
     # appeared in the previous reply. High values = the model is looping.
@@ -162,7 +183,8 @@ def render(m: ConvMetrics, label: str = "") -> str:
         ("agreement rate", f"{m.agreement_rate:.0%}"),
         ("disagreement turns", m.disagree_turns),
         ("honest 'unknown'", m.honest_unknown),
-        ("language match", f"{m.lang_match_rate:.0%}"),
+        ("language match", f"{m.lang_match_rate:.0%} "
+                            f"(of {m.lang_scored_turns} scorable turns)"),
         ("cross-turn repetition", f"{m.repetition_score:.2f}"),
         ("opener variety", f"{m.opener_variety:.0%}"),
     ]

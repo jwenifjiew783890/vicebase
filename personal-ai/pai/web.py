@@ -185,13 +185,42 @@ def search(query: str, k: int = 5, use_cache: bool = True) -> SearchOutcome:
     return outcome
 
 
-def rewrite_query(user_text: str) -> str:
+# Words that cannot carry a query on their own. If nothing but these
+# survives the rewrite, there is nothing to search for.
+_HOLLOW = {"latest", "current", "now", "today", "recent", "this", "that",
+           "it", "one", "thing", "answer", "aaj", "abhi", "kal", "taza",
+           "wala", "wali", "ye", "yeh", "wo", "woh", "iska", "uska"}
+
+
+def rewrite_query(user_text: str, context: str = "") -> str:
     """Turn a conversational utterance into a search query.
 
     A 4B model's raw phrasing makes poor queries, and this runs before any
     model call anyway. Deterministic: strip conversational scaffolding and
     the Hindi/Hinglish request verbs, keep the content words.
+
+    Returns "" when nothing contentful survives, and an empty query is NOT
+    searched.
+
+    MEASURED, M10 t4: "Iska latest answer web se check kar" is almost
+    entirely scaffolding -- its subject is "iska", *this*, and what "this"
+    refers to is in the previous turn. The rewrite reduced it to "latest .",
+    which DuckDuckGo answered with an album by Cheap Trick, and two
+    irrelevant results were injected as evidence. `context` is the previous
+    user turn, used to resolve exactly that case.
     """
+    q = _rewrite(user_text)
+    if _is_hollow(q) and context:
+        q = _rewrite(context)
+    return "" if _is_hollow(q) else q
+
+
+def _is_hollow(q: str) -> bool:
+    words = [w for w in re.findall(r"[\w\u0900-\u097f]+", q.lower())]
+    return not [w for w in words if w not in _HOLLOW and len(w) > 1]
+
+
+def _rewrite(user_text: str) -> str:
     t = user_text.strip()
     t = re.sub(r"^(hey|yaar|arre|acha|ok|so|umm|bhai)[,\s]+", "", t, flags=re.I)
     t = re.sub(r"\b(can you|could you|please|search (the )?web for|"
@@ -208,4 +237,9 @@ def rewrite_query(user_text: str) -> str:
     t = re.sub(r"^\b(ke|ka|ki|se|me|mein|ko|aur|to|toh)\b\s*", "", t, flags=re.I)
     t = re.sub(r"[?।]+", " ", t)
     t = _WS.sub(" ", t).strip()
-    return t or user_text.strip()
+    # Deliberately NOT `or user_text.strip()`. Falling back to the original
+    # text when the rewrite stripped everything is what sent "check kar" and
+    # "Iska latest answer web se check kar" to a search engine. An
+    # utterance that is entirely scaffolding has no query in it, and the
+    # caller needs to be able to tell.
+    return t

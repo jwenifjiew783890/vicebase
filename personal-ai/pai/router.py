@@ -183,6 +183,69 @@ FORCE_VAULT = re.compile(
     r"|नोट्स|वॉल्ट",
     re.IGNORECASE | re.UNICODE)
 
+# A question about the shared history. Never a web query, whatever
+# temporal word it happens to contain.
+#
+# MEASURED, M07 t2: "Kal maine jo bola tha yaad hai?" ("remember what I
+# said yesterday?") matched VOLATILE on "kal" and routed to a WEB SEARCH,
+# announced with "ruko, checking".
+MEMORY_QUERY = re.compile(
+    r"\b(do you )?remember\b|\b(you|we) (said|told|discussed|talked|agreed)\b"
+    r"|\bi (said|told you|mentioned)\b|\blast (time|week|night)\b"
+    r"|\bwhat did (i|we|you) (say|tell|decide)\b"
+    r"|\byaad (hai|h|hai\?|nahi)\b|\byaad\b"
+    r"|\b(maine|tumne|humne|hamne) .{0,24}(bola|kaha|bataya|batayi|discuss)"
+    r"|\bpehle (bataya|bola|kaha|discuss)"
+    r"|याद है|मैंने कहा|तुमने कहा",
+    re.IGNORECASE | re.UNICODE)
+
+
+# An explicit instruction to switch language. This is an ORDER, and the
+# language it is WRITTEN in is not the language it ASKS for -- "Now speak
+# English" is an English sentence and "Acha ab Hindi mein bol" is a Hindi
+# one, and both were previously routed by the language of the sentence
+# rather than by what it demanded.
+#
+# MEASURED, mandatory conversation M08 -- the probe that exists for exactly
+# this behaviour -- where all four turns failed. "Now speak English." was
+# answered in Hindi. "Acha ab Hindi mein bol" produced "main already
+# English mein hi reply kar raha hoon", which was both wrong and written in
+# Hinglish.
+#
+# The match sets a session-sticky override that outranks per-turn
+# detection until the user changes it again. An order is categorical;
+# treating it as one more input to a heuristic was the mistake.
+LANGUAGE_COMMAND = [
+    ("hi", re.compile(
+        r"\b(speak|talk|reply|answer|write|say (it|that))\s+(in\s+)?hindi\b"
+        r"|\bhindi\s+(?:me|mein|men|mai|main)\s*(bol|bolo|bat|baat|likh|reply|jawab)"
+        r"|\bhindi\s+(?:me|mein|men|mai|main)\b"
+        r"|हिंदी में", re.IGNORECASE | re.UNICODE)),
+    ("hinglish", re.compile(
+        r"\b(speak|talk|reply|answer|write)\s+(in\s+)?hinglish\b"
+        r"|\bhinglish\s+(?:me|mein|men|mai|main)\b"
+        r"|\bmix\s+(?:me|mein|men|mai|main)\s*(bol|baat)", re.IGNORECASE | re.UNICODE)),
+    ("en", re.compile(
+        r"\b(speak|talk|reply|answer|write|say (it|that))\s+(in\s+)?english\b"
+        r"|\benglish\s+(?:me|mein|men|mai|main)\s*(bol|bolo|bat|baat|likh|reply|jawab)"
+        r"|\benglish\s+(?:me|mein|men|mai|main)\b"
+        r"|अंग्रेज़ी में|इंग्लिश में", re.IGNORECASE | re.UNICODE)),
+]
+
+
+def language_command(text: str) -> str | None:
+    """Which language is the user ORDERING, if any?
+
+    Hinglish is checked before Hindi and English because "Hinglish mein
+    baat kar" contains neither "hindi" nor "english" as a whole word, but a
+    looser pattern would match it twice.
+    """
+    for lang, pattern in LANGUAGE_COMMAND:
+        if pattern.search(text):
+            return lang
+    return None
+
+
 # Retraction. The user is calling something OFF. This is the one pattern in
 # the router that exists for safety rather than quality, so it is checked
 # before everything else and it never reaches the planner.
@@ -341,6 +404,12 @@ class Route:
     # A delegation request that has everything OpenCode needs to start.
     # Only a ready delegation may be acknowledged with "on it".
     delegate_ready: bool = False
+    # A question about the shared conversation history. Answered from the
+    # store; never from the web.
+    memory_query: bool = False
+    # The user explicitly ordered this language. The caller should make it
+    # stick for the rest of the session rather than re-detecting each turn.
+    lang_locked: bool = False
     lang: str = "en"
     reasons: list[str] = field(default_factory=list)
 
@@ -419,11 +488,19 @@ class Router:
         # inherits the conversation's language rather than defaulting to
         # English -- see _NEUTRAL in signals.py and conversation A01.
         lang = detect_language(user_text, default=prev_lang or "en")
+        # An explicit order outranks detection, in both directions: it sets
+        # the language for this turn AND is reported so the caller can make
+        # it stick.
+        ordered = language_command(user_text)
+        if ordered:
+            lang = ordered
         r = Route(path=Path.FAST, lang=lang)
+        r.lang_locked = bool(ordered)
 
         forced_web = bool(FORCE_WEB.search(user_text))
         forbidden = bool(FORCE_NO_TOOL.search(user_text))
         forced_vault = bool(FORCE_VAULT.search(user_text))
+        memory_q = bool(MEMORY_QUERY.search(user_text))
 
         # 0. Retraction outranks every other rule, including the explicit
         #    overrides below. "Wait, don't do that" must not be able to
@@ -520,7 +597,12 @@ class Router:
         strong_vault = (best_dense >= self.cfg.strong_dense
                         or best_bm25 >= self.cfg.strong_bm25)
 
-        if forced_vault and not forced_web:
+        if memory_q and not forced_web:
+            # A question about the two of you is answered from the store or
+            # not at all.
+            r.memory_query = True
+            r.reasons.append("memory question, web suppressed")
+        elif forced_vault and not forced_web:
             # "check my notes for X" is a vault instruction. Reading it as a
             # volatile web query as well is how M10 turn 3 and turn 4 ended
             # up answering an Obsidian question from a search engine.

@@ -386,13 +386,41 @@ class LearningLoop:
                           "reason": "learned: prefers detail"},
     }
 
-    def generation_params(self, base_max_tokens: int = 300) -> dict:
-        """Generation settings implied by the currently active rules.
+    # A style correction made IN this conversation applies to the rest of
+    # this conversation, immediately, without waiting for promotion.
+    #
+    # Promotion deliberately needs evidence from three DISTINCT sessions --
+    # that is what stops one bad afternoon from becoming a permanent rule,
+    # and it is correct. But it answers a different question. "Arre itna
+    # bada answer kyun de raha hai?" is not weak evidence about the user's
+    # long-term preferences; it is an unambiguous instruction about the
+    # next reply, and obeying it should not be contingent on him saying it
+    # again next week.
+    SESSION_STYLE = {
+        Signal.STYLE_TOO_LONG:  "style.brevity",
+        Signal.STYLE_TOO_SHORT: "style.detail",
+    }
+
+    def session_style(self, user_text: str) -> str | None:
+        """The style key an explicit correction in this turn asks for."""
+        for d in detect(user_text):
+            key = self.SESSION_STYLE.get(d.signal)
+            if key:
+                return key
+        return None
+
+    def generation_params(self, base_max_tokens: int = 300,
+                          session_style: str | None = None) -> dict:
+        """Generation settings implied by the active rules and this session.
 
         Returned to the orchestrator, which applies them to the call. A rule
         that can be enforced is enforced; the prose stays in the prompt too,
         because the two reinforce each other and the prose is what the user
         reads in the review queue.
+
+        `session_style` is an in-conversation correction. It is applied LAST
+        so it beats a promoted rule -- what he just said outranks what he
+        used to prefer.
         """
         params: dict = {"max_tokens": base_max_tokens,
                         "max_sentences": None, "applied": []}
@@ -403,6 +431,12 @@ class LearningLoop:
             params["max_tokens"] = eff["max_tokens"]
             params["max_sentences"] = eff["max_sentences"]
             params["applied"].append((rule.rule_key, eff["reason"]))
+        eff = self.RULE_EFFECTS.get(session_style or "")
+        if eff:
+            params["max_tokens"] = eff["max_tokens"]
+            params["max_sentences"] = eff["max_sentences"]
+            params["applied"].append(
+                (session_style, "asked for it in this conversation"))
         return params
 
     # ------------------------------------------------------- prompt export

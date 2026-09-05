@@ -68,8 +68,27 @@ class TestQueryRewriting(unittest.TestCase):
         self.assertNotIn("kar", out.split())
         self.assertIn("nextjs", out)
 
-    def test_never_returns_empty(self):
-        for q in ["check kar", "batao", "search karo", "?"]:
+    def test_a_contentless_utterance_yields_no_query(self):
+        """This test used to assert the opposite, and the opposite was the
+        bug.
+
+        Returning the original text when the rewrite stripped everything
+        looked like a safe fallback. It is not: "Iska latest answer web se
+        check kar" reduced to "latest .", which DuckDuckGo answered with an
+        album by Cheap Trick, and two irrelevant results were injected as
+        evidence (M10 t4, round 3). There is nothing to search for here,
+        and saying so is the correct outcome.
+        """
+        for q in ["check kar", "batao", "search karo", "?",
+                  "Iska latest answer web se check kar."]:
+            self.assertEqual(rewrite_query(q), "", q)
+
+    def test_a_real_query_survives_the_rewrite(self):
+        """ANTI-FALSE-GREEN for the test above."""
+        for q in ["what is the latest nextjs version",
+                  "current price of bitcoin",
+                  "aaj ka weather kya hai",
+                  "search the web for the nextjs 15 release"]:
             self.assertTrue(rewrite_query(q).strip(), q)
 
     def test_leaves_a_clean_query_alone(self):

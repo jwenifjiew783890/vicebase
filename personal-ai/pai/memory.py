@@ -30,6 +30,7 @@ subsystem from destroying itself over months of use:
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
 from dataclasses import dataclass, field
@@ -167,6 +168,18 @@ class Fact:
         return self.valid_to is None
 
 
+# Words that carry no retrieval signal. Kept small on purpose: this is a
+# recall aid, not a search engine, and over-filtering a short question
+# leaves nothing to match on.
+_STOP = {
+    "the", "and", "for", "that", "this", "with", "you", "was", "were",
+    "did", "does", "have", "has", "had", "what", "when", "where", "which",
+    "your", "yours", "about", "remember", "said", "say", "told", "tell",
+    "yaad", "bola", "bataya", "kaha", "tha", "thi", "the", "hai", "hain",
+    "maine", "tumne", "mujhe", "tujhe", "kya", "kab", "kaun", "wala",
+}
+
+
 class MemoryStore:
     """SQLite-backed four-tier memory."""
 
@@ -212,6 +225,34 @@ class MemoryStore:
         ))
 
     # ------------------------------------------------------------- episodic
+
+    def search_turns(self, query: str, limit: int = 4,
+                     exclude_session: str | None = None) -> list[sqlite3.Row]:
+        """Content-word search across every stored turn, all sessions.
+
+        Deliberately dumb -- overlap on content words, ranked by how many
+        match. The point is not retrieval quality; it is that a question
+        about the shared history has SOMETHING to be answered from, or
+        provably nothing. `self.turns()` is per-session and could not
+        answer "what did I say yesterday" even in principle.
+        """
+        words = {w for w in re.findall(r"[\w\u0900-\u097f]+", query.lower())
+                 if len(w) > 2 and w not in _STOP}
+        if not words:
+            return []
+        rows = self.db.execute(
+            "SELECT session_id, role, text, ts FROM turns "
+            "ORDER BY ts DESC LIMIT 400").fetchall()
+        scored = []
+        for r in rows:
+            if exclude_session and r["session_id"] == exclude_session:
+                continue
+            have = set(re.findall(r"[\w\u0900-\u097f]+", r["text"].lower()))
+            hit = len(words & have)
+            if hit:
+                scored.append((hit, r))
+        scored.sort(key=lambda x: -x[0])
+        return [r for _, r in scored[:limit]]
 
     def add_episode(
         self, session_id: str, summary: str, ts_start: float, ts_end: float,

@@ -246,8 +246,8 @@ MUTATIONS = [
 
     ("orchestrator: fabricated source claims allowed through",
      "pai/orchestrator.py",
-     "        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
-     "        if False:"),
+     "        elif res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
+     "        elif False:"),
 
     ("orchestrator: claimed-but-unrun actions allowed through",
      "pai/orchestrator.py",
@@ -295,8 +295,51 @@ MUTATIONS = [
 
     ("orchestrator: source claims allowed on the fast path",
      "pai/orchestrator.py",
-     "        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
-     "        if route.needs_web and SOURCE_CLAIM.search(res.text):"),
+     "        elif res.evidence == 0 and SOURCE_CLAIM.search(res.text):",
+     "        elif route.needs_web and SOURCE_CLAIM.search(res.text):"),
+
+    # ---- round 4: language commands, in-session style, memory questions --
+
+    ("router: explicit language orders ignored", "pai/router.py",
+     "        ordered = language_command(user_text)",
+     "        ordered = None  # MUTANT"),
+
+    ("orchestrator: a locked language does not stick", "pai/orchestrator.py",
+     "        elif locked:\n            route.lang = locked",
+     "        elif False:\n            route.lang = locked"),
+
+    ("signals: bare imperatives are English again", "pai/signals.py",
+     '    "bol", "dekh", "chal", "soch", "likh", "padh", "samjha", "samjhao",',
+     '    "__bol", "__dekh", "__chal", "__soch", "__likh", "__padh",'),
+
+    ("learning: an in-session style correction is ignored", "pai/learning.py",
+     "        eff = self.RULE_EFFECTS.get(session_style or \"\")",
+     "        eff = None  # MUTANT"),
+
+    ("orchestrator: style corrections do not persist in the session",
+     "pai/orchestrator.py",
+     "        if style:\n            self._style[session_id] = style",
+     "        if False:\n            self._style[session_id] = style"),
+
+    ("router: memory questions may become web queries", "pai/router.py",
+     "        if memory_q and not forced_web:",
+     "        if False and not forced_web:"),
+
+    ("orchestrator: memory questions search nothing", "pai/orchestrator.py",
+     "        if route.memory_query:\n"
+     "            for row in self.store.search_turns(user_text,",
+     "        if False:\n"
+     "            for row in self.store.search_turns(user_text,"),
+
+    ("orchestrator: invented memories allowed through", "pai/orchestrator.py",
+     "        if route.memory_query and res.evidence == 0 \\\n"
+     "                and MEMORY_CLAIM.search(res.text):",
+     "        if False and res.evidence == 0 \\\n"
+     "                and MEMORY_CLAIM.search(res.text):"),
+
+    ("memory: turn search leaks the current session", "pai/memory.py",
+     "            if exclude_session and r[\"session_id\"] == exclude_session:",
+     "            if False:"),
 
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',

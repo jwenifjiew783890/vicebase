@@ -288,6 +288,9 @@ NO_EVIDENCE_DIRECTIVE = {
     "vault": "His notes were searched and contain NOTHING about this. Say "
              "plainly that there is nothing in his notes about it. Do NOT "
              "describe what his notes say.",
+    "memory": "You have NO record of this conversation. Say plainly that "
+              "you do not remember it. Do NOT say you remember, and do NOT "
+              "describe what he supposedly said.",
 }
 
 # Claims that a capability was ACTUALLY invoked. Checked only when the
@@ -378,6 +381,34 @@ def _pending_reply(decision, lang: str) -> str:
         why=decision.why)
 
 
+# Claims to remember something. The third guard in this family, and the
+# one that had to be written after the first two were already in place.
+#
+# MEASURED, M07 t2. The user asked "Kal maine jo bola tha yaad hai?" and
+# the assistant answered "Haan yaad hai, kal tumne kaha tha ki tu project
+# launch kar raha hai aur team ko ek meeting call karwana hai." He had said
+# no such thing; there was no such conversation; the store was empty and
+# the web search had just returned EMPTY.
+#
+# SOURCE_CLAIM missed it because it looks for claims about an EXTERNAL
+# source. "Haan yaad hai" claims no source. It claims a memory -- a
+# different lie, and in a product whose premise is that it remembers you,
+# a worse one.
+MEMORY_CLAIM = re.compile(
+    r"\b(yes|yeah|yep),? i remember\b|\bi remember (that|when|you)\b"
+    r"|\byou (said|told me|mentioned) that\b"
+    r"|\bhaan+,? yaad hai\b|\byaad hai,? (tum|tu|aap)\b"
+    r"|\b(tumne|aapne|tune) (kaha|bola|bataya) tha\b"
+    r"|हाँ याद है|तुमने कहा था",
+    re.IGNORECASE | re.UNICODE)
+
+NO_MEMORY_REPLY = {
+    "en": "I don't have any record of that, so I'd rather not pretend.",
+    "hi": "Mere paas iska koi record nahi hai -- jhooth nahi bolunga.",
+    "hinglish": "Mere paas iska koi record nahi hai, guess nahi karunga.",
+}
+
+
 # Deterministic reply to a bare retraction, and the continuation phrases
 # that must never appear in one.
 #
@@ -453,8 +484,17 @@ class Orchestrator:
         # Per-session state the deterministic layer owns.
         self._pending: dict[str, list[Decision]] = {}
         self._lang: dict[str, str] = {}
+        # Style corrections made in a conversation, scoped to it.
+        self._style: dict[str, str] = {}
+        # A language the user explicitly ordered, scoped to the session.
+        self._lang_locked: dict[str, str] = {}
 
     # ------------------------------------------------------------ helpers
+
+    def _previous_user_turn(self, session_id: str) -> str:
+        """The user turn before this one, for resolving back-references."""
+        rows = [r for r in self.store.turns(session_id) if r["role"] == "user"]
+        return rows[-2]["text"] if len(rows) >= 2 else ""
 
     def _cancel_pending(self, session_id: str) -> list[str]:
         """Drop every action awaiting confirmation for this session.
@@ -466,7 +506,7 @@ class Orchestrator:
         return [d.action.name for d in pending]
 
     def _search_web(self, user_text: str, channel: Channel,
-                    res: "TurnResult") -> list:
+                    res: "TurnResult", previous_user_turn: str = "") -> list:
         """Run the web search the route asked for, through the gateway.
 
         Returns the results, possibly empty. Empty is a legitimate outcome
@@ -474,7 +514,12 @@ class Orchestrator:
         NO_EVIDENCE_DIRECTIVE and SOURCE_CLAIM.
         """
         from .web import rewrite_query
-        action = Action("web.search", {"query": rewrite_query(user_text)},
+        query = rewrite_query(user_text, context=previous_user_turn)
+        if not query:
+            # Nothing to search for. Searching anyway is how "Iska latest
+            # answer web se check kar" ended up retrieving an album review.
+            return []
+        action = Action("web.search", {"query": query},
                         reason="route chose the web path")
         decision = self.gateway.submit(action, Trust.USER, channel)
         if decision.verdict is not Verdict.ALLOW:
@@ -559,10 +604,18 @@ class Orchestrator:
         hits: list[Hit] = self.vault.search(user_text, k=5)
         res.timings_ms["retrieval"] = (time.perf_counter() - t_r) * 1000
 
-        route = self.router.route(user_text, hits, turn_index=self.turn_index,
-                                  prev_lang=self._lang.get(session_id, "en"))
+        # A locked language survives later turns: once he says "speak
+        # English", a Hindi-looking turn does not silently switch him back.
+        locked = self._lang_locked.get(session_id)
+        route = self.router.route(
+            user_text, hits, turn_index=self.turn_index,
+            prev_lang=locked or self._lang.get(session_id, "en"))
         res.route = route
         self.turn_index += 1
+        if route.lang_locked:
+            self._lang_locked[session_id] = route.lang
+        elif locked:
+            route.lang = locked
         if route.lang:
             self._lang[session_id] = route.lang
 
@@ -594,10 +647,22 @@ class Orchestrator:
         #     invented answer attributed to the internet. The search runs
         #     through the gateway like any other capability, so its output is
         #     tainted, injection-scanned and audited.
+        # 4a. A memory question is answered from the store. Without this
+        #     the turn has nothing at all in context and the model invents
+        #     a plausible past (F33).
+        history_blocks: list[str] = []
+        if route.memory_query:
+            for row in self.store.search_turns(user_text,
+                                               exclude_session=session_id):
+                who = "he" if row["role"] == "user" else "you"
+                history_blocks.append(f"- {who} said: {row['text']}")
+
         web_blocks: list[str] = []
         if route.needs_web:
             t_w = time.perf_counter()
-            outcome = self._search_web(user_text, channel, res)
+            outcome = self._search_web(
+                user_text, channel, res,
+                previous_user_turn=self._previous_user_turn(session_id))
             res.timings_ms["web"] = (time.perf_counter() - t_w) * 1000
             web_blocks = [str(r.as_context()) for r in outcome[:3]]
 
@@ -610,7 +675,12 @@ class Orchestrator:
         if web_blocks:
             context += ("\n\n" if context else "") + wrap_untrusted(
                 "\n\n".join(web_blocks), "web-search")
-        res.evidence = len(route.inject) + len(web_blocks)
+        if history_blocks:
+            context += ("\n\n" if context else "") + (
+                "From your earlier conversations with him:\n"
+                + "\n".join(history_blocks))
+        res.evidence = (len(route.inject) + len(web_blocks)
+                        + len(history_blocks))
 
         system = self.build_system_prompt(route.lang)
         # A retrieval path that came back empty must say so. Without this the
@@ -622,6 +692,8 @@ class Orchestrator:
                 system += "\n\n" + NO_EVIDENCE_DIRECTIVE["web"]
             elif route.vault_forced:
                 system += "\n\n" + NO_EVIDENCE_DIRECTIVE["vault"]
+            elif route.memory_query:
+                system += "\n\n" + NO_EVIDENCE_DIRECTIVE["memory"]
 
         # Question restraint, asked for BEFORE generation as well as
         # enforced after it.
@@ -646,7 +718,17 @@ class Orchestrator:
         # Apply generation limits implied by learned rules. A learned
         # brevity preference becomes a token cap, not a polite request --
         # the end-to-end test showed the request alone does not work.
-        params = self.learning.generation_params()
+        # An explicit style correction takes effect on THIS reply -- the
+        # user is correcting the previous one, so the next thing he hears
+        # has to be different. MEASURED, M04: he said "Arre itna bada
+        # answer kyun de raha hai?" and then "Simple bol.", and the replies
+        # went 33 -> 22 -> 27 -> 40 words. The longest answer in the
+        # conversation came two turns after he asked for shorter ones.
+        style = self.learning.session_style(user_text)
+        if style:
+            self._style[session_id] = style
+        params = self.learning.generation_params(
+            session_style=self._style.get(session_id))
         res.gen_params = params
         applied = params.get("applied") or []
         if applied and hasattr(self.conversation, "max_tokens"):
@@ -686,7 +768,11 @@ class Orchestrator:
         # all on the web and vault paths; this covers the fast path too,
         # which is speculative and is flagged as such. Round 3 watches for
         # the guard firing on a reply that did not deserve it.
-        if res.evidence == 0 and SOURCE_CLAIM.search(res.text):
+        if route.memory_query and res.evidence == 0 \
+                and MEMORY_CLAIM.search(res.text):
+            res.guard_tripped = "fabricated_memory"
+            res.text = NO_MEMORY_REPLY.get(route.lang, NO_MEMORY_REPLY["en"])
+        elif res.evidence == 0 and SOURCE_CLAIM.search(res.text):
             res.guard_tripped = "fabricated_source_claim"
             res.text = NO_EVIDENCE_REPLY.get(route.lang,
                                              NO_EVIDENCE_REPLY["en"])

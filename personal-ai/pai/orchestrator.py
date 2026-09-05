@@ -20,10 +20,11 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Protocol, Sequence
+from typing import Any, Callable, Optional, Protocol, Sequence
 
 from .gateway import (Action, Channel, Decision, ExecResult, ExecStatus,
-                      Gateway, Tainted, Verdict, execute, wrap_untrusted)
+                      Gateway, REGISTRY, Tainted, Verdict, execute,
+                      wrap_untrusted)
 from .learning import LearningLoop
 from .memory import MemoryStore
 from .obsidian import Hit, VaultIndex
@@ -160,6 +161,19 @@ class Orchestrator:
         self.router = router or Router()
         self.learning = learning or LearningLoop(store)
         self.turn_index = 0
+        # Capabilities with a real backend. Everything else in REGISTRY is
+        # declared, permission-tiered and audited, but not yet executable.
+        self.handlers: dict[str, Callable[[Action], Any]] = {
+            "obsidian.search": lambda a: self.vault.search(
+                a.args["query"], k=a.args.get("k", 5)),
+            "obsidian.read": lambda a: [
+                h for h in self.vault.chunks.values()
+                if h.path == a.args["path"]],
+            "memory.recall": lambda a: [
+                dict(r) for r in self.store.db.execute(
+                    "SELECT subject,predicate,object FROM facts "
+                    "WHERE valid_to IS NULL")],
+        }
 
     # ------------------------------------------------------------ prompt
 
@@ -247,7 +261,23 @@ class Orchestrator:
         return res
 
     def _runner(self, action: Action):
-        """Tool dispatch. Real implementations are injected per capability."""
-        if action.name == "obsidian.search":
-            return self.vault.search(action.args["query"], k=action.args.get("k", 5))
-        return None
+        """Dispatch an approved action to its implementation.
+
+        Only capabilities with a registered handler can actually run. An
+        unimplemented one raises, which the gateway types as EXEC_ERR --
+        deliberately NOT the None that used to fall through to EMPTY.
+        EMPTY means "ran fine, found nothing" and instructs the model to say
+        it could not find anything; that is a false statement when the truth
+        is that the tool does not exist yet.
+        """
+        handler = self.handlers.get(action.name)
+        if handler is None:
+            raise NotImplementedError(
+                f"no handler registered for {action.name!r}")
+        return handler(action)
+
+    def register(self, name: str, handler: Callable[[Action], Any]) -> None:
+        """Wire a real implementation for one capability."""
+        if name not in REGISTRY:
+            raise KeyError(f"{name!r} is not a declared capability")
+        self.handlers[name] = handler

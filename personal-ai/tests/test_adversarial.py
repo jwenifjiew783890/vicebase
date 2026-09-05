@@ -184,9 +184,6 @@ class TestToolFailure(unittest.TestCase):
         self.assertFalse(r.should_retry)
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
 
 class TestPromptAssembly(unittest.TestCase):
     """The system prompt is a shipped artifact; it needs its own tests."""
@@ -233,3 +230,54 @@ class TestPromptAssembly(unittest.TestCase):
     def test_prompt_stays_within_a_sane_cache_budget(self):
         """The header is prompt-cached every turn; bloat costs latency."""
         self.assertLess(len(self._prompt()), 3000)
+
+
+class TestUnimplementedTools(unittest.TestCase):
+    """A missing backend must not masquerade as "found nothing"."""
+
+    def _orch(self):
+        from pai.memory import MemoryStore
+        from pai.obsidian import VaultIndex, TfidfEmbedder
+        from pai.orchestrator import Orchestrator
+        s = MemoryStore()
+        v = VaultIndex(TfidfEmbedder())
+        v.add_note("a.md", "# A\npasskey decision notes")
+        v.build_vectors()
+        class C:
+            def respond(self, *a): return "ok"
+        return Orchestrator(s, v, C())
+
+    def _run(self, orch, name, args):
+        from pai.gateway import Action, Gateway, execute
+        d = Gateway().submit(Action(name, args), Trust.USER)
+        return execute(d, orch._runner)
+
+    def test_wired_tool_returns_ok(self):
+        r = self._run(self._orch(), "obsidian.search", {"query": "passkey"})
+        self.assertIs(r.status, ExecStatus.OK)
+
+    def test_unwired_tool_is_exec_err_not_empty(self):
+        """EMPTY tells the model to say it found nothing. That would be a lie."""
+        r = self._run(self._orch(), "web.search", {"query": "news"})
+        self.assertIs(r.status, ExecStatus.EXEC_ERR)
+        self.assertIn("no handler registered", r.detail)
+        self.assertNotIn("Do NOT answer from memory", r.guidance)
+
+    def test_empty_is_reserved_for_a_real_search_with_no_hits(self):
+        r = self._run(self._orch(), "memory.recall", {"query": "anything"})
+        self.assertIs(r.status, ExecStatus.EMPTY)
+        self.assertIn("Do NOT answer from memory", r.guidance)
+
+    def test_register_rejects_undeclared_capability(self):
+        with self.assertRaises(KeyError):
+            self._orch().register("totally.made.up", lambda a: None)
+
+    def test_register_wires_a_capability(self):
+        o = self._orch()
+        o.register("web.search", lambda a: ["result"])
+        self.assertIs(self._run(o, "web.search", {"query": "x"}).status,
+                      ExecStatus.OK)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

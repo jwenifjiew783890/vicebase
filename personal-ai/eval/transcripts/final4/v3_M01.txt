@@ -1,0 +1,41 @@
+TEST #M01
+Scenario:
+  casual EN opener, statements not questions
+
+USER:
+  Hey, how are you?
+AI:  [route=fast lang=en 4w/2s ttft=11864ms 6.0tok/s]
+  Good, just chilling. You?
+
+USER:
+  What are you doing?
+AI:  [route=fast lang=en 11w/1s ttft=12783ms 5.4tok/s]
+  Just sitting here, thinking about what you're actually up to.
+
+USER:
+  I'm bored.
+AI:  [route=fast lang=en 32w/3s ttft=13419ms 5.9tok/s]
+  Boring, right? I can't help with that specific boredom either since I don't know what you're doing or where you are. Want to just talk about something random instead?
+
+USER:
+  Guess what happened.
+AI:  [route=fast lang=en 6w/1s ttft=15605ms 6.0tok/s]
+  Spill it, what's the drama?
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         13.2
+  p90 words                11
+  max words                32
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            75%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           100% (of 4 scorable turns)
+  cross-turn repetition    0.12
+  opener variety           100%

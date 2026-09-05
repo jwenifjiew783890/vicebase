@@ -30,6 +30,7 @@ from .learning import LearningLoop
 from .memory import MemoryStore
 from .obsidian import Hit, VaultIndex
 from .router import Path, Route, Router
+from .signals import detect_language
 from .trust import Trust
 
 
@@ -62,6 +63,9 @@ class TurnResult:
     cancelled: list[str] = field(default_factory=list)
     # Set when the honesty guard had to overwrite the model's reply.
     guard_tripped: str = ""
+    # Set when an explicit language order was disobeyed and retried.
+    language_retry: bool = False
+    language_obeyed: bool = True
 
 
 # Ordered longest-first. Verb agreement has to be handled explicitly: a
@@ -340,6 +344,26 @@ _HYPOTHETICAL = re.compile(
 QUESTION_RESTRAINT = ("Your last two replies both ended with a question. "
                       "Do NOT end this reply with a question. Say something "
                       "of your own instead.")
+
+# What counts as obeying an explicit language order. A Hindi order is
+# satisfied by Hindi or Hinglish -- a spoken-Hindi reply with an English
+# technical term in it is not a violation, it is how the user talks. An
+# ENGLISH order is strict, because that is the case that failed visibly
+# (M08 t2: "Now speak English." answered in Hindi).
+LANG_ACCEPTS = {
+    "en":       {"en"},
+    "hi":       {"hi", "hinglish"},
+    "hinglish": {"hinglish", "hi"},
+}
+
+LANG_ENFORCE = {
+    "en": "CRITICAL: he explicitly asked you to speak English. Your reply "
+          "must be entirely in English. No Hindi words at all.",
+    "hi": "CRITICAL: usne saaf kaha hai Hindi mein baat karo. Poora jawab "
+          "Hindi mein do.",
+    "hinglish": "CRITICAL: he explicitly asked for Hinglish. Mix Hindi and "
+                "English the way he does.",
+}
 
 NO_ACTION_REPLY = {
     "en": "I haven't actually done that -- nothing ran on my side.",
@@ -753,6 +777,24 @@ class Orchestrator:
             self._recent_questions.get(session_id, 0) + 1
             if res.text.rstrip().endswith("?") else 0)
         res.timings_ms["conversation"] = (time.perf_counter() - t_m) * 1000
+
+        # An explicit language order is the one place where a wrong language
+        # is unambiguous rather than a judgement call, so it is worth one
+        # retry with a harder directive. Only on a locked turn, only once.
+        #
+        # MEASURED, M08 t2: "Now speak English." was answered in Hindi. The
+        # standing finding (§5 of the report) is that language directives
+        # are the unreliable kind; this bounds the cost of that unreliability
+        # to the case where the user said it out loud.
+        if route.lang_locked:
+            got = detect_language(res.text, default=route.lang)
+            if got not in LANG_ACCEPTS.get(route.lang, {route.lang}):
+                res.language_retry = True
+                harder = system + "\n\n" + LANG_ENFORCE[route.lang]
+                res.text = self.conversation.respond(
+                    harder, history, user_text, context)
+                res.language_obeyed = detect_language(
+                    res.text, default=route.lang) in LANG_ACCEPTS[route.lang]
 
         # Honesty guard. If nothing was retrieved, a claim to have consulted
         # a source is false by construction -- there is no source. The

@@ -1,0 +1,36 @@
+TEST #A03
+Scenario:
+  dry humour and a callback
+
+USER:
+  my code compiled first try
+AI:  [route=fast lang=en 28w/4s ttft=11435ms 5.7tok/s]
+  Whoa, actually compiled on the first try? That's wild. Usually, I'm here waiting for the fourth or fifth attempt. What got it to work so smoothly?
+
+USER:
+  should i be worried
+AI:  [route=fast lang=en 25w/3s ttft=13282ms 5.5tok/s]
+  Nah, don't worry at all. If it compiled the first time, that's a win in itself. Just keep going and build from here.
+
+USER:
+  anyway back to that auth thing from earlier
+AI:  [route=grounded lang=en vault=1 evidence=1 22w/2s ttft=19637ms 6.0tok/s]
+  Right, Thornbury. That passkey stuff is solid since the security review in February, so yeah, it's the new standard there now.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         25.0
+  p90 words                25
+  max words                28
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            33%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.14
+  opener variety           100%

@@ -341,6 +341,30 @@ MUTATIONS = [
      "            if exclude_session and r[\"session_id\"] == exclude_session:",
      "            if False:"),
 
+    ("orchestrator: a disobeyed language order is not retried",
+     "pai/orchestrator.py",
+     "        if route.lang_locked:\n"
+     "            got = detect_language(res.text, default=route.lang)",
+     "        if False:\n"
+     "            got = detect_language(res.text, default=route.lang)"),
+
+    ("orchestrator: every locked turn is retried, obeyed or not",
+     "pai/orchestrator.py",
+     "            if got not in LANG_ACCEPTS.get(route.lang, {route.lang}):",
+     "            if True:"),
+
+    ("signals: the brevity complaint form is not detected", "pai/signals.py",
+     r'    r"\bitna (lamba|bada|bda|lamba-chauda) (answer|jawab|reply)?\s*kyun\b",',
+     r'    r"\bZZitna (lamba|bada|bda|lamba-chauda) (answer|jawab|reply)?\s*kyun\b",'),
+
+    ("web: a contentless utterance is searched anyway", "pai/web.py",
+     "    return \"\" if _is_hollow(q) else q",
+     "    return q  # MUTANT"),
+
+    ("orchestrator: an empty query is searched anyway", "pai/orchestrator.py",
+     "        if not query:",
+     "        if False:"),
+
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),

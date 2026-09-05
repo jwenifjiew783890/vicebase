@@ -287,3 +287,52 @@ class TestQueryRewrite(unittest.TestCase):
         orch.register("web.search", lambda a: calls.append(a) or [])
         orch.handle("s", "what's the latest nextjs version")
         self.assertEqual(len(calls), 1)
+
+
+class TestLockedLanguageEnforcement(unittest.TestCase):
+    """One retry, only on an explicit order, only when it was disobeyed."""
+
+    class Twice:
+        """Answers in Hindi first, English on the retry."""
+        max_tokens = 300
+        def __init__(self):
+            self.calls = 0
+            self.systems = []
+        def respond(self, system, history, user, context):
+            self.systems.append(system)
+            self.calls += 1
+            return ("Kya scene hai bhai, thoda busy hoon" if self.calls == 1
+                    else "Not much, just working through some things.")
+
+    def test_a_disobeyed_order_is_retried_once(self):
+        store, vault, _, orch = build(self.Twice())
+        res = orch.handle("s", "Now speak English.")
+        self.assertTrue(res.language_retry)
+        self.assertTrue(res.language_obeyed)
+        self.assertIn("Not much", res.text)
+        self.assertIn("CRITICAL", orch.conversation.systems[-1])
+        self.assertEqual(orch.conversation.calls, 2, "retried more than once")
+
+    def test_an_obeyed_order_is_not_retried(self):
+        """ANTI-FALSE-GREEN: the retry must be conditional."""
+        model = Says("Sure, English it is. What's up?")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "Now speak English.")
+        self.assertFalse(res.language_retry)
+        self.assertEqual(len(model.systems), 1)
+
+    def test_an_unlocked_turn_is_never_retried(self):
+        """ANTI-FALSE-GREEN: only an explicit order earns a second call."""
+        model = Says("Kya scene hai bhai")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "what are you up to")
+        self.assertFalse(res.language_retry)
+        self.assertEqual(len(model.systems), 1)
+
+    def test_hinglish_satisfies_a_hindi_order(self):
+        """ANTI-FALSE-GREEN: a technical English word in spoken Hindi is
+        how he talks, not a violation."""
+        model = Says("Haan bhai, main deployment pipeline dekh raha hoon")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "Acha ab Hindi mein bol.")
+        self.assertFalse(res.language_retry)

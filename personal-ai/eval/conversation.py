@@ -45,6 +45,8 @@ class Turn:
     sentences: int = 0
     evidence: int = 0
     guard: str = ""
+    lang_retry: bool = False
+    lang_obeyed: bool = True
     cancelled: list = field(default_factory=list)
 
 
@@ -74,6 +76,9 @@ class Transcript:
                 meta.append("cancelled=" + ",".join(t.cancelled))
             if t.guard:
                 meta.append(f"GUARD={t.guard}")
+            if t.lang_retry:
+                meta.append("lang-retry="
+                            + ("obeyed" if t.lang_obeyed else "STILL WRONG"))
             meta.append(f"{t.words}w/{t.sentences}s")
             meta.append(f"ttft={t.ttft_ms:.0f}ms")
             meta.append(f"{t.tok_s:.1f}tok/s")
@@ -151,7 +156,9 @@ class Harness:
                 out_tokens=getattr(stats, "completion_tokens", 0),
                 words=count_words(res.text), sentences=count_sentences(res.text),
                 evidence=res.evidence, guard=res.guard_tripped,
-                cancelled=list(res.cancelled)))
+                cancelled=list(res.cancelled),
+                lang_retry=res.language_retry,
+                lang_obeyed=res.language_obeyed))
         return tr
 
     # convenience for memory/learning tests

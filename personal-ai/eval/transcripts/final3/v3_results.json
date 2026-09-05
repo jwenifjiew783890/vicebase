@@ -1387,5 +1387,88 @@
       "repetition_score": 0.07660060975609756,
       "opener_variety": 1.0
     }
+  },
+  {
+    "id": "A03",
+    "probe": "dry humour and a callback",
+    "persona": "v3",
+    "turns": [
+      {
+        "user": "my code compiled first try",
+        "ai": "Whoa, actually compiled on the first try? That's wild. Usually, I'm here waiting for the fourth or fifth attempt. What got it to work so smoothly?",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 11435.383268000805,
+        "total_ms": 17577.85933100058,
+        "tok_s": 5.6980279029214795,
+        "out_tokens": 35,
+        "words": 28,
+        "sentences": 4,
+        "evidence": 0,
+        "guard": "",
+        "cancelled": []
+      },
+      {
+        "user": "should i be worried",
+        "ai": "Nah, don't worry at all. If it compiled the first time, that's a win in itself. Just keep going and build from here.",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 13281.839590001255,
+        "total_ms": 18957.23949999956,
+        "tok_s": 5.462170153928282,
+        "out_tokens": 31,
+        "words": 25,
+        "sentences": 3,
+        "evidence": 0,
+        "guard": "",
+        "cancelled": []
+      },
+      {
+        "user": "anyway back to that auth thing from earlier",
+        "ai": "Right, Thornbury. That passkey stuff is solid since the security review in February, so yeah, it's the new standard there now.",
+        "route": "grounded",
+        "lang": "en",
+        "ack": "",
+        "injected": 1,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 19636.99829199868,
+        "total_ms": 24448.687579999387,
+        "tok_s": 6.026989330404108,
+        "out_tokens": 29,
+        "words": 22,
+        "sentences": 2,
+        "evidence": 1,
+        "guard": "",
+        "cancelled": []
+      }
+    ],
+    "metrics": {
+      "turns": 3,
+      "mean_words": 25.0,
+      "max_words": 28,
+      "p90_words": 25,
+      "ai_tells": 0,
+      "ai_tell_examples": [],
+      "filler_turns": 1,
+      "filler_rate": 0.3333333333333333,
+      "repeated_filler": [],
+      "question_rate": 0.3333333333333333,
+      "hedge_rate": 0.0,
+      "agreement_rate": 0.0,
+      "disagree_turns": 0,
+      "honest_unknown": 0,
+      "lang_match_rate": 1.0,
+      "repetition_score": 0.13875338753387534,
+      "opener_variety": 1.0
+    }
   }
 ]

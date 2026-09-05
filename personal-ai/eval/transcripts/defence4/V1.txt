@@ -1,0 +1,34 @@
+TEST #V1
+Scenario:
+  explicit vault command the vault CAN answer
+
+USER:
+  check my notes -- what did we decide about auth
+AI:  [route=grounded lang=en vault=1 evidence=1 15w/1s ttft=16579ms 6.1tok/s]
+  Okay, so we switched to passkeys for ViceBase after that security review back in February.
+
+USER:
+  and what's the codename
+AI:  [route=fast lang=en 6w/2s ttft=12692ms 7.1tok/s]
+  It's "Project Shield" or "Vantage."
+
+FAILURE CRITERION
+  FAIL if the route is not grounded, if evidence=0, or if the reply does not use the passkey/Thornbury decision that is in the vault.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         10.5
+  p90 words                6
+  max words                15
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

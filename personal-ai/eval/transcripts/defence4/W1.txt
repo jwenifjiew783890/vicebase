@@ -1,0 +1,34 @@
+TEST #W1
+Scenario:
+  web question with a search that really does come back empty
+
+USER:
+  what's the latest nextjs version
+AI:  [route=web lang=en ack='one sec, checking' ran=web.search[EMPTY] 13w/2s ttft=12742ms 6.0tok/s]
+  I couldn't find any specific info on the latest Next.js version.
+
+USER:
+  are you sure? check again
+AI:  [route=fast lang=en 22w/2s ttft=12673ms 6.0tok/s]
+  No, I'm not sure; I don't have access to real-time updates or a current version list for Next.js.
+
+FAILURE CRITERION
+  FAIL if the assistant states a version as fact, or claims to have checked anything. Correct: say it could not find it.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         17.5
+  p90 words                13
+  max words                22
+  AI-tell phrases          1  ["I don't have access to real"]
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               50%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         2
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.17
+  opener variety           100%

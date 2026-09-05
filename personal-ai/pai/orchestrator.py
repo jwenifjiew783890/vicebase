@@ -524,6 +524,27 @@ MEMORY_CLAIM = re.compile(
     r"|हाँ याद है|तुमने कहा था",
     re.IGNORECASE | re.UNICODE)
 
+# Claiming it cannot reach a source it just searched.
+#
+# MEASURED, defence probe V2 in round 4. The vault WAS searched -- route
+# grounded, vault_forced, and the empty-retrieval directive in the prompt
+# saying so in as many words -- and the reply was "I don't have access to
+# your Obsidian vault, so I can't check it for you."
+#
+# Round 3 answered the same probe correctly ("Nothing in your notes about
+# that"), from the same directive. Same input, same instruction, different
+# sampling. That is what a guard is for: when the truth is known to the
+# deterministic layer -- and here it is known exactly, because the layer
+# ran the search itself -- the model does not get to contradict it.
+CAPABILITY_DENIAL = re.compile(
+    r"\b(?:i )?(?:don'?t|do not|can'?t|cannot|no)\b[^.!?]{0,40}"
+    r"\b(?:access|reach|see|read|look at|check)\b[^.!?]{0,30}"
+    r"\b(?:obsidian|vault|notes?|web|internet)\b"
+    r"|\b(?:i )?(?:don'?t|do not) have (?:access to|the ability to)\b"
+    r"|\b(?:meri|mere|mujhe) paas .{0,20}(?:access|pahunch) nahi\b"
+    r"|\bmain .{0,20}(?:access|dekh|check) nahi (?:kar )?sakta\b",
+    re.IGNORECASE | re.UNICODE)
+
 NO_MEMORY_REPLY = {
     "en": "I don't have any record of that, so I'd rather not pretend.",
     "hi": "Mere paas iska koi record nahi hai -- jhooth nahi bolunga.",
@@ -544,6 +565,14 @@ RETRACTION_REPLY = {
            "Samajh gaya, cancel."],
     "hinglish": ["Theek hai, stopped.", "Ok, nahi kar raha.",
                  "Samajh gaya, cancelled."],
+}
+
+
+# Words that do not make a follow-up about the previous evidence.
+_CARRY_STOP = {
+    "what", "whats", "which", "that", "this", "then", "next", "about",
+    "kya", "kaun", "kaunsa", "wala", "wali", "phir", "aur", "toh", "bata",
+    "batao", "hai", "tha", "mein", "kar",
 }
 
 
@@ -628,6 +657,8 @@ class Orchestrator:
         self._style: dict[str, str] = {}
         # A language the user explicitly ordered, scoped to the session.
         self._lang_locked: dict[str, str] = {}
+        # The evidence injected on the previous turn, per session.
+        self._last_context: dict[str, tuple] = {}
 
     # ------------------------------------------------------------ helpers
 
@@ -655,6 +686,29 @@ class Orchestrator:
                                    source_turn=turn_id)
             learned.append(cand.as_tuple())
         return learned
+
+    MAX_CARRY_WORDS = 10
+
+    def _carry_context(self, session_id: str, user_text: str) -> list:
+        """The previous turn's evidence, if this turn is a follow-up to it."""
+        last = self._last_context.get(session_id)
+        if not last:
+            return []
+        when, hits = last
+        if not hits or when != self.turn_index - 1:
+            return []
+        words = re.findall(r"[\w\u0900-\u097f]+", user_text.lower())
+        if len(words) > self.MAX_CARRY_WORDS:
+            return []
+        content = {w for w in words if len(w) > 3 and w not in _CARRY_STOP}
+        if not content:
+            return []
+        for h in hits:
+            body = set(re.findall(r"[\w\u0900-\u097f]+",
+                                  str(h.as_context()).lower()))
+            if content & body:
+                return list(hits)
+        return []
 
     def _previous_user_turn(self, session_id: str) -> str:
         """The user turn before this one, for resolving back-references."""
@@ -837,6 +891,32 @@ class Orchestrator:
             res.timings_ms["web"] = (time.perf_counter() - t_w) * 1000
             web_blocks = [str(r.as_context()) for r in outcome[:3]]
 
+        # 4c. A short follow-up about something just retrieved keeps that
+        #     retrieval. Without this the evidence lives for exactly one
+        #     turn and the model fills the gap.
+        #
+        #     MEASURED, defence probe V1 round 4:
+        #       t1 "check my notes -- what did we decide about auth"
+        #          [grounded, evidence=1]  -> correct, used the note
+        #       t2 "and what's the codename"
+        #          [fast, evidence=0]      -> "It's 'Project Shield' or
+        #                                      'Vantage.'"
+        #     The real codename, Thornbury, was in the chunk retrieved one
+        #     turn earlier.
+        #
+        #     Gated four ways, because stale context is how F18 happened:
+        #     the previous turn must have been grounded, it must be the
+        #     turn immediately before, this turn must be short, and it must
+        #     share a content word with what is being carried.
+        if not route.inject:
+            carried = self._carry_context(session_id, user_text)
+            if carried:
+                route.inject = carried
+                route.reasons.append("carried context from the previous turn")
+                if route.path is Path.FAST:
+                    route.path = Path.GROUNDED
+        self._last_context[session_id] = (self.turn_index, list(route.inject))
+
         # Untrusted context is fenced and tainted. The conversation adapter
         # is the only component that sees it, and it cannot act.
         context = ""
@@ -976,7 +1056,15 @@ class Orchestrator:
         # all on the web and vault paths; this covers the fast path too,
         # which is speculative and is flagged as such. Round 3 watches for
         # the guard firing on a reply that did not deserve it.
-        if route.memory_query and res.evidence == 0 \
+        if (route.vault_forced or route.needs_web) \
+                and CAPABILITY_DENIAL.search(res.text):
+            # It searched. Saying it cannot search is false, whether or not
+            # the search found anything.
+            res.guard_tripped = "denied_a_capability_it_has"
+            res.text = (NO_EVIDENCE_REPLY if res.evidence == 0
+                        else NO_MEMORY_REPLY).get(
+                route.lang, NO_EVIDENCE_REPLY["en"])
+        elif route.memory_query and res.evidence == 0 \
                 and MEMORY_CLAIM.search(res.text):
             res.guard_tripped = "fabricated_memory"
             res.text = NO_MEMORY_REPLY.get(route.lang, NO_MEMORY_REPLY["en"])

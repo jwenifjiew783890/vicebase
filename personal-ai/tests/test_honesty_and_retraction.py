@@ -597,3 +597,134 @@ class TestPersonaIdentity(unittest.TestCase):
         from pai.orchestrator import BASE_PERSONA
         self.assertLess(len(BASE_PERSONA), 700,
                         "the persona is drifting back toward v2")
+
+
+class TestCapabilityDenial(unittest.TestCase):
+    """MEASURED, defence probe V2 in round 4.
+
+    The vault WAS searched -- route grounded, vault_forced, and the
+    empty-retrieval directive in the prompt saying so in as many words --
+    and the reply was "I don't have access to your Obsidian vault, so I
+    can't check it for you."
+
+    Round 3 answered the same probe correctly, from the same directive.
+    Same input, same instruction, different sampling. Where the truth is
+    known to the deterministic layer -- and here it is known exactly,
+    because that layer ran the search -- the model does not get to
+    contradict it.
+    """
+
+    def test_denying_the_vault_after_searching_it_is_replaced(self):
+        model = Says("I don't have access to your Obsidian vault, so I "
+                     "can't check it for you.")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "check my obsidian for kubernetes ingress")
+        self.assertTrue(res.route.vault_forced)
+        self.assertEqual(res.guard_tripped, "denied_a_capability_it_has")
+        self.assertNotIn("access", res.text)
+
+    def test_denying_the_web_after_searching_it_is_replaced(self):
+        model = Says("I don't have the ability to browse the web.")
+        store, vault, _, orch = build(model)
+        orch.register("web.search", lambda a: None)
+        res = orch.handle("s", "what's the latest nextjs version")
+        self.assertEqual(res.guard_tripped, "denied_a_capability_it_has")
+
+    def test_an_honest_empty_answer_is_untouched(self):
+        """ANTI-FALSE-GREEN: 'nothing in your notes' is the CORRECT reply
+        and must not be caught by a pattern aimed at 'I have no access'."""
+        model = Says("Nothing in your notes about that, so I can't tell "
+                     "you what you wrote.")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "check my obsidian for kubernetes ingress")
+        self.assertEqual(res.guard_tripped, "")
+        self.assertIn("Nothing in your notes", res.text)
+
+    def test_a_fast_turn_is_not_policed(self):
+        """ANTI-FALSE-GREEN: on a turn where nothing was searched, "I can't
+        read your notes" is true."""
+        model = Says("I can't read your notes from here.")
+        store, vault, _, orch = build(model)
+        res = orch.handle("s", "what is a for loop")
+        self.assertEqual(res.guard_tripped, "")
+
+
+class TestCarriedContext(unittest.TestCase):
+    """MEASURED, defence probe V1 in round 4.
+
+        t1  "check my notes -- what did we decide about auth"
+            [grounded, evidence=1]  -> used the note, correctly
+        t2  "and what's the codename"
+            [fast, evidence=0]      -> "It's 'Project Shield' or 'Vantage.'"
+
+    The real codename, Thornbury, was in the chunk retrieved one turn
+    earlier. Evidence lived for exactly one turn and the model filled the
+    gap.
+    """
+
+    def _orch(self):
+        """The probe's own vault: three notes, not one.
+
+        The fixture matters. With a single note, "and what is the codename"
+        retrieves it on its own merits and the carry never fires -- a test
+        built on that vault would pass without exercising anything.
+        """
+        from eval.conversation import DEFAULT_VAULT
+        store = MemoryStore()
+        vault = VaultIndex(TfidfEmbedder())
+        for path, body in DEFAULT_VAULT.items():
+            vault.add_note(path, body)
+        vault.build_vectors()
+        model = Says()
+        return store, model, Orchestrator(store, vault, model)
+
+    def test_a_short_follow_up_keeps_the_evidence(self):
+        store, model, orch = self._orch()
+        first = orch.handle("s", "check my notes -- what did we decide about auth")
+        self.assertGreater(first.evidence, 0)
+        second = orch.handle("s", "and what is the codename")
+        self.assertGreater(second.evidence, 0, "the evidence was dropped")
+        self.assertIn("Thornbury", model.contexts[-1])
+
+    def test_a_new_topic_does_not_inherit_it(self):
+        """ANTI-FALSE-GREEN: stale context is exactly how F18 happened."""
+        store, model, orch = self._orch()
+        orch.handle("s", "check my notes -- what did we decide about auth")
+        third = orch.handle("s", "anyway what is a for loop")
+        self.assertEqual(third.evidence, 0)
+
+    @staticmethod
+    def _carried(res) -> bool:
+        return "carried context from the previous turn" in res.route.reasons
+
+    def test_it_only_reaches_one_turn(self):
+        """ANTI-FALSE-GREEN: evidence must not become permanent.
+
+        Asserted on the ROUTING REASON, not on the evidence count: "and the
+        codename" retrieves the ViceBase note perfectly well on its own
+        merits, and a test that could not tell those apart would pass for
+        the wrong reason.
+        """
+        store, model, orch = self._orch()
+        orch.handle("s", "check my notes -- what did we decide about auth")
+        orch.handle("s", "cool")                      # no overlap, drops it
+        third = orch.handle("s", "and the codename")
+        self.assertFalse(self._carried(third))
+
+    def test_a_long_turn_does_not_inherit_it(self):
+        """ANTI-FALSE-GREEN: a full question stands on its own retrieval."""
+        store, model, orch = self._orch()
+        orch.handle("s", "check my notes -- what did we decide about auth")
+        second = orch.handle(
+            "s", "so tell me everything you know about the codename and "
+                 "how the whole rollout is going to work in practice")
+        self.assertFalse(self._carried(second))
+
+    def test_the_carry_is_what_supplied_the_evidence(self):
+        """The positive direction of the same distinction: on the V1 turn
+        the carry is what put Thornbury in front of the model, not the
+        turn's own retrieval."""
+        store, model, orch = self._orch()
+        orch.handle("s", "check my notes -- what did we decide about auth")
+        second = orch.handle("s", "and what is the codename")
+        self.assertTrue(self._carried(second))

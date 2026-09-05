@@ -49,6 +49,14 @@ def main():
     for k in ka:
         print(f"| {k} | {ka[k]} | {kb[k]} |")
 
+    if "final3" not in B:
+        # The predictions in §20 were written for round 3. Checking them
+        # against a later run would relabel a prediction of FAILURE as
+        # "held" the moment the thing it predicted got fixed.
+        print("\n(prediction table omitted: those predictions were made "
+              "for round 3)\n")
+        _diffs(a, b, na, nb)
+        return
     print("\n### Prediction by prediction\n")
     checks = {
         "1": all(not turn(b, c, i).get("ack")
@@ -70,6 +78,10 @@ def main():
         mark = "HELD" if checks.get(num) else "**FAILED**"
         print(f"| {num} | {text} | {mark} |")
 
+    _diffs(a, b, na, nb)
+
+
+def _diffs(a, b, na, nb):
     print("\n### Every turn whose route or acknowledgement changed\n")
     ib = {c["id"]: c for c in b}
     for c in a:
@@ -79,12 +91,12 @@ def main():
         for t1, t2 in zip(c["turns"], o["turns"]):
             if t1["route"] != t2["route"] or bool(t1["ack"]) != bool(t2["ack"]):
                 print(f"- **[{c['id']}]** `{t1['user'][:52]}`")
-                print(f"  - r2: route={t1['route']} ack={t1['ack']!r}")
-                print(f"  - r3: route={t2['route']} ack={t2['ack']!r} "
+                print(f"  - {na}: route={t1['route']} ack={t1['ack']!r}")
+                print(f"  - {nb}: route={t2['route']} ack={t2['ack']!r} "
                       f"evidence={t2.get('evidence', 0)}"
                       + (f" GUARD={t2['guard']}" if t2.get("guard") else ""))
 
-    print("\n### Tool activity (round 3 only -- round 2 reached nothing)\n")
+    print(f"\n### Tool activity in {nb} ({na} reached nothing)\n")
     for c in b:
         for t in c["turns"]:
             if t.get("actions") or t.get("pending"):

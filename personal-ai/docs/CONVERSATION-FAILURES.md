@@ -1287,3 +1287,70 @@ think of, and each time the fix was to make the *check* structurally
 correct rather than to add another pattern. Whole-reply matching was the
 bug both here and in F33 — where `SOURCE_CLAIM` looked for the wrong kind
 of claim entirely.
+
+---
+
+## F41 — Evidence lived for exactly one turn  ·  FIXED
+
+Defence probe V1, round 4. Turn 1 is the F37 fix working — the assistant
+now *uses* the note instead of disowning it:
+
+```
+t1  USER: check my notes -- what did we decide about auth
+    [grounded  evidence=1]
+    AI:   Okay, so we switched to passkeys for ViceBase after that security
+          review back in February.
+
+t2  USER: and what's the codename
+    [fast  evidence=0]
+    AI:   It's "Project Shield" or "Vantage."
+```
+
+The real codename, Thornbury, was in the chunk retrieved one turn earlier.
+Retrieval is per-turn; a short follow-up about the thing just retrieved
+retrieves nothing of its own, and the model fills the gap with two
+confident inventions.
+
+**Fix.** The previous turn's evidence is carried into a follow-up, gated
+four ways because stale context is exactly how F18 happened: the previous
+turn must have been grounded, it must be the turn immediately before, this
+turn must be ten words or fewer, and it must share a content word with what
+is being carried.
+
+**A note on the test for it.** The obvious fixture — a vault with only the
+ViceBase note in it — makes this test pass without exercising anything,
+because "and what is the codename" then retrieves that note perfectly well
+on its own. The test uses the probe's real three-note vault and asserts on
+the *routing reason*, not the evidence count, so it cannot pass for the
+wrong reason.
+
+---
+
+## F42 — It denied a capability it had just used  ·  FIXED
+
+Same probe run, V2:
+
+```
+USER: check my obsidian for what I wrote about kubernetes ingress
+      [route=grounded  vault_forced  evidence=0]
+      -- and the prompt carried the directive "His notes were searched and
+         contain NOTHING about this. Say plainly that there is nothing in
+         his notes about it."
+AI:   I don't have access to your Obsidian vault, so I can't check it for
+      you.
+```
+
+Round 3 answered the same probe correctly — *"Nothing in your notes about
+that, so I can't tell you what you wrote."* — from the same directive.
+Same input, same instruction, different sampling.
+
+This is the F20 failure returning through a different door, and it is the
+clearest illustration in the project of why the guards exist: a directive
+is a request, and a 4B model grants requests most of the time. Where the
+deterministic layer *knows* the truth — and here it knows it exactly,
+because it ran the search itself — the model does not get to contradict it.
+
+**Fix.** `CAPABILITY_DENIAL`: when a retrieval actually ran and the reply
+claims the system cannot reach that source, the reply is replaced. Guarded
+so that *"Nothing in your notes about that"* — which is the correct answer
+and contains "notes" and "can't" — is untouched.

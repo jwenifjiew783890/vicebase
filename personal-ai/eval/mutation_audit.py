@@ -332,9 +332,9 @@ MUTATIONS = [
      "            for row in self.store.search_turns(user_text,"),
 
     ("orchestrator: invented memories allowed through", "pai/orchestrator.py",
-     "        if route.memory_query and res.evidence == 0 \\\n"
+     "        elif route.memory_query and res.evidence == 0 \\\n"
      "                and MEMORY_CLAIM.search(res.text):",
-     "        if False and res.evidence == 0 \\\n"
+     "        elif False and res.evidence == 0 \\\n"
      "                and MEMORY_CLAIM.search(res.text):"),
 
     ("memory: turn search leaks the current session", "pai/memory.py",
@@ -421,6 +421,36 @@ MUTATIONS = [
     ("orchestrator: roleplayed work is not a claim", "pai/orchestrator.py",
      "    if _ROLEPLAY.search(text):\n        return True",
      "    if False:\n        return True"),
+
+    ("orchestrator: it may deny a source it just searched",
+     "pai/orchestrator.py",
+     "        if (route.vault_forced or route.needs_web) \\\n"
+     "                and CAPABILITY_DENIAL.search(res.text):",
+     "        if False:"),
+
+    ("orchestrator: evidence is dropped after one turn",
+     "pai/orchestrator.py",
+     "            carried = self._carry_context(session_id, user_text)",
+     "            carried = []  # MUTANT"),
+
+    ("orchestrator: context is carried to any later turn",
+     "pai/orchestrator.py",
+     "        if not hits or when != self.turn_index - 1:",
+     "        if not hits:"),
+
+    ("orchestrator: context is carried without a shared word",
+     "pai/orchestrator.py",
+     "        for h in hits:\n"
+     "            body = set(re.findall(r\"[\\w\\u0900-\\u097f]+\",\n"
+     "                                  str(h.as_context()).lower()))\n"
+     "            if content & body:\n"
+     "                return list(hits)",
+     "        return list(hits)\n"
+     "        for h in hits:\n"
+     "            body = set(re.findall(r\"[\\w\\u0900-\\u097f]+\",\n"
+     "                                  str(h.as_context()).lower()))\n"
+     "            if content & body:\n"
+     "                return list(hits)"),
 
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',

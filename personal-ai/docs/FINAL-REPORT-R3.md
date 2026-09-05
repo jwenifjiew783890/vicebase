@@ -625,21 +625,42 @@ has mutated.
 ### 13.4 Every defence has a negative test
 
 A guard that fires unconditionally passes every test written in its
-favour. So each defence added in round 2 is paired with a test proving it
-can still be **silent**:
+favour. So each defence is paired with a test proving it can still be
+**silent**:
 
 | Defence | The test that proves it is discriminating |
 |---|---|
 | Fabricated source claim | same claim text + real evidence → reply untouched |
 | Empty-retrieval directive | evidence present → directive absent from the prompt |
 | Action claim | action really executed → reply untouched |
+| Action claim, per clause | "Should I push it?" survives; "I pushed it. Anything else?" does not |
+| Capability denial | the guard never fires on any of **its own replacement strings** |
+| Invented memory | a real record in the store → the claim stands |
+| Carried context | a new topic does not inherit it; a long turn does not either |
 | Ack withheld | complete delegation brief → ack still fires |
 | Retraction | ordinary turns ("kar do", "go on") are not retractions |
 | Retraction cancels | cancellation is scoped to one session, not global |
-| Searchable subject | real queries still route to the web |
+| Searchable subject | real queries still route to the web — every control case contains a temporal word |
 | Sticky language | a genuine English turn still switches away from Hindi |
+| Marker list | technical English ("push this to main", "check the log file") stays English |
 | Vault command | a populated vault still answers normally |
 | Question restraint | a statement reply clears the run |
+| Fact extraction | 361 real user turns → zero facts invented |
+| Fact retraction | the same 361 turns → zero facts erased |
+| Severed-reply repair | a finished reply is untouched; a fragment too short to save is left alone |
+
+Two of those are worth singling out.
+
+**"The guard never fires on its own replacement strings"** exists because
+the obvious Hindi pattern for *"no record"* matches *"Mere paas iska koi
+record nahi hai"* — which is what the memory guard *writes*. That version
+would have replaced a correct reply with itself, in every future run,
+silently.
+
+**"361 real user turns → zero"** is the strongest negative test in the
+project. Sixteen hand-written cases prove the extractor's veto works on the
+failures I thought of; running it across every user turn in every committed
+transcript proves it on the ones I did not.
 
 ### 13.5 Fixes are proven against the pre-fix code
 
@@ -659,7 +680,30 @@ F24 fabricated claim survives              'Maine internet...'  "I couldn't..."
 F21 reply to "don't do that"               'Okay, keep going.'  'Alright, not doing it.'
 ```
 
-### 13.6 What the tests still cannot tell you
+### 13.6 Four rounds, and each one still found things
+
+| round | conversations | findings |
+|---|---|---|
+| 1 | 11 | F1–F16 |
+| — | the audit auditing itself | F17–F18 |
+| 2 | 20 (the frozen mandatory set) | F19–F28 |
+| 3 | 20 + 8 probes + 1 memory probe | F29–F38 |
+| 4 | 20 + 8 probes + 1 memory probe | F39–F43 |
+| 4b | 4, re-run to verify round 4's own output | 0 new |
+
+The count per round is falling slowly. The **severity** is falling fast,
+and that is the number that matters: round 2 found a permission system that
+had never seen a permission request and a web path that had never made a
+request; round 4 found a reply that said "Project Shield" instead of
+"Thornbury".
+
+Round 4b is the first pass that found nothing new — and it only ran four
+conversations, chosen because they were the ones that had failed. It is a
+verification, not a clean bill of health. **A round that finds nothing is
+usually a round that was not adversarial enough**, and the honest
+expectation is that a fifth full round would find several more.
+
+### 13.7 What the tests still cannot tell you
 
 Whether the conversation is *good*. Test counts measure discipline, not
 charm. That is what §14 is for, and why it is transcripts rather than

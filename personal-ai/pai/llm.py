@@ -107,11 +107,24 @@ _THINK = re.compile(r"<think>.*?</think>\s*", re.DOTALL | re.IGNORECASE)
 
 
 def _strip_thinking(text: str) -> str:
-    """Remove reasoning blocks. They must never reach TTS."""
+    """Remove reasoning blocks. They must never reach the user or TTS.
+
+    The unterminated case matters and an earlier version got it wrong: when
+    the model hits its token budget mid-thought there is no closing tag, and
+    splitting on the tag returned the reasoning itself as the reply. Anything
+    after an unclosed <think> is reasoning, not an answer, so it is dropped
+    entirely -- the caller sees an empty string and can retry or fall back,
+    which is strictly better than speaking the model's private notes aloud.
+    """
     out = _THINK.sub("", text)
-    # An unterminated block means the model ran out of budget mid-thought.
-    if "<think>" in out.lower():
-        out = re.split(r"</?think>", out, flags=re.IGNORECASE)[-1]
+    lowered = out.lower()
+    if "<think>" in lowered:
+        # Keep only what precedes the unclosed tag.
+        out = out[:lowered.index("<think>")]
+    # A stray closing tag with no opener: keep what follows it.
+    lowered = out.lower()
+    if "</think>" in lowered:
+        out = out[lowered.index("</think>") + len("</think>"):]
     return out.strip()
 
 

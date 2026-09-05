@@ -234,13 +234,88 @@ now raise, typing as `EXEC_ERR` with the reason.
 
 ## 5. Persona A/B — v1 vs v2 on identical conversations
 
-*Filled in from `eval/transcripts/ab/`.*
-
 **Why the comparison is valid.** llama.cpp uses a fixed default seed, and
 v1 conversations 001–003 reproduced their round-1 metrics **exactly**
-(001: 7.8 mean words; 002: 15.2 mean words / 100% question rate; 003: 42.0
-mean / 79 max). Identical inputs, identical sampling — the only variable is
-the persona.
+(001: 7.8 mean words; 002: 15.2 mean / 100% question rate; 003: 42.0 mean /
+79 max). Identical inputs, identical sampling — the only variable is the
+persona text.
+
+**v1 baseline (480 chars) — all six cases, MEASURED**
+
+| case | what it probes | mean words | question rate | max |
+|---|---|---|---|---|
+| 001 | casual EN | 7.8 | 50% | 20 |
+| 002 | casual HI | 15.2 | 100% | 28 |
+| 003 | Hinglish | 42.0 | 67% | 79 |
+| 004 | brevity after correction | **95.0** | 0% | **122** |
+| 008 | honest unknown | 24.7 | 100% | 29 |
+| 009 | disagreement | 48.0 | 0% | 62 |
+
+**v2 (1583 chars, a clause per defect) — MEASURED**
+
+| case | mean words | question rate | max | verdict |
+|---|---|---|---|---|
+| 001 | 7.8 → **13.0** | 50% → **75%** | 20 → 27 | **worse** |
+| 002 | 15.2 → 14.5 | 100% → **100%** | 28 → 22 | flat |
+| 003 | 42.0 → **23.0** | 67% → **33%** | 79 → **33** | **better** |
+| 004 | 95.0 → **35.5** | 0% → 0% | 122 → **48** | **much better** |
+
+### The finding, and my own wrong first reading
+
+After two cases I concluded persona instructions were simply a weak lever at
+4B. Case 003 then produced a large clean win. **The correct reading is
+regression toward the mean.**
+
+v2's LENGTH clause says *"default to one or two sentences."* That
+**lengthens** a one-word reply ("hey" → a sentence) and **shortens** a
+95-word one. It pulls every reply toward the same middle:
+
+| case | v1 mean | v2 mean | change |
+|---|---|---|---|
+| 001 | 7.8 | 13.0 | **+67%** |
+| 002 | 15.2 | 14.5 | −5% |
+| 003 | 42.0 | 23.0 | −45% |
+| 004 | 95.0 | 35.5 | **−63%** |
+
+The effect is **monotonic across all four cases**: the longer v1's replies
+were, the more v2 shortened them, with a fixed point at roughly **15
+words**. (Correlation between v1 length and the v2 change is −1.000, though
+with n=4 that number is degenerate — the pattern, not the coefficient, is
+the evidence, and it has a clear mechanism.)
+
+The instruction was the wrong *shape*: **absolute where the behaviour should
+be relative**. v1 actually said "match his length" and got 7.8 words on
+casual turns; it simply had no brake on growth. The right rule combines
+both — mirror his length, and never grow across a conversation.
+
+**On the single most important case this is a large win.** Case 004 is where
+the user said *"arre nahi, itna bada answer mat do. simple bol."* v1
+ignored it and averaged 95 words; v2 averaged 35.5 and capped at 48. The
+correction still is not fully obeyed — 35 words is not "simple bol" — but
+the gap closed by nearly two thirds.
+
+**One thing did not move at all.** Question rate on case 002 stayed at
+**100% under both personas**, despite v2 stating in plain English "Do not
+end every message with a question." A direct, unambiguous negative
+instruction had zero measured effect. That is the clearest single argument
+in this exercise for post-training over prompting — and it is consistent
+with the mechanism that a negative instruction raises the salience of the
+forbidden thing.
+
+### The asymmetry that matters most
+
+| Fix made in | Held? |
+|---|---|
+| Deterministic code — routing (F2), language ID (F3), reasoning leak (F7), prompt assembly (F8/F9), tool honesty | **All held** |
+| Persona instruction — brevity (F5), questions (F4), invention (F1), citations (F6) | **Partial or reversed** |
+
+This is the practical argument for the architecture's central claim: keep
+as much behaviour as possible in code, and treat the model as the language
+layer rather than the control layer.
+
+**Persona v3** (318 chars, positively phrased, *relative* length rule) was
+written as the counter-hypothesis. It is **untested** — a hypothesis, not a
+recommendation.
 
 ---
 

@@ -178,5 +178,95 @@
       "repetition_score": 0.1922222222222222,
       "opener_variety": 1.0
     }
+  },
+  {
+    "id": "M03",
+    "probe": "self-interruption and self-correction",
+    "persona": "v2",
+    "turns": [
+      {
+        "user": "So I was thinking about the auth thing and",
+        "ai": "Hold up, you didn't finish that thought. Do you mean OAuth, JWT, or just getting tokens to work?\n\nTell me exactly what's failing so I can figure out where the logic is broken.",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 20071.010183,
+        "total_ms": 26865.431475999685,
+        "tok_s": 6.181541913403682,
+        "out_tokens": 42,
+        "words": 35,
+        "sentences": 3
+      },
+      {
+        "user": "Actually wait, ek second...",
+        "ai": "Take your time, I'll be right here. Just let me know what you're thinking about when you're ready.",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 21626.13722199967,
+        "total_ms": 25837.115114999506,
+        "tok_s": 5.6993887429085435,
+        "out_tokens": 24,
+        "words": 21,
+        "sentences": 2
+      },
+      {
+        "user": "Nahi nahi, mera matlab wo nahi tha.",
+        "ai": "Oye, phir se mat confuse karne ko. Kya haal hai?",
+        "route": "fast",
+        "lang": "hi",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 23405.547825999747,
+        "total_ms": 26289.797772000384,
+        "tok_s": 6.240790616971039,
+        "out_tokens": 18,
+        "words": 10,
+        "sentences": 2
+      },
+      {
+        "user": "I meant the deployment pipeline.",
+        "ai": "Aur toh deployment pipeline? Okay, bas confirm karo ki specifically kaunsi step fail ho rahi hai ya time out kar rahi hai.\n\nAgar context available hai (jaise error logs ya specific step), toh batao, warna main guess nahi kar sakta.",
+        "route": "fast",
+        "lang": "en",
+        "ack": "",
+        "injected": 0,
+        "actions": [],
+        "pending": [],
+        "ttft_ms": 25392.48793800016,
+        "total_ms": 35752.105257999574,
+        "tok_s": 5.888248389468834,
+        "out_tokens": 61,
+        "words": 40,
+        "sentences": 3
+      }
+    ],
+    "metrics": {
+      "turns": 4,
+      "mean_words": 26.5,
+      "max_words": 40,
+      "p90_words": 35,
+      "ai_tells": 0,
+      "ai_tell_examples": [],
+      "filler_turns": 0,
+      "filler_rate": 0.0,
+      "repeated_filler": [],
+      "question_rate": 0.75,
+      "hedge_rate": 0.0,
+      "agreement_rate": 0.25,
+      "disagree_turns": 0,
+      "honest_unknown": 0,
+      "lang_match_rate": 0.75,
+      "repetition_score": 0.04265873015873015,
+      "opener_variety": 1.0
+    }
   }
 ]

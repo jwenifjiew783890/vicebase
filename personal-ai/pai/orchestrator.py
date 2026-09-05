@@ -223,7 +223,9 @@ class Orchestrator:
                     "SELECT subject,predicate,object FROM facts "
                     "WHERE valid_to IS NULL")],
             "web.search": self._web_search,
+            "code.delegate": self._delegate_code,
         }
+        self.opencode_url = "http://127.0.0.1:4096"
 
     # ------------------------------------------------------------ prompt
 
@@ -354,6 +356,24 @@ class Orchestrator:
         from .web import search, rewrite_query
         outcome = search(rewrite_query(str(action.args["query"])))
         return outcome.results or None
+
+    def _delegate_code(self, action: Action):
+        """Hand a task to OpenCode.
+
+        The brief is built deterministically first. If it is not actionable
+        the task is NOT sent -- the orchestrator surfaces what is missing so
+        the assistant can ask one clarifying question. Sending a specialist
+        agent off on a guess wastes exactly the capability it was called for.
+        """
+        from .opencode import OpenCodeClient, build_brief
+        brief = build_brief(str(action.args.get("task", "")),
+                            repo=str(action.args.get("repo", "")))
+        if not brief.is_actionable:
+            raise ValueError("brief incomplete: " + "; ".join(brief.missing))
+        result = OpenCodeClient(self.opencode_url).delegate(brief)
+        if not result.ok:
+            raise RuntimeError(result.error)
+        return result
 
     def register(self, name: str, handler: Callable[[Action], Any]) -> None:
         """Wire a real implementation for one capability."""

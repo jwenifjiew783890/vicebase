@@ -161,3 +161,43 @@ class TestTheLoopEndToEnd(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAgainstTheWholeCorpus(unittest.TestCase):
+    """Run the extractor over every user turn ever said to this system.
+
+    Twelve hand-written negative cases prove the veto works on the failures
+    I thought of. This proves it on 257 turns I did not: every user turn in
+    every committed transcript, across four rounds of conversation in three
+    languages.
+
+    None of them state a fact -- the mandatory set was written to probe
+    conversation, not to feed the extractor -- so the correct answer is
+    zero, and any non-zero result is something the extractor invented.
+    """
+
+    def _corpus(self):
+        import glob, json
+        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        turns = []
+        for path in glob.glob(os.path.join(here, "eval/transcripts/**/*results*.json"),
+                              recursive=True):
+            with open(path, encoding="utf-8") as fh:
+                for conv in json.load(fh):
+                    if isinstance(conv, dict):
+                        for t in conv.get("turns", []):
+                            if t.get("user"):
+                                turns.append(t["user"])
+        return turns
+
+    def test_no_fact_is_invented_from_real_conversation(self):
+        turns = self._corpus()
+        self.assertGreater(len(turns), 200, "the corpus went missing")
+        invented = [(t, [c.as_tuple() for c in extract_facts(t)])
+                    for t in turns if extract_facts(t)]
+        self.assertEqual(invented, [],
+                         f"invented {len(invented)} facts from real turns")
+
+    def test_the_extractor_still_fires_on_a_real_statement(self):
+        """ANTI-FALSE-GREEN: zero on the corpus must not mean zero always."""
+        self.assertTrue(extract_facts("main neovim use karta hoon"))

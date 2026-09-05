@@ -259,6 +259,7 @@ persona text.
 | 002 | 15.2 → 14.5 | 100% → **100%** | 28 → 22 | flat |
 | 003 | 42.0 → **23.0** | 67% → **33%** | 79 → **33** | **better** |
 | 004 | 95.0 → **35.5** | 0% → 0% | 122 → **48** | **much better** |
+| 008 | 24.7 → 30.7 | 100% → **0%** | 29 → 37 | mixed |
 
 ### The finding, and my own wrong first reading
 
@@ -294,13 +295,23 @@ ignored it and averaged 95 words; v2 averaged 35.5 and capped at 48. The
 correction still is not fully obeyed — 35 words is not "simple bol" — but
 the gap closed by nearly two thirds.
 
-**One thing did not move at all.** Question rate on case 002 stayed at
-**100% under both personas**, despite v2 stating in plain English "Do not
-end every message with a question." A direct, unambiguous negative
-instruction had zero measured effect. That is the clearest single argument
-in this exercise for post-training over prompting — and it is consistent
-with the mechanism that a negative instruction raises the salience of the
-forbidden thing.
+**On question rate, the effect is inconsistent rather than absent.** I
+claimed "unmoved" after three cases and case 008 disproved it:
+
+| question rate | v1 | v2 | |
+|---|---|---|---|
+| 001 | 50% | 75% | worse |
+| 002 | 100% | 100% | unchanged |
+| 003 | 67% | 33% | better |
+| 004 | 0% | 0% | both zero |
+| 008 | 100% | **0%** | much better |
+
+So the QUESTIONS clause does work — twice decisively, once backwards, once
+not at all. **That inconsistency is itself the finding.** A behaviour that
+responds to an instruction on three cases out of five and reverses on a
+fourth is not a behaviour you can ship on prompting. You can ship it on
+weights, because SFT and DPO make it a property of the model rather than a
+request repeated in context.
 
 ### The asymmetry that matters most
 
@@ -331,12 +342,93 @@ recommendation.
 
 ---
 
-## 8. Acceptance criteria
+## 8. Acceptance criteria — honest assessment
 
-*Assessed below against measured evidence only.*
+You listed 22 criteria and said not to declare the layer complete until all
+are YES. **They are not all YES.** Here is where each actually stands, and
+"unverified" is used where it is the truth.
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 1 | Feels natural | **Yes, on casual turns** | "hey"→"hey"; 0 AI-tells in 11 turns |
+| 2 | Lightweight enough | **Unverified on target** | runs at 6 tok/s on 4 CPU cores; RTX 4050 not tested |
+| 3 | Natural English | **Yes** | transcripts 001, 004 |
+| 4 | Natural Hindi | **Yes — the standout result** | "Bhai, sab badhiya. Tu?" |
+| 5 | Hinglish | **Yes** | transcript 003 register mirroring |
+| 6 | Adapts style to me | **No** | see #7 |
+| 7 | Learns from repeated interaction | **Untested end-to-end** | pipeline unit-tested; `learning_e2e.py` did not run |
+| 8 | Memory stays controlled | **Yes** | 180-day sim: 10 rules peak, cap 40; bitemporal supersession |
+| 9 | Resists sycophancy | **Yes, structurally** | 7 tests vs a naive LLM proposer; conversational test 009 incomplete |
+| 10 | Obsidian retrieval | **Yes** | hybrid beats dense-only on the codename test |
+| 11 | Web fallback | **Routing yes, execution no** | no backend wired |
+| 12 | Distinguishes internal vs retrieval | **Yes** | general-knowledge short-circuit, 6/6 scenarios |
+| 13 | Tools can't be triggered by generation | **Yes** | 24 injection payloads, all denied; holds with scanner disabled |
+| 14 | Clean OpenCode boundary | **Declared, not wired** | schema + tier + audit only |
+| 15 | Automation safely invoked | **Not testable here** | no backend |
+| 16 | Voice low latency | **NOT TESTED** | no audio |
+| 17 | STT reliable | **NOT TESTED** | ASR run did not complete |
+| 18 | TTS natural | **NOT TESTED** | no TTS installed |
+| 19 | Acknowledges slow operations | **Yes** | ack fires before the wait; varied, language-matched |
+| 20 | Delegates hard tasks | **Routing yes** | delegation intent detected; no agent behind it |
+| 21 | Graceful failures | **Yes** | typed OK/PARSE_ERR/DENIED/EXEC_ERR/TIMEOUT/EMPTY |
+| 22 | Prompt injection addressed | **Yes** | structural, not lexical |
+| 23 | Dangerous actions confirmed | **Yes** | voice can never authorise irreversible |
+| 24 | Memory inspectable/correctable | **Yes** | versioned, rollback, review queue |
+| 25 | Maintainable | **Yes** | 137 tests, 135 scenarios, stdlib only |
+| 26 | Better than baseline where expected | **Partially** | v2 −63% on case 004; +67% worse on 001 |
+
+**Score: 15 yes · 4 partial · 3 no/untested · 4 not testable here.**
+
+The three that matter most and are **not** yes: personal adaptation (#6/#7),
+because the end-to-end learning run did not complete; and all of voice
+(#16–18), because this environment has no audio.
 
 ---
 
 ## 9. Verdict
 
-*Below.*
+**Can a stock 4B model, wrapped in this runtime, hold a conversation that
+feels personal rather than generic?**
+
+**On casual conversation, yes — better than I expected.** Zero
+generic-assistant phrasing across 11 turns, 100% opener variety, and Hindi
+that a native speaker would recognise as speech rather than translation.
+*"Bhai, sab badhiya. Tu?"* came free from the base model with no
+fine-tuning at all. That is the single most encouraging result here, and it
+means the Hindi requirement is not the risk I thought it was — the ASR is.
+
+**On discipline, no — and not by prompting.** Every round-1 failure was a
+discipline failure: inventing a personal memory, asking a question on every
+turn, growing from 16 to 79 words, fabricating a citation, ignoring an
+explicit correction. The A/B shows prompting moves some of these (case 004,
+−63%) while pulling others the wrong way (case 001, +67%), and moves the question
+rate inconsistently — decisively better on two cases, unchanged on one,
+worse on another.
+
+**The asymmetry is the finding.** Every defect fixed in deterministic code
+stayed fixed: routing, language ID, the reasoning leak, prompt assembly,
+tool honesty. Every defect addressed by instruction was partial or reversed.
+That is not a small observation — it is the empirical case for the
+architecture's central claim, and I did not have it before running these
+conversations.
+
+**What this means for the plan.** Phase 4 (conversational fine-tuning) moves
+from "worth doing" to **necessary**. Brevity, question restraint, and
+obeying a correction in-session are exactly the behaviours SFT and DPO
+install and prompting demonstrably cannot. The system prompt should get
+*smaller*, not larger — persona v3 exists to test that — and the behavioural
+work should move into weights and into T3 rules.
+
+**What I would not claim.** That this is a finished conversational layer.
+Voice is entirely untested. The learning loop is proven in unit tests and in
+a 180-day simulation but not end-to-end against the model. Only three of
+eighteen capabilities have a backend. The measured latency is CPU latency
+and says nothing about your laptop.
+
+**What I would claim.** The deterministic half of this system is real,
+tested, and holds up under adversarial pressure. The model half is a good
+starting point with a clearly identified gap and a clearly indicated fix.
+And the most valuable thing produced here is not the code — it is the eleven
+documented failures with root causes, because every one of them would
+otherwise have been found by you, months from now, one annoying conversation
+at a time.

@@ -85,6 +85,14 @@ class LlamaConversation:
         self.temperature = temperature
         self.last: GenStats | None = None
 
+    # Spoken when the model produces nothing usable. Deliberately short and
+    # in-character rather than an error string, because this reaches TTS.
+    FALLBACKS = {
+        "en": "sorry, lost my thread there - say that again?",
+        "hi": "arre, dhyan hat gaya - phir se bolo?",
+        "hinglish": "sorry yaar, thread kho gaya - phir se bolo?",
+    }
+
     def respond(self, system: str, history: Sequence[dict],
                 user: str, context: str) -> str:
         msgs = [{"role": "system", "content": system}]
@@ -100,7 +108,23 @@ class LlamaConversation:
         text, stats = self.backend.chat(
             msgs, max_tokens=self.max_tokens, temperature=self.temperature)
         self.last = stats
-        return _strip_thinking(text)
+        out = _strip_thinking(text)
+
+        # Stripping an unterminated reasoning block can leave nothing at all
+        # (see F7). One retry with a larger budget and no thinking room,
+        # then a short in-character fallback -- never an empty turn and
+        # never an error string, because this text goes to TTS.
+        if not out:
+            retry, stats2 = self.backend.chat(
+                msgs + [{"role": "assistant", "content": ""}],
+                max_tokens=self.max_tokens + 120,
+                temperature=max(0.3, self.temperature - 0.2))
+            self.last = stats2
+            out = _strip_thinking(retry)
+        if not out:
+            from .signals import detect_language
+            out = self.FALLBACKS.get(detect_language(user), self.FALLBACKS["en"])
+        return out
 
 
 _THINK = re.compile(r"<think>.*?</think>\s*", re.DOTALL | re.IGNORECASE)

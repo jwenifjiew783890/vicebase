@@ -72,6 +72,17 @@ def main():
                             "dur_s": len(data)/16000})
             print(f"[{i+1}/{len(rows)}] WER={w:.1%} rtf={rtf:.2f}\n"
                   f"   REF: {ref[:90]}\n   HYP: {hyp.strip()[:90]}", flush=True)
+            # Write after EVERY sample. An earlier version only wrote at
+            # the end, so hitting the timeout lost the entire run.
+            os.makedirs(os.path.dirname(OUT) or ".", exist_ok=True)
+            _srt = sorted(wers)
+            json.dump({"summary": {"model": MODEL, "n": len(wers),
+                                   "mean_wer": sum(wers) / len(wers),
+                                   "median_wer": _srt[len(wers) // 2],
+                                   "mean_rtf": sum(x["rtf"] for x in results) / len(results),
+                                   "partial": True},
+                       "results": results},
+                      open(OUT, "w"), indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"[{i+1}] failed: {type(e).__name__}: {e}", flush=True)
 

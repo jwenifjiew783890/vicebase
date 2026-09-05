@@ -100,5 +100,59 @@ class TestPlannerParsing(unittest.TestCase):
         self.assertIn("open opencode please", acts[0].reason)
 
 
+
+class TestEmptyResponseFallback(unittest.TestCase):
+    """Stripping a reasoning block can leave nothing. Never emit an empty turn."""
+
+    class FakeBackend:
+        def __init__(self, outputs): self.outputs = list(outputs); self.calls = 0
+        def chat(self, msgs, **kw):
+            from pai.llm import GenStats
+            self.calls += 1
+            out = self.outputs.pop(0) if self.outputs else ""
+            return out, GenStats(completion_tokens=len(out.split()))
+
+    def _conv(self, outputs):
+        from pai.llm import LlamaConversation
+        c = LlamaConversation.__new__(LlamaConversation)
+        c.backend = self.FakeBackend(outputs)
+        c.max_tokens = 100; c.temperature = 0.7; c.last = None
+        return c
+
+    def test_retries_once_when_stripping_leaves_nothing(self):
+        c = self._conv(["<think>hmm let me work this out",
+                        "Haan bhai, sab theek."])
+        out = c.respond("sys", [], "kya haal hai", "")
+        self.assertEqual(out, "Haan bhai, sab theek.")
+        self.assertEqual(c.backend.calls, 2)
+
+    def test_falls_back_in_the_users_language_when_retry_also_fails(self):
+        from pai.llm import LlamaConversation
+        c = self._conv(["<think>a", "<think>b"])
+        out = c.respond("sys", [], "kya haal hai", "")
+        self.assertEqual(out, LlamaConversation.FALLBACKS["hi"])
+
+    def test_english_fallback_for_english_turn(self):
+        from pai.llm import LlamaConversation
+        c = self._conv(["<think>a", "<think>b"])
+        out = c.respond("sys", [], "what's going on", "")
+        self.assertEqual(out, LlamaConversation.FALLBACKS["en"])
+
+    def test_never_returns_empty(self):
+        c = self._conv(["", ""])
+        self.assertTrue(c.respond("sys", [], "hey", "").strip())
+
+    def test_no_retry_when_first_response_is_fine(self):
+        c = self._conv(["All good."])
+        self.assertEqual(c.respond("sys", [], "hey", ""), "All good.")
+        self.assertEqual(c.backend.calls, 1)
+
+    def test_fallback_is_not_an_error_string(self):
+        """This text reaches TTS; it must sound like a person."""
+        from pai.llm import LlamaConversation
+        for v in LlamaConversation.FALLBACKS.values():
+            for bad in ("error", "exception", "none", "null", "failed", "sorry, i"):
+                self.assertNotIn(bad, v.lower().replace("sorry, lost", "x"))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

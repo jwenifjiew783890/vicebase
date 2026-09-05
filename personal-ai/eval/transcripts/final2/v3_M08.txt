@@ -1,0 +1,41 @@
+TEST #M08
+Scenario:
+  language switching on command
+
+USER:
+  Acha ab Hindi mein bol.
+AI:  [route=fast lang=hinglish 28w/2s ttft=11664ms 5.6tok/s]
+  Bhai, main already English mein hi reply kar raha hoon taaki humara mix bhi rahe. Ab main Hindi mein bolunga toh wahi ho jayega, koi problem nahi hai.
+
+USER:
+  Now speak English.
+AI:  [route=fast lang=en 12w/2s ttft=13060ms 5.9tok/s]
+  Kya scene hai? Bhai, abhi thoda busy ho raha hoon, kaise ho?
+
+USER:
+  Chal Hinglish mein baat kar.
+AI:  [route=fast lang=en 24w/3s ttft=14694ms 6.0tok/s]
+  Arre, theek hai, Hinglish mein chalte hain. Kya haal-chaal? Thoda busy feel ho raha hai ya koi specific topic pe baat karni hai?
+
+USER:
+  Main usually kis language mein baat karta hoon?
+AI:  [route=fast lang=en 40w/2s ttft=17171ms 6.1tok/s]
+  Aapne pehle Hindi mein "Acha ab Hindi mein bol" kiya tha, phir English mein "Now speak English", aur ab Hinglish mein pooch rahe ho. Toh lagta hai aap mix hona pasand karte ho ya context ke hisaab switch karte ho!
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         26.0
+  p90 words                28
+  max words                40
+  AI-tell phrases          0  []
+  filler turn rate         50%
+  over-used filler         -
+  question rate            50%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           25%
+  cross-turn repetition    0.16
+  opener variety           100%

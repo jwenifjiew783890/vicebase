@@ -1,0 +1,36 @@
+TEST #M05
+Scenario:
+  detail requested, must not stay terse
+
+USER:
+  What's a database index?
+AI:  [route=fast lang=en 39w/2s ttft=11562ms 6.0tok/s]
+  A database index is basically a data structure that helps the database find records faster, like putting names on books so you don't have to scan every single one. It trades storage space for speed when querying data.
+
+USER:
+  Isko detail mein explain kar.
+AI:  [route=fast lang=hinglish 100w/3s ttft=14219ms 5.8tok/s]
+  Pata hai, index ka basic idea hai ki wo search speed badhata hai, lekin detail mein toh yeh ek sorted list (ya tree structure) hoti hai jo table ke data ke saath linked rehti hai. Jab bhi query aati hai, database pehle us index check karti hai aur match milne par direct data nikal deti hai, poora table scan karne ki zaroorat nahi padti. Agar maine koi specific detail galat ya missing di hai, toh main woh correct kar dunga—bas yehi hai ki yeh performance optimize karta hai, trade-off ke saath storage mein thoda space use hota hai.
+
+USER:
+  Aur iske downsides?
+AI:  [route=fast lang=hinglish 84w/4s ttft=20538ms 5.8tok/s]
+  Haan, downsides bhi hain. Sabse pehle, index banane par storage space badh jata hai kyunki extra data store hota hai. Aur jab tum data update karte ho—delete ya modify—tab database ko poora index ko bhi update karne padta hai, jo slow kar sakta hai agar index bahut bada ho. Plus, jo queries wo index use kar sakte hain, unke saath baaki queries mein performance thodi gir sakti hai kyunki database ko decide karna padta hai ki index use kare ya na kare.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         74.3
+  p90 words                84
+  max words                100
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       1
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.15
+  opener variety           100%

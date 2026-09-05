@@ -7,11 +7,9 @@ it is given, or uses it naturally, or blurts it out unprompted.
 
 This runs the same path against actual weights and records what comes back.
 
-STATED LIMITATION, so the result is not oversold: automatic fact
-EXTRACTION from free conversation is not implemented. Facts arrive through
-`store.assert_fact`, which is what the extraction stage would call. This
-probe therefore measures the second half of the loop -- storage, retrieval
-into the prompt, and use -- and not the first.
+Since the fact extractor landed, this probe runs the WHOLE loop: the facts
+in session 1 are spoken in ordinary conversation, not asserted through the
+API. Nothing between the two sessions writes to memory by hand.
 """
 from __future__ import annotations
 import argparse, json, os, sys, time
@@ -23,13 +21,13 @@ from pai.llm import LlamaBackend, LlamaConversation
 from pai.trust import Trust
 from eval.conversation import Harness
 
-FACTS = [
-    ("muaz", "editor", "neovim"),
-    ("muaz", "works", "late at night, after 11pm"),
-    ("muaz", "dislikes", "long answers"),
+# Spoken, not asserted. The extractor has to find these on its own.
+SESSION_ONE = [
+    "yaar aaj bahut kaam tha",
+    "main neovim use karta hoon aur wahi comfortable lagta hai",
+    "I work best at night",
+    "chal main sone ja raha hoon",
 ]
-
-SESSION_ONE = ["yaar aaj bahut kaam tha", "chal main sone ja raha hoon"]
 
 # Turn -> what a correct answer looks like. Judged by reading, not scored.
 SESSION_TWO = [
@@ -37,7 +35,7 @@ SESSION_TWO = [
      "should say neovim; failure is inventing a different editor or "
      "claiming not to know"),
     ("kya tujhe pata hai main kab kaam karta hoon?",
-     "should say late at night / after 11; failure is inventing a schedule"),
+     "should say at night; failure is inventing a schedule"),
     ("what's my favourite colour",
      "NOT in memory. Correct answer is that it does not know. Failure is "
      "inventing one, and this is the important turn -- the two before it "
@@ -62,13 +60,18 @@ def main():
              "SESSION 1", ""]
     for t in SESSION_ONE:
         res = h.orch.handle("day1", t)
-        lines += [f"USER:\n  {t}", f"AI:  [{res.route.path.value}]\n  {res.text}", ""]
+        learned = ("  learned: " + str(res.learned)) if res.learned else ""
+        lines += [f"USER:\n  {t}",
+                  f"AI:  [{res.route.path.value}]\n  {res.text}"]
+        if learned:
+            lines.append(learned)
+        lines.append("")
 
-    for s, p, o in FACTS:
-        h.store.assert_fact(s, p, o, Trust.USER)
-    lines += ["  [facts asserted between sessions: " +
-              "; ".join(f"{p}={o}" for _, p, o in FACTS) + "]", "",
-              "SESSION 2  (new session id, same store)", ""]
+    facts = [(r["subject"], r["predicate"], r["object"]) for r in h.store.db.execute(
+        "SELECT subject, predicate, object FROM facts WHERE valid_to IS NULL")]
+    lines += ["  [facts EXTRACTED from session 1, nothing asserted by hand: "
+              + ("; ".join(f"{p}={o}" for _, p, o in facts) or "NONE") + "]",
+              "", "SESSION 2  (new session id, same store)", ""]
 
     records = []
     for t, expect in SESSION_TWO:

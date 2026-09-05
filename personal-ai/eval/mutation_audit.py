@@ -424,7 +424,7 @@ MUTATIONS = [
 
     ("orchestrator: it may deny a source it just searched",
      "pai/orchestrator.py",
-     "        if (route.vault_forced or route.needs_web) \\\n"
+     "        if (route.vault_forced or route.needs_web or route.memory_query) \\\n"
      "                and CAPABILITY_DENIAL.search(res.text):",
      "        if False:"),
 

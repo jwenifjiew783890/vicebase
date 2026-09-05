@@ -1434,3 +1434,76 @@ it is better than a passing test: **the model made the same mistake again
 and the deterministic layer caught it in a live conversation.** A test
 proves a defence works on input you chose. That transcript proves it works
 on input the model chose.
+
+---
+
+## F44 — Three of my own defences were false greens  ·  FIXED  ·  found by the audit
+
+The final mutation audit ran 86 mutations and reported **82 killed, 4
+survivors**. All four were mine, and three of them are the same mistake.
+
+```
+SURVIVED  orchestrator: the hypothetical check runs over the whole reply again
+SURVIVED  orchestrator: roleplayed work is not a claim
+SURVIVED  orchestrator: context is carried to any later turn
+SURVIVED  orchestrator: it may deny a source it just searched   (anchor missing)
+```
+
+**The first two mask each other.** The F40 fix has two halves: check the
+hypothetical framing per clause, and treat roleplay ("(typing sound)",
+"\*opens terminal\*") as a claim. My test for each used a string that
+**both** halves catch — the A06 sentence contains a claim clause *and*
+"(typing sound)" *and* "Done!". Disable either half and the other still
+catches it, so neither half had a test that depended on it.
+
+Fixed by isolating the strings:
+- roleplay only — *"\*types quietly\* (clicking around)"*, which contains
+  no capability verb at all
+- clause-scoping only — *"I pushed it to main. Anything else?"*, which
+  contains no roleplay marker and is the exact shape that defeated the
+  whole-reply check in A06
+
+**The third is masked by a cheaper check.** The carried-context rule tests
+adjacency (`when != turn_index - 1`) *and* whether the previous turn had
+hits. Every test I wrote had an empty-hits turn in the middle doing the
+work. The case only adjacency can catch is an interleaved session: the
+session's own last context is still non-empty, and the global turn counter
+has moved on. Now tested.
+
+**The fourth is not a false green** — the anchor stopped matching when I
+extended the guard to the memory path and forgot to update the mutation's
+find-string. An audit whose anchor has drifted reports "survived" and is
+right to: it could not run the experiment. Repaired, and it kills.
+
+Re-run on just those four: **4/4 killed.**
+
+This is the third time this project has hit defence masking (F18, F40 and
+now this), and the lesson has sharpened each time: **it is not enough for
+every defence to have a test. Every defence needs a test that fails when
+that defence alone is removed.** A test suite cannot tell you which of
+those you have. Only a mutation audit can, and only if its anchors are
+kept honest.
+
+---
+
+## F45 — I committed a live mutation  ·  FIXED  ·  methodology
+
+F28 recorded that killing the audit mid-run leaves a mutated file on disk,
+and the fix was: do not edit source while the audit runs. I obeyed that and
+then walked through the door next to it.
+
+While the final audit had `pai/router.py` rewritten, a `git add -A` in an
+unrelated commit — the one that stopped tracking `.pyc` files — staged and
+committed the mutated version: the lexical-overlap gate applied to *all*
+hits rather than only marginal ones, which is the exact over-correction
+F18 documented and reverted.
+
+The audit's `finally` restored the working tree correctly. It cannot
+restore the index. Nothing was released with it — the mutated code existed
+in one commit on a branch and never in a working tree that ran tests — and
+it was caught by `git status` showing `pai/router.py` modified after an
+audit that had just cleanly finished.
+
+**The rule that was missing:** during an audit, do not edit source *and do
+not commit*. `git add -A` is not safe when something else is rewriting
+tracked files, however careful you are being about the editor.

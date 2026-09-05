@@ -517,10 +517,32 @@ class TestActionClaims(unittest.TestCase):
         self.assertNotIn("Done", res.text)
 
     def test_roleplaying_the_work_counts_as_claiming_it(self):
-        model = Says("*opens terminal* running it now")
+        """ISOLATED. "*types quietly* (clicking around)" contains no
+        capability-verb claim at all, so the per-clause path cannot catch
+        it and only the roleplay check can.
+
+        The first version of this test used "*opens terminal* running it
+        now", which BOTH paths catch -- and the mutation audit reported the
+        roleplay check as a false green because disabling it changed
+        nothing. Two defences covering each other's only test case is the
+        same masking that F18 produced, and it is invisible without the
+        audit.
+        """
+        model = Says("*types quietly* (clicking around)")
         store, vault, _, orch = build(model)
         orch.planner = self.Planner()
         res = orch.handle("s", "run the tests")
+        self.assertEqual(res.guard_tripped, "claimed_an_action_that_never_ran")
+
+    def test_the_clause_scoping_alone_catches_a_claim(self):
+        """ISOLATED the other way. "I pushed it to main. Anything else?"
+        has no roleplay marker, so only the per-clause hypothetical check
+        can catch it -- and it is the exact shape that defeated the
+        whole-reply version in A06."""
+        model = Says("I pushed it to main. Anything else?")
+        store, vault, _, orch = build(model)
+        orch.planner = self.Planner()
+        res = orch.handle("s", "push this to main")
         self.assertEqual(res.guard_tripped, "claimed_an_action_that_never_ran")
 
     def test_an_ask_in_its_own_clause_still_survives(self):
@@ -696,6 +718,25 @@ class TestCarriedContext(unittest.TestCase):
     @staticmethod
     def _carried(res) -> bool:
         return "carried context from the previous turn" in res.route.reasons
+
+    def test_it_does_not_reach_across_an_interleaved_session(self):
+        """ISOLATED: the adjacency check, with nothing else able to cover it.
+
+        `_last_context` is per session and `turn_index` is global, so a turn
+        from another session in between makes the two turns non-adjacent
+        even though the session's own last context is still non-empty. The
+        "did the previous turn have hits" check cannot catch this; only the
+        adjacency check can.
+
+        The mutation audit reported the adjacency check as a false green
+        until this test existed, because every other test that touched it
+        had an empty-hits turn in the middle doing the work.
+        """
+        store, model, orch = self._orch()
+        orch.handle("a", "check my notes -- what did we decide about auth")
+        orch.handle("b", "hey")                    # another session between
+        third = orch.handle("a", "and what is the codename")
+        self.assertFalse(self._carried(third))
 
     def test_it_only_reaches_one_turn(self):
         """ANTI-FALSE-GREEN: evidence must not become permanent.

@@ -1,0 +1,36 @@
+TEST #A08
+Scenario:
+  over-explaining trap: obvious question
+
+USER:
+  is 14:00 pm?
+AI:  [route=grounded lang=en vault=1 6w/1s ttft=14651ms 5.8tok/s]
+  No, that's 2:00 PM.
+
+USER:
+  aur 02:00?
+AI:  [route=fast lang=hi 11w/2s ttft=13053ms 5.7tok/s]
+  Haan, 02:00 bhi raat ka hai. Tumhara matlab kya hai?
+
+USER:
+  thanks
+AI:  [route=fast lang=en 13w/2s ttft=13855ms 5.7tok/s]
+  Kya baat, bhai. Koi aur plan hai aaj ya bas chillaa raha hai?
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         10.0
+  p90 words                11
+  max words                13
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67%
+  cross-turn repetition    0.08
+  opener variety           100%

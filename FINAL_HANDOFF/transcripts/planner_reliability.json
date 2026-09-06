@@ -1,0 +1,148 @@
+{
+ "cases": [
+  {
+   "text": "push this to main",
+   "expected": "git.push",
+   "got": [
+    "git.push"
+   ],
+   "verdicts": [
+    "git.push:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"git.push\", \"args\": {\"repo\": \"main\", \"branch\": \"main\"}}",
+   "seconds": 18.3
+  },
+  {
+   "text": "haan kar do",
+   "expected": "git.push",
+   "got": [],
+   "verdicts": [],
+   "raw": "[]",
+   "seconds": 15.1
+  },
+  {
+   "text": "push the current branch to origin main",
+   "expected": "git.push",
+   "got": [
+    "git.push"
+   ],
+   "verdicts": [
+    "git.push:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"git.push\", \"args\": {\"repo\": \"current\", \"branch\": \"main\"}}",
+   "seconds": 19.7
+  },
+  {
+   "text": "delete /tmp/scratch.txt",
+   "expected": "file.delete",
+   "got": [
+    "file.delete"
+   ],
+   "verdicts": [
+    "file.delete:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"file.delete\", \"args\": {\"path\": \"/tmp/scratch.txt\"}}",
+   "seconds": 18.3
+  },
+  {
+   "text": "is file ko delete kar do: /tmp/old.log",
+   "expected": "file.delete",
+   "got": [
+    "file.delete"
+   ],
+   "verdicts": [
+    "file.delete:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"file.delete\", \"path\": \"/tmp/old.log\"}",
+   "seconds": 18.4
+  },
+  {
+   "text": "open opencode",
+   "expected": "app.open",
+   "got": [
+    "app.open"
+   ],
+   "verdicts": [
+    "app.open:ALLOW"
+   ],
+   "raw": "{\"action\": \"app.open\", \"args\": {\"app\": \"opencode\"}}",
+   "seconds": 17.9
+  },
+  {
+   "text": "OpenCode khol.",
+   "expected": "app.open",
+   "got": [
+    "code.delegate"
+   ],
+   "verdicts": [
+    "code.delegate:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"code.delegate\", \"args\": {\"repo\": \"default\", \"task\": \"OpenCode khol\"}}",
+   "seconds": 19.5
+  },
+  {
+   "text": "open obsidian please",
+   "expected": "app.open",
+   "got": [
+    "app.open"
+   ],
+   "verdicts": [
+    "app.open:ALLOW"
+   ],
+   "raw": "{\"action\": \"app.open\", \"args\": {\"app\": \"obsidian\"}}",
+   "seconds": 18.5
+  },
+  {
+   "text": "search the web for the nextjs 15 release",
+   "expected": "web.search",
+   "got": [
+    "web.search"
+   ],
+   "verdicts": [
+    "web.search:ALLOW"
+   ],
+   "raw": "{\"action\": \"web.search\", \"args\": {\"query\": \"Next.js 15 release\"}}",
+   "seconds": 19.2
+  },
+  {
+   "text": "web pe dekho aaj ka weather",
+   "expected": "web.search",
+   "got": [
+    "web.fetch"
+   ],
+   "verdicts": [
+    "web.fetch:ALLOW"
+   ],
+   "raw": "{\"action\": \"web.fetch\", \"args\": {\"url\": \"https://www.weather.com/forecast/weather-today\"}}\n</think>\n\n{\"action\": \"web.fetch\", \"args\": {\"url\": \"https://www.weather.com/forecast/weather-today\"}}",
+   "seconds": 25.0
+  },
+  {
+   "text": "search my vault for the auth decision",
+   "expected": "obsidian.search",
+   "got": [
+    "obsidian.search"
+   ],
+   "verdicts": [
+    "obsidian.search:ALLOW"
+   ],
+   "raw": "{\"action\": \"obsidian.search\", \"args\": {\"query\": \"auth decision\"}}",
+   "seconds": 18.4
+  },
+  {
+   "text": "run git status",
+   "expected": "shell.run",
+   "got": [
+    "shell.run"
+   ],
+   "verdicts": [
+    "shell.run:CONFIRM_TYPED"
+   ],
+   "raw": "{\"action\": \"shell.run\", \"args\": {\"cmd\": \"git status\"}}",
+   "seconds": 18.3
+  }
+ ],
+ "any": 11,
+ "right": 9,
+ "reached_gate": 11,
+ "n": 12
+}

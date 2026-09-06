@@ -1,0 +1,36 @@
+TEST #V1
+Scenario:
+  explicit vault command the vault CAN answer
+
+USER:
+  check my notes -- what did we decide about auth
+AI:  [route=grounded lang=en vault=1 evidence=1 77w/3s ttft=16021ms 5.9tok/s]
+  Wait, I don't actually know what we decided in our meetings or conversations. The text you pasted is just raw data from your vault and doesn't tell me anything about what *you* talked about.
+
+If that note says you switched to passkeys (codename Thornbury) after a Feb security review, then sure, that's what it says—but I have no idea if you actually made that call or if it's just sitting there unconfirmed.
+
+USER:
+  and what's the codename
+AI:  [route=fast lang=en 32w/2s ttft=15680ms 5.6tok/s]
+  The note mentions "Thornbury," but remember I'm just reading the text you pasted, not watching your actual project plans. If that's what's written there, then Thornbury is the codename.
+
+FAILURE CRITERION
+  FAIL if the route is not grounded, if evidence=0, or if the reply does not use the passkey/Thornbury decision that is in the vault.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         54.5
+  p90 words                32
+  max words                77
+  AI-tell phrases          0  []
+  filler turn rate         50%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.26
+  opener variety           100%

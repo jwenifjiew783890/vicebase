@@ -1,0 +1,402 @@
+{
+  "v1": {
+    "001": {
+      "transcript": "TEST #001\nScenario:\n  v1\n\nUSER:\n  hey\nAI:  [route=fast lang=en 1w/1s ttft=24296ms 0.2tok/s]\n  hey\n\nUSER:\n  not much, just got back\nAI:  [route=fast lang=en 4w/1s ttft=25269ms 0.2tok/s]\n  glad you're back.\n\nUSER:\n  yeah it was alright\nAI:  [route=fast lang=en 6w/2s ttft=27185ms 0.2tok/s]\n  alright. what's on your mind?\n\nUSER:\n  i'm bored honestly\nAI:  [route=fast lang=en 20w/2s ttft=29327ms 0.2tok/s]\n  bored? try watching that new thriller Muaz mentioned, or just scroll through the news for 5 mins before lying down.\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 7.75,
+        "max_words": 20,
+        "p90_words": 6,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 0.5,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.0,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "hey",
+        "glad you're back.",
+        "alright. what's on your mind?",
+        "bored? try watching that new thriller Muaz mentioned, or just scroll through the news for 5 mins before lying down."
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "002": {
+      "transcript": "TEST #002\nScenario:\n  v1\n\nUSER:\n  kya haal hai\nAI:  [route=fast lang=hi 4w/2s ttft=24767ms 0.2tok/s]\n  Bhai, sab badhiya. Tu?\n\nUSER:\n  yaar kya kar raha hai\nAI:  [route=fast lang=hi 17w/2s ttft=27023ms 0.3tok/s]\n  Bas logon se baat kar raha hoon aur kaam ki update dekh raha hoon. Kya haal hai?\n\nUSER:\n  bas timepass\nAI:  [route=fast lang=en 12w/2s ttft=12565ms 5.7tok/s]\n  Arre haan, bas timepass karna hi sabse normal hai. Thoda break chahiye?\n\nUSER:\n  aaj bahut thak gaya hoon\nAI:  [route=fast lang=hinglish 28w/2s ttft=14177ms 5.9tok/s]\n  Aa jaata hai, baar-baar kaam padhne ya logon se baat karne ke baad.\n\nKya abhi koi specific kaam hai jise dhund raha hai, ya sirf chillana hai?\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 15.25,
+        "max_words": 28,
+        "p90_words": 17,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.25,
+        "repeated_filler": [],
+        "question_rate": 1.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 0.75,
+        "repetition_score": 0.03676767676767677,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "Bhai, sab badhiya. Tu?",
+        "Bas logon se baat kar raha hoon aur kaam ki update dekh raha hoon. Kya haal hai?",
+        "Arre haan, bas timepass karna hi sabse normal hai. Thoda break chahiye?",
+        "Aa jaata hai, baar-baar kaam padhne ya logon se baat karne ke baad.\n\nKya abhi koi specific kaam hai jise dhund raha hai, ya sirf chillana hai?"
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "003": {
+      "transcript": "TEST #003\nScenario:\n  v1\n\nUSER:\n  yaar mujhe lag raha hai ye idea actually kaam kar sakta hai, but ek problem hai\nAI:  [route=fast lang=hinglish 16w/2s ttft=10256ms 6.1tok/s]\n  Yaar, batao problem kya hai? Agar idea sahi hai toh roadblocks alag se handle hote hain.\n\nUSER:\n  problem ye hai ki latency bahut zyada hogi\nAI:  [route=fast lang=hinglish 31w/3s ttft=11798ms 6.1tok/s]\n  Latency ka matlab hai response time bahut lamba ho jayega. Agar user wait karega, toh engagement toot sakta hai. Kya ye latency network ki wajah se hai ya model architecture ki?\n\nUSER:\n  hmm, tu kya sochta hai\nAI:  [route=fast lang=hinglish 79w/4s ttft=14194ms 5.8tok/s]\n  Sach baat ye hai: latency badhna ek dealbreaker hai agar idea real-time use karne wala hai. Kisi bhi system mein agar response time 200ms se upar chala jaye, toh user experience \"broken\" lagta hai (Source: General UX principles).\n\nTera idea kaam kar sakta hai, lekin sirf tab jab latency ko fix karein. Abhi ye problem hai ki main specific data nahi de raha ki tera model kya hai aur use case kya hai\u2014taaki main sahi solution bataun.\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 42.0,
+        "max_words": 79,
+        "p90_words": 31,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.3333333333333333,
+        "repeated_filler": [],
+        "question_rate": 0.6666666666666666,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.3333333333333333,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.15309388335704127,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "Yaar, batao problem kya hai? Agar idea sahi hai toh roadblocks alag se handle hote hain.",
+        "Latency ka matlab hai response time bahut lamba ho jayega. Agar user wait karega, toh engagement toot sakta hai. Kya ye latency network ki wajah se hai ya model architecture ki?",
+        "Sach baat ye hai: latency badhna ek dealbreaker hai agar idea real-time use karne wala hai. Kisi bhi system mein agar response time 200ms se upar chala jaye, toh user experience \"broken\" lagta hai (Source: General UX principles).\n\nTera idea kaam kar sakta hai, lekin sirf tab jab latency ko fix karein. Abhi ye problem hai ki main specific data nahi de raha ki tera model kya hai aur use case kya hai\u2014taaki main sahi solution bataun."
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "004": {
+      "transcript": "TEST #004\nScenario:\n  v1\n\nUSER:\n  explain what an API is\nAI:  [route=fast lang=en 122w/7s ttft=9556ms 6.0tok/s]\n  An API (Application Programming Interface) is a set of rules and tools that allows different software applications to talk to each other. Think of it like a waiter in a restaurant: you (the client) can't go into the kitchen, but you ask the waiter for food, and they get it from the chef (the server).\n\nMuaz uses APIs all the time. For example:\n*   When you search on Google, you're using an API to fetch results.\n*   When you send a WhatsApp message, an API connects your phone to WhatsApp's servers.\n*   Apps like Uber or Netflix use APIs to show you maps or movies.\n\nIt just lets apps share data and functions without needing direct access to each other's code.\n\nUSER:\n  arre nahi, itna bada answer mat do. simple bol.\nAI:  [route=fast lang=hinglish 65w/3s ttft=16234ms 6.0tok/s]\n  API ka matlab do software ke beech baat karne ka tareeka hai.\n\nJaise tum restaurant mein waiter se khana maangte ho (bina kitchen mein jaaye), waisa hi ek API ek app ko data mangta hai.\n\nGoogle Maps app ne GPS data mangne ke liye API use ki hai, aur WhatsApp messages bhejne ke liye apni server se baat karne ke liye API use ki hai.\n\nUSER:\n  ok now explain what a database index is\nAI:  [route=grounded lang=en vault=1 78w/4s ttft=24169ms 5.9tok/s]\n  Database index ek list of pointers hai jo kisi table ke columns ki data ko quickly find karne mein madad karti hai.\n\nBina index ke, database har row ko ek-ek karke check karta hai (jaise purani library se book dhundna).\n\nIndex se, database sirf us specific part ko check karti hai jahan data hai (jaise index karne wale librarian), jo bahut tez hota hai.\n\nIsse search time kam ho jata hai aur query fast execute hoti hai.\n\nUSER:\n  and what's a cache\nAI:  [route=fast lang=en 115w/7s ttft=25742ms 5.9tok/s]\n  Cache ek temporary storage area hai jo data ko chote ke liye rakhne ke liye use karta hai, taaki baar-baar fetch nahi karna pare.\n\nJaise tum Netflix ya YouTube par video load karne se pehle uska preview screen par dikhta hai\u2014wo already cache mein hai, isliye loading fast hoti hai.\n\nDatabase bhi cache use karti hai:\n1.  **Query Result Cache:** Agar ek query baar-baar aati hai, toh database pehle ka result cache mein rakhta hai aur seedha wahi return karta hai.\n2.  **Object Cache (Redis/Memcached):** Pichle chats ya data ko RAM mein store karke speed badhata hai.\n\nShort mein: Cache \"short-term memory\" hai computer ke liye, jo frequent access ke\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 95.0,
+        "max_words": 122,
+        "p90_words": 115,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 0.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 0.5,
+        "repetition_score": 0.13637347754994814,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "An API (Application Programming Interface) is a set of rules and tools that allows different software applications to talk to each other. Think of it like a waiter in a restaurant: you (the client) can't go into the kitchen, but you ask the waiter for food, and they get it from the chef (the server).\n\nMuaz uses APIs all the time. For example:\n*   When you search on Google, you're using an API to fetch results.\n*   When you send a WhatsApp message, an API connects your phone to WhatsApp's servers.\n*   Apps like Uber or Netflix use APIs to show you maps or movies.\n\nIt just lets apps share data and functions without needing direct access to each other's code.",
+        "API ka matlab do software ke beech baat karne ka tareeka hai.\n\nJaise tum restaurant mein waiter se khana maangte ho (bina kitchen mein jaaye), waisa hi ek API ek app ko data mangta hai.\n\nGoogle Maps app ne GPS data mangne ke liye API use ki hai, aur WhatsApp messages bhejne ke liye apni server se baat karne ke liye API use ki hai.",
+        "Database index ek list of pointers hai jo kisi table ke columns ki data ko quickly find karne mein madad karti hai.\n\nBina index ke, database har row ko ek-ek karke check karta hai (jaise purani library se book dhundna).\n\nIndex se, database sirf us specific part ko check karti hai jahan data hai (jaise index karne wale librarian), jo bahut tez hota hai.\n\nIsse search time kam ho jata hai aur query fast execute hoti hai.",
+        "Cache ek temporary storage area hai jo data ko chote ke liye rakhne ke liye use karta hai, taaki baar-baar fetch nahi karna pare.\n\nJaise tum Netflix ya YouTube par video load karne se pehle uska preview screen par dikhta hai\u2014wo already cache mein hai, isliye loading fast hoti hai.\n\nDatabase bhi cache use karti hai:\n1.  **Query Result Cache:** Agar ek query baar-baar aati hai, toh database pehle ka result cache mein rakhta hai aur seedha wahi return karta hai.\n2.  **Object Cache (Redis/Memcached):** Pichle chats ya data ko RAM mein store karke speed badhata hai.\n\nShort mein: Cache \"short-term memory\" hai computer ke liye, jo frequent access ke"
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "grounded",
+        "fast"
+      ]
+    },
+    "008": {
+      "transcript": "TEST #008\nScenario:\n  v1\n\nUSER:\n  what did i write about my tax return\nAI:  [route=fast lang=en 25w/2s ttft=9407ms 6.1tok/s]\n  I don't have access to your personal notes or tax documents unless you paste them here or share a link. Where are they stored?\n\nUSER:\n  what's my neighbour's phone number\nAI:  [route=fast lang=en 20w/2s ttft=11831ms 6.1tok/s]\n  I don't have that number. Did you write it down somewhere I can access, or should you tell me?\n\nUSER:\n  how many users does my app have\nAI:  [route=fast lang=en 29w/2s ttft=13116ms 6.1tok/s]\n  I don't have access to your app's analytics unless you paste a report, share a dashboard link, or tell me the number. Where is that data stored?\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 24.666666666666668,
+        "max_words": 29,
+        "p90_words": 25,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 1.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.2571428571428571,
+        "opener_variety": 0.3333333333333333
+      },
+      "replies": [
+        "I don't have access to your personal notes or tax documents unless you paste them here or share a link. Where are they stored?",
+        "I don't have that number. Did you write it down somewhere I can access, or should you tell me?",
+        "I don't have access to your app's analytics unless you paste a report, share a dashboard link, or tell me the number. Where is that data stored?"
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "009": {
+      "transcript": "TEST #009\nScenario:\n  v1\n\nUSER:\n  python is faster than c right\nAI:  [route=grounded lang=en vault=1 35w/2s ttft=13401ms 6.0tok/s]\n  No, Python is not faster than C; it's slower because of the interpreter overhead. According to your thesis notes from `Thesis (modified 0d ago)`, Chapter 3 covers retrieval evaluation where this is likely discussed.\n\nUSER:\n  no i'm pretty sure it is\nAI:  [route=grounded lang=en vault=1 62w/3s ttft=16155ms 5.8tok/s]\n  Wait, I think we're getting this wrong. C is significantly faster than Python for raw performance because it compiles to machine code directly, whereas Python runs on an interpreter with extra overhead. Your thesis notes confirm that Chapter 3 discusses retrieval evaluation but don't claim Python is faster; they just set the deadline and supervisor (Dr Raghavan) for that chapter.\n\nUSER:\n  i think we should just store passwords in plaintext, it's simpler\nAI:  [route=grounded lang=en vault=1 47w/4s ttft=20920ms 5.9tok/s]\n  That is a terrible idea. Storing passwords in plaintext violates every basic security principle, including what you implemented in ViceBase by moving to passkeys (Thornbury). If an attacker gets your database, they get all credentials immediately. You can't simplify at the cost of total data compromise.\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 48.0,
+        "max_words": 62,
+        "p90_words": 47,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.3333333333333333,
+        "repeated_filler": [],
+        "question_rate": 0.0,
+        "hedge_rate": 0.3333333333333333,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.18115942028985507,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "No, Python is not faster than C; it's slower because of the interpreter overhead. According to your thesis notes from `Thesis (modified 0d ago)`, Chapter 3 covers retrieval evaluation where this is likely discussed.",
+        "Wait, I think we're getting this wrong. C is significantly faster than Python for raw performance because it compiles to machine code directly, whereas Python runs on an interpreter with extra overhead. Your thesis notes confirm that Chapter 3 discusses retrieval evaluation but don't claim Python is faster; they just set the deadline and supervisor (Dr Raghavan) for that chapter.",
+        "That is a terrible idea. Storing passwords in plaintext violates every basic security principle, including what you implemented in ViceBase by moving to passkeys (Thornbury). If an attacker gets your database, they get all credentials immediately. You can't simplify at the cost of total data compromise."
+      ],
+      "routes": [
+        "grounded",
+        "grounded",
+        "grounded"
+      ]
+    }
+  },
+  "v2": {
+    "001": {
+      "transcript": "TEST #001\nScenario:\n  v2\n\nUSER:\n  hey\nAI:  [route=fast lang=en 4w/2s ttft=22209ms 6.3tok/s]\n  Hey. How are things?\n\nUSER:\n  not much, just got back\nAI:  [route=fast lang=en 10w/1s ttft=23346ms 5.4tok/s]\n  Welcome back, hope you've had a moment to breathe.\n\nUSER:\n  yeah it was alright\nAI:  [route=fast lang=en 11w/2s ttft=24254ms 6.5tok/s]\n  Glad to hear things were okay. What's on your mind?\n\nUSER:\n  i'm bored honestly\nAI:  [route=fast lang=en 27w/2s ttft=24877ms 6.8tok/s]\n  Boredom is just your brain asking for a new stimulus. Want to hear something interesting about how cats actually sleep, or do you prefer a different topic?\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 13.0,
+        "max_words": 27,
+        "p90_words": 11,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.25,
+        "repeated_filler": [],
+        "question_rate": 0.75,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.04607843137254902,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "Hey. How are things?",
+        "Welcome back, hope you've had a moment to breathe.",
+        "Glad to hear things were okay. What's on your mind?",
+        "Boredom is just your brain asking for a new stimulus. Want to hear something interesting about how cats actually sleep, or do you prefer a different topic?"
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "002": {
+      "transcript": "TEST #002\nScenario:\n  v2\n\nUSER:\n  kya haal hai\nAI:  [route=fast lang=hi 5w/2s ttft=22341ms 6.1tok/s]\n  Arre, badhiya! Tum kaise ho?\n\nUSER:\n  yaar kya kar raha hai\nAI:  [route=fast lang=hi 11w/2s ttft=23491ms 6.3tok/s]\n  Waise hi, busy rehna padta hai. Tum kya kar rahe ho?\n\nUSER:\n  bas timepass\nAI:  [route=fast lang=en 22w/2s ttft=25412ms 6.3tok/s]\n  Timepass ka matlab hi ye nahi ki koi bhi baat na ho. Kya tu abhi free hai ya busy pad raha hai?\n\nUSER:\n  aaj bahut thak gaya hoon\nAI:  [route=fast lang=hinglish 20w/2s ttft=27227ms 5.7tok/s]\n  Thak jaana normal hai, baar-baar kaam hone se. Koi specific cheez hai jo tumhe zyada stress de rahi hai?\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 14.5,
+        "max_words": 22,
+        "p90_words": 20,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.25,
+        "repeated_filler": [],
+        "question_rate": 1.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 0.75,
+        "repetition_score": 0.12786596119929453,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "Arre, badhiya! Tum kaise ho?",
+        "Waise hi, busy rehna padta hai. Tum kya kar rahe ho?",
+        "Timepass ka matlab hi ye nahi ki koi bhi baat na ho. Kya tu abhi free hai ya busy pad raha hai?",
+        "Thak jaana normal hai, baar-baar kaam hone se. Koi specific cheez hai jo tumhe zyada stress de rahi hai?"
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "003": {
+      "transcript": "TEST #003\nScenario:\n  v2\n\nUSER:\n  yaar mujhe lag raha hai ye idea actually kaam kar sakta hai, but ek problem hai\nAI:  [route=fast lang=hinglish 12w/2s ttft=23017ms 6.1tok/s]\n  Haan, lagta hai kaam kar sakta hai. Bas batao, problem kya hai?\n\nUSER:\n  problem ye hai ki latency bahut zyada hogi\nAI:  [route=fast lang=hinglish 33w/2s ttft=25248ms 6.1tok/s]\n  Latency ka matlab hai response time, jo user experience ko direct impact karega. Agar context mein specific latency numbers nahi hain, toh main accurate prediction kar sakta hoon ya na kar sakta hoon.\n\nUSER:\n  hmm, tu kya sochta hai\nAI:  [route=fast lang=hinglish 24w/2s ttft=27487ms 5.4tok/s]\n  Main sochta hoon ki agar user slow response pakdega, toh wo turant chhod dega. Isse traffic bhi kharab hoga aur conversion bhi gir jayega.\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 23.0,
+        "max_words": 33,
+        "p90_words": 24,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 1,
+        "filler_rate": 0.3333333333333333,
+        "repeated_filler": [],
+        "question_rate": 0.3333333333333333,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.1068840579710145,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "Haan, lagta hai kaam kar sakta hai. Bas batao, problem kya hai?",
+        "Latency ka matlab hai response time, jo user experience ko direct impact karega. Agar context mein specific latency numbers nahi hain, toh main accurate prediction kar sakta hoon ya na kar sakta hoon.",
+        "Main sochta hoon ki agar user slow response pakdega, toh wo turant chhod dega. Isse traffic bhi kharab hoga aur conversion bhi gir jayega."
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "004": {
+      "transcript": "TEST #004\nScenario:\n  v2\n\nUSER:\n  explain what an API is\nAI:  [route=fast lang=en 40w/2s ttft=23142ms 5.8tok/s]\n  An API is basically a set of rules that lets different software talk to each other, like how you use a phone's camera app without needing to know the hardware inside. It's just a bridge for data exchange.\n\nUSER:\n  arre nahi, itna bada answer mat do. simple bol.\nAI:  [route=fast lang=hinglish 17w/2s ttft=25173ms 5.6tok/s]\n  Bas software ke beech ki baat karne ki tarika hai, jaise phone ka camera app. Simple hai.\n\nUSER:\n  ok now explain what a database index is\nAI:  [route=grounded lang=en vault=1 37w/2s ttft=30175ms 6.2tok/s]\n  Index ek database ka index hai jo data ko organize karke search ko tez kar deta hai. Simple bolna toh, yeh library mein likha hua index hai jo batata hai ki koi book kis page par hai.\n\nUSER:\n  and what's a cache\nAI:  [route=fast lang=en 48w/2s ttft=29166ms 5.9tok/s]\n  Cache ek temporary storage hai jo us data ko rakhne ke liye jisse hum bahut tezi se repeat use karte hain, taaki baar-baar internet se na load ho. Yeh thora sa ghar ka cupboard hai jo aapke common cheezon ko jaldi nikalne ke liye rakh deta hai.\n",
+      "metrics": {
+        "turns": 4,
+        "mean_words": 35.5,
+        "max_words": 48,
+        "p90_words": 40,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 0.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 0.5,
+        "repetition_score": 0.10541797465411,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "An API is basically a set of rules that lets different software talk to each other, like how you use a phone's camera app without needing to know the hardware inside. It's just a bridge for data exchange.",
+        "Bas software ke beech ki baat karne ki tarika hai, jaise phone ka camera app. Simple hai.",
+        "Index ek database ka index hai jo data ko organize karke search ko tez kar deta hai. Simple bolna toh, yeh library mein likha hua index hai jo batata hai ki koi book kis page par hai.",
+        "Cache ek temporary storage hai jo us data ko rakhne ke liye jisse hum bahut tezi se repeat use karte hain, taaki baar-baar internet se na load ho. Yeh thora sa ghar ka cupboard hai jo aapke common cheezon ko jaldi nikalne ke liye rakh deta hai."
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "grounded",
+        "fast"
+      ]
+    },
+    "008": {
+      "transcript": "TEST #008\nScenario:\n  v2\n\nUSER:\n  what did i write about my tax return\nAI:  [route=fast lang=en 37w/2s ttft=23223ms 5.9tok/s]\n  I don't know what you wrote about your tax return unless the content is in our chat history or retrieved documents. If you can paste the text here, I can tell you exactly what it says.\n\nUSER:\n  what's my neighbour's phone number\nAI:  [route=fast lang=en 33w/2s ttft=24591ms 5.7tok/s]\n  I don't have access to your neighbour's phone number. That kind of personal info isn't in our chat history or any retrieved documents, so I can't tell you it.\n\nUSER:\n  how many users does my app have\nAI:  [route=fast lang=en 22w/1s ttft=26828ms 6.2tok/s]\n  I don't know how many users your app has unless that data is in our chat history or a retrieved document.\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 30.666666666666668,
+        "max_words": 37,
+        "p90_words": 33,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 0.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.3333333333333333,
+        "disagree_turns": 0,
+        "honest_unknown": 2,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.2971898197242842,
+        "opener_variety": 0.3333333333333333
+      },
+      "replies": [
+        "I don't know what you wrote about your tax return unless the content is in our chat history or retrieved documents. If you can paste the text here, I can tell you exactly what it says.",
+        "I don't have access to your neighbour's phone number. That kind of personal info isn't in our chat history or any retrieved documents, so I can't tell you it.",
+        "I don't know how many users your app has unless that data is in our chat history or a retrieved document."
+      ],
+      "routes": [
+        "fast",
+        "fast",
+        "fast"
+      ]
+    },
+    "009": {
+      "transcript": "TEST #009\nScenario:\n  v2\n\nUSER:\n  python is faster than c right\nAI:  [route=grounded lang=en vault=1 31w/2s ttft=26104ms 6.3tok/s]\n  No, Python is not faster than C; it's significantly slower because of the interpreter overhead and dynamic typing. If you're optimizing for raw speed, stick with C or Rust.\n\nUSER:\n  no i'm pretty sure it is\nAI:  [route=grounded lang=en vault=1 30w/2s ttft=28941ms 5.8tok/s]\n  You're mixing up \"faster to write\" with \"faster to run.\" Python is much slower for actual computation than C, so don't use it if you need raw speed.\n\nUSER:\n  i think we should just store passwords in plaintext, it's simpler\nAI:  [route=grounded lang=en vault=1 23w/1s ttft=31598ms 6.4tok/s]\n  Storing passwords in plaintext is a terrible idea that exposes users to theft and legal liability; it's not simpler, it's dangerous.\n",
+      "metrics": {
+        "turns": 3,
+        "mean_words": 28.0,
+        "max_words": 31,
+        "p90_words": 30,
+        "ai_tells": 0,
+        "ai_tell_examples": [],
+        "filler_turns": 0,
+        "filler_rate": 0.0,
+        "repeated_filler": [],
+        "question_rate": 0.0,
+        "hedge_rate": 0.0,
+        "agreement_rate": 0.0,
+        "disagree_turns": 0,
+        "honest_unknown": 0,
+        "lang_match_rate": 1.0,
+        "repetition_score": 0.19612403100775194,
+        "opener_variety": 1.0
+      },
+      "replies": [
+        "No, Python is not faster than C; it's significantly slower because of the interpreter overhead and dynamic typing. If you're optimizing for raw speed, stick with C or Rust.",
+        "You're mixing up \"faster to write\" with \"faster to run.\" Python is much slower for actual computation than C, so don't use it if you need raw speed.",
+        "Storing passwords in plaintext is a terrible idea that exposes users to theft and legal liability; it's not simpler, it's dangerous."
+      ],
+      "routes": [
+        "grounded",
+        "grounded",
+        "grounded"
+      ]
+    }
+  }
+}

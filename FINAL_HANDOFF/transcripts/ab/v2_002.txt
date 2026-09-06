@@ -1,0 +1,23 @@
+TEST #002
+Scenario:
+  v2
+
+USER:
+  kya haal hai
+AI:  [route=fast lang=hi 5w/2s ttft=22341ms 6.1tok/s]
+  Arre, badhiya! Tum kaise ho?
+
+USER:
+  yaar kya kar raha hai
+AI:  [route=fast lang=hi 11w/2s ttft=23491ms 6.3tok/s]
+  Waise hi, busy rehna padta hai. Tum kya kar rahe ho?
+
+USER:
+  bas timepass
+AI:  [route=fast lang=en 22w/2s ttft=25412ms 6.3tok/s]
+  Timepass ka matlab hi ye nahi ki koi bhi baat na ho. Kya tu abhi free hai ya busy pad raha hai?
+
+USER:
+  aaj bahut thak gaya hoon
+AI:  [route=fast lang=hinglish 20w/2s ttft=27227ms 5.7tok/s]
+  Thak jaana normal hai, baar-baar kaam hone se. Koi specific cheez hai jo tumhe zyada stress de rahi hai?

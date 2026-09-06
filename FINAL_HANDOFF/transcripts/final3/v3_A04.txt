@@ -1,0 +1,36 @@
+TEST #A04
+Scenario:
+  ambiguity - should clarify, not guess
+
+USER:
+  kar do
+AI:  [route=action lang=en 4w/2s ttft=11246ms 5.6tok/s]
+  Kya karne ka? Batao.
+
+USER:
+  wo wala
+AI:  [route=fast lang=hi 9w/2s ttft=12166ms 5.2tok/s]
+  Kaunsa wala? Pehle batao, main samajh nahi pa raha.
+
+USER:
+  kal wala kaam
+AI:  [route=fast lang=hinglish 20w/2s ttft=13469ms 5.8tok/s]
+  Kal wala kaam abhi tak nahi hua tha, mujhe pata bhi nahi chalta. Kya tumhe bataana hai ki kya hua?
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         11.0
+  p90 words                9
+  max words                20
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67%
+  cross-turn repetition    0.08
+  opener variety           100%

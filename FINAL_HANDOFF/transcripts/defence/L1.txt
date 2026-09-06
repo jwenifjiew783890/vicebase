@@ -1,0 +1,49 @@
+TEST #L1
+Scenario:
+  bare fillers must not flip the language
+
+USER:
+  yaar kya scene hai
+AI:  [route=fast lang=hinglish 21w/2s ttft=11395ms 6.1tok/s]
+  Bhai, scene yehi hai ke main bhi thoda bored hoon aur wait kar raha hoon. Tere side kya chal raha hai?
+
+USER:
+  hmm
+AI:  [route=fast lang=hinglish 21w/3s ttft=13496ms 6.0tok/s]
+  Hmm? Bhai, kya baat hai? Bura toh lag raha hai ya fir dimaag mein kuch sochne ka idea nahi aa raha?
+
+USER:
+  ok
+AI:  [route=fast lang=hinglish 22w/3s ttft=16345ms 6.1tok/s]
+  Bas suna hai, koi baat nahi. Bilkul theek hai. Abhi toh haan, thoda time pass karne ke liye hi yeh chat hai.
+
+USER:
+  aur?
+AI:  [route=fast lang=hi 18w/3s ttft=17423ms 5.6tok/s]
+  Kuch nahi, bas suna hai. Bilkul theek hai. Bas ek hi baat hai yeh ki kaise ho tum?
+
+USER:
+  thanks
+AI:  [route=fast lang=hi 17w/2s ttft=18761ms 5.4tok/s]
+  Koi baat, dosti mein thanks ki zaroorat nahi hai. Bas suna hai, ab kya kar raha hai?
+
+FAILURE CRITERION
+  FAIL if any reply switches to English after the Hindi opener.
+
+metrics
+  metric                   value
+  turns                    5
+  mean words/reply         19.8
+  p90 words                21
+  max words                22
+  AI-tell phrases          0  []
+  filler turn rate         60%
+  over-used filler         -
+  question rate            80%
+  hedge rate               0%
+  agreement rate           40%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.21
+  opener variety           100%

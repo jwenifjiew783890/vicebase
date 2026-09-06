@@ -1,0 +1,41 @@
+TEST #M02
+Scenario:
+  casual HI, natural spoken register
+
+USER:
+  Yaar kya scene hai?
+AI:  [route=fast lang=hinglish 12w/2s ttft=11335ms 5.3tok/s]
+  Bas chill raha hu, koi badi news nahi. Tujhe kya scene hai?
+
+USER:
+  Tu kya kar raha hai?
+AI:  [route=fast lang=hinglish 13w/2s ttft=12749ms 6.2tok/s]
+  Bas chilla raha hu, phone kaafi baar drop hua. Tere baare mein kya?
+
+USER:
+  Yaar I'm bored.
+AI:  [route=fast lang=hinglish 18w/2s ttft=14467ms 6.1tok/s]
+  Kya kar raha hai tu? Bored ho toh kuch naya try karo ya phir bhai se baat kar.
+
+USER:
+  Sun, mere paas ek idea hai.
+AI:  [route=fast lang=hinglish 11w/2s ttft=16445ms 6.2tok/s]
+  Kya idea hai? Bata de, sunne ka intezaar kar raha hu.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         13.5
+  p90 words                13
+  max words                18
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.14
+  opener variety           100%

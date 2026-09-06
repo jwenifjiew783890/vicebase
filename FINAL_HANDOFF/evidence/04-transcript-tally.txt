@@ -1,0 +1,18 @@
+# Transcript tally (counts files on disk, does not trust a document)
+# Command: python3 eval/tally.py
+# Run: 2026-09-06 05:32 UTC
+
+transcripts on disk : 110
+user turns in them  : 373
+   ab           12
+   defence      9
+   defence4     9
+   defence4b    3
+   final        4
+   final2       20
+   final3       20
+   final4       20
+   final4b      2
+   langfix      1
+   mandatory    7
+   v1           3

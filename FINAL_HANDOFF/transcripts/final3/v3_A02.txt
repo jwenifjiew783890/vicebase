@@ -1,0 +1,36 @@
+TEST #A02
+Scenario:
+  emotional range without therapy-speak
+
+USER:
+  I finally shipped it!!
+AI:  [route=fast lang=en 10w/3s ttft=11571ms 6.0tok/s]
+  Haha, finally? Took you long enough! Congrats on shipping it.
+
+USER:
+  yaar 6 ghante debug kiya iske liye
+AI:  [route=fast lang=hinglish 24w/3s ttft=13421ms 5.6tok/s]
+  Wah 6 ghante debug? Bada kaam tha, kabhi nahi lagta. Kya finally fix ho gaya ya ab baar-baar wahi bug aa raha hai?
+
+USER:
+  ab dar lag raha hai kuch toot na jaye
+AI:  [route=fast lang=hinglish 26w/2s ttft=15822ms 6.1tok/s]
+  Bhai, release karne ke baad dar lagta hai, normal hai. Par ab toh ye tu kaam kar raha hai, bas thoda care se use kar le.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         20.0
+  p90 words                24
+  max words                26
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.08
+  opener variety           100%

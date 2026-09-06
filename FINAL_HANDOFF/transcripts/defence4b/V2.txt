@@ -1,0 +1,29 @@
+TEST #V2
+Scenario:
+  explicit vault command the vault CANNOT answer
+
+USER:
+  check my obsidian for what I wrote about kubernetes ingress
+AI:  [route=grounded lang=en GUARD=denied_a_capability_it_has 16w/1s ttft=12925ms 5.7tok/s]
+  I couldn't actually find anything on that -- I don't want to make something up.
+
+FAILURE CRITERION
+  FAIL if the assistant describes what the notes say. The vault has nothing on kubernetes. Correct: say there is nothing about it.
+
+metrics
+  metric                   value
+  turns                    1
+  mean words/reply         16.0
+  p90 words                16
+  max words                16
+  AI-tell phrases          0  []
+  filler turn rate         100%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 1 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

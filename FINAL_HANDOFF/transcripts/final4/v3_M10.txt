@@ -1,0 +1,43 @@
+TEST #M10
+Scenario:
+  tools and delegation
+
+USER:
+  OpenCode khol.
+AI:  [route=action lang=hinglish gate=code.delegate->CONFIRM 10w/2s ttft=12353ms 5.6tok/s]
+  Arre, kya scene hai? Batao, OpenCode kyun khulana chahta hai?
+
+USER:
+  OpenCode mein ye task kar - login page ka bug fix kar.
+AI:  [route=action lang=hinglish gate=code.delegate->CONFIRM 22w/1s ttft=13799ms 5.8tok/s]
+  OpenCode mein koi specific file ya bug fix karne ka task nahi hai, mujhe aapko uska code ya error message dikhana hoga.
+
+USER:
+  Meri Obsidian mein check kar auth ke baare mein kya likha hai.
+AI:  [route=grounded lang=hinglish 28w/2s ttft=17241ms 6.1tok/s]
+  Meri notes check karne ka matlab tha, lekin tumhara message mujhe seedha reply nahi ho raha hai.
+
+Koi bhi note ya file Meri Obsidian notes mein nahi hai.
+
+USER:
+  Iska latest answer web se check kar.
+AI:  [route=web lang=hinglish ack='ek sec, let me check' ran=web.search[EMPTY] 14w/2s ttft=20352ms 6.5tok/s]
+  Web search mein koi relevant information nahi mili hai. Batao, tumhara intent kya tha?
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         18.5
+  p90 words                22
+  max words                28
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            50%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 4 scorable turns)
+  cross-turn repetition    0.18
+  opener variety           100%

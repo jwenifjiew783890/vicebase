@@ -1,0 +1,43 @@
+TEST #002
+Scenario:
+  Casual Hindi. Must be spoken Hindi, not textbook.
+
+USER:
+  kya haal hai
+AI:  [route=fast lang=hi 4w/2s ttft=10110ms 6.2tok/s]
+  Bhai, sab badhiya. Tu?
+
+USER:
+  yaar kya kar raha hai
+AI:  [route=fast lang=hi 17w/2s ttft=11419ms 0.8tok/s]
+  Bas logon se baat kar raha hoon aur kaam ki update dekh raha hoon. Kya haal hai?
+
+USER:
+  bas timepass
+AI:  [route=fast lang=en 12w/2s ttft=12381ms 2.7tok/s]
+  Arre haan, bas timepass karna hi sabse normal hai. Thoda break chahiye?
+
+USER:
+  aaj bahut thak gaya hoon
+AI:  [route=web lang=hinglish ack='ek sec, let me check' 28w/2s ttft=22910ms 3.6tok/s]
+  Aa jaata hai, baar-baar kaam padhne ya logon se baat karne ke baad.
+
+Kya abhi koi specific kaam hai jise dhund raha hai, ya sirf chillana hai?
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         15.2
+  p90 words                17
+  max words                28
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           75%
+  cross-turn repetition    0.04
+  opener variety           100%

@@ -1,0 +1,15 @@
+# Fact extractor over every real user turn
+# Command: python3 eval/extractor_sweep.py
+# Run: 2026-09-06 05:32 UTC
+
+FACT  editor       neovim                   <- 'main neovim use karta hoon aur wahi comfortable lagta hai'
+FACT  works_when   at night                 <- 'I work best at night'
+FACT  editor       neovim                   <- 'main neovim use karta hoon aur wahi comfortable lagta hai'
+FACT  works_when   at night                 <- 'I work best at night'
+======================================================================
+user turns swept    : 373
+facts extracted     : 4
+retractions found   : 0
+
+Every line above must be a fact the user actually stated in that
+turn. Anything else is an invented memory and a defect.

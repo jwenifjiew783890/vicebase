@@ -1,0 +1,61 @@
+TEST #A01
+Scenario:
+  filler discipline over many tiny turns
+
+USER:
+  hmm
+AI:  [route=fast lang=en 16w/2s ttft=11609ms 5.3tok/s]
+  Yeah, just sitting here thinking about whatever's on your mind. You feeling that same vibe?
+
+USER:
+  haan
+AI:  [route=fast lang=hi 19w/2s ttft=13023ms 5.5tok/s]
+  Bhai, kabse hai yeh feeling? Koi specific cheez mein stuck ho ya bas sunne ki baat nahi kar paate?
+
+USER:
+  acha
+AI:  [route=fast lang=hi q-retry=obeyed 19w/2s ttft=18221ms 5.6tok/s]
+  Bas aise hi chal raha hai, bhai. Tension mat le, thoda time de aur baad mein kuch kar lena.
+
+USER:
+  aur?
+AI:  [route=fast lang=hi 24w/3s ttft=16272ms 6.1tok/s]
+  Bhai, bas aise hi baitha hoon. Koi specific plan nahi hai abhi. Chalo thoda time nikalte hain, baad mein koi kaam shuru karte hain?
+
+USER:
+  phir?
+AI:  [route=fast lang=hi 20w/3s ttft=18468ms 5.8tok/s]
+  Bhai, bas thoda relax ho. Koi urgent kaam nahi hai abhi, toh phir kya? Bas aise hi baat karte hain.
+
+USER:
+  ok
+AI:  [route=fast lang=hi 17w/3s ttft=20796ms 5.7tok/s]
+  Bhai, abhi toh koi baat nahi hui. Bas chill kar raha hoon. Kya plan hai agle ka?
+
+USER:
+  hmm
+AI:  [route=fast lang=hi 16w/3s ttft=22125ms 5.5tok/s]
+  Hmm? Kya soch raha hai abhi? Kuch decide karna hai ya fir bhi chill karte hain?
+
+USER:
+  achha
+AI:  [route=fast lang=hi q-retry=STILL ASKED 15w/1s ttft=26191ms 5.2tok/s]
+  Achha toh, chalo abhi thoda chill karte hain aur baad mein kuch decide karte hain.
+
+metrics
+  metric                   value
+  turns                    8
+  mean words/reply         18.2
+  p90 words                20
+  max words                24
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            75%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 5 scorable turns)
+  cross-turn repetition    0.24
+  opener variety           100%

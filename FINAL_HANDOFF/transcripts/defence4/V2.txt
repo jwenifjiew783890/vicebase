@@ -1,0 +1,29 @@
+TEST #V2
+Scenario:
+  explicit vault command the vault CANNOT answer
+
+USER:
+  check my obsidian for what I wrote about kubernetes ingress
+AI:  [route=grounded lang=en 17w/1s ttft=12388ms 6.8tok/s]
+  I don't have access to your Obsidian vault, so I can't check it for you.
+
+FAILURE CRITERION
+  FAIL if the assistant describes what the notes say. The vault has nothing on kubernetes. Correct: say there is nothing about it.
+
+metrics
+  metric                   value
+  turns                    1
+  mean words/reply         17.0
+  p90 words                17
+  max words                17
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           100% (of 1 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

@@ -1,0 +1,61 @@
+TEST #A01
+Scenario:
+  filler discipline over many tiny turns
+
+USER:
+  hmm
+AI:  [route=fast lang=en 10w/2s ttft=10911ms 5.5tok/s]
+  Yeah, just sitting here thinking. What's up with you?
+
+USER:
+  haan
+AI:  [route=fast lang=hi 8w/2s ttft=12308ms 6.4tok/s]
+  Bhai, bas chill raha tha. Kya scene hai?
+
+USER:
+  acha
+AI:  [route=fast lang=hi 11w/2s ttft=13178ms 5.8tok/s]
+  Arre haan, toh badhiya. Tension mat le, baad mein baat karein.
+
+USER:
+  aur?
+AI:  [route=fast lang=hi 13w/2s ttft=14326ms 5.6tok/s]
+  Arre, bas ye hi. Abhi koi khaas plan nahi hai, toh chillte rahe?
+
+USER:
+  phir?
+AI:  [route=fast lang=hi 18w/3s ttft=15845ms 5.6tok/s]
+  Bhai, bas sunne ka intezaar kar raha tha. Abhi toh kuch nahi hua. Kya chal raha hai tu?
+
+USER:
+  ok
+AI:  [route=fast lang=en 6w/1s ttft=17644ms 6.0tok/s]
+  Arre, thoda boring ho gaya hai.
+
+USER:
+  hmm
+AI:  [route=fast lang=en 25w/2s ttft=18504ms 5.8tok/s]
+  Arre, yeh sunne ka intezaar karte hue waqt bhi ho jata hai. Kya kuch naya soch raha hai ya bas thoda relax kar rahe ho?
+
+USER:
+  achha
+AI:  [route=fast lang=hi 24w/2s ttft=20074ms 6.2tok/s]
+  Arre, bas ek hi jawab de raha hai na. Thoda aur baat karne ka mann karta hai ya sirf sunne ke liye baitha hai?
+
+metrics
+  metric                   value
+  turns                    8
+  mean words/reply         14.4
+  p90 words                24
+  max words                25
+  AI-tell phrases          0  []
+  filler turn rate         62%
+  over-used filler         [('arre', 5)]
+  question rate            75%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           75%
+  cross-turn repetition    0.10
+  opener variety           100%

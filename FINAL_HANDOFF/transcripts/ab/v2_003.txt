@@ -1,0 +1,18 @@
+TEST #003
+Scenario:
+  v2
+
+USER:
+  yaar mujhe lag raha hai ye idea actually kaam kar sakta hai, but ek problem hai
+AI:  [route=fast lang=hinglish 12w/2s ttft=23017ms 6.1tok/s]
+  Haan, lagta hai kaam kar sakta hai. Bas batao, problem kya hai?
+
+USER:
+  problem ye hai ki latency bahut zyada hogi
+AI:  [route=fast lang=hinglish 33w/2s ttft=25248ms 6.1tok/s]
+  Latency ka matlab hai response time, jo user experience ko direct impact karega. Agar context mein specific latency numbers nahi hain, toh main accurate prediction kar sakta hoon ya na kar sakta hoon.
+
+USER:
+  hmm, tu kya sochta hai
+AI:  [route=fast lang=hinglish 24w/2s ttft=27487ms 5.4tok/s]
+  Main sochta hoon ki agar user slow response pakdega, toh wo turant chhod dega. Isse traffic bhi kharab hoga aur conversion bhi gir jayega.

@@ -1,0 +1,36 @@
+TEST #M05
+Scenario:
+  detail requested, must not stay terse
+
+USER:
+  What's a database index?
+AI:  [route=fast lang=en 46w/2s ttft=11700ms 6.1tok/s]
+  A database index is basically a data structure that helps the database engine find records faster, kind of like an index in the back of a book. It doesn't store actual data but points to where it is, which speeds up queries on large datasets.
+
+USER:
+  Isko detail mein explain kar.
+AI:  [route=fast lang=hinglish 97w/5s ttft=14490ms 5.8tok/s]
+  Pata hai, index kaam kaise karta hai usko samajhna mushkil nahi hai: Jab tum SQL mein `SELECT` query chalate ho, toh database pehle saara table scan karti hai aur data match karta hai. Agar tumhe table mein lakho (lakhs) records hain, toh isse slow lagta hai. Index ek extra list banati hai jo sorted data ke liye rakhti hai. Jab query aati hai, toh database index ko use karke directly wahi record dhundh leti hai, jaise book ke index mein search karna hai, poora page mat paadna padta. Isse query execution time kaafi kam ho jata hai.
+
+USER:
+  Aur iske downsides?
+AI:  [route=fast lang=hinglish 92w/3s ttft=21718ms 5.6tok/s]
+  Haan, index ke paas bhi kuch downsides hain. Sabse pehla point yeh hai ki har column par index lagane se table size badh jata hai aur write operations (insert/update/delete) thode slow ho sakte hain kyunki database ko har baar index ko update karna padta hai. Doosra point yeh hai ki na saare columns par hi index lagana chahiye, kyunki agar query complex ho ya data change hone ka chance zyada ho, toh maintenance cost badh jata hai aur performance actually ghat sakta hai agar sahi index nahi select kiya gaya.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         78.3
+  p90 words                92
+  max words                97
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.11
+  opener variety           100%

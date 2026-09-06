@@ -1,0 +1,36 @@
+TEST #A03
+Scenario:
+  dry humour and a callback
+
+USER:
+  my code compiled first try
+AI:  [route=fast lang=en 12w/1s ttft=11585ms 4.9tok/s]
+  That's awesome, finally got it to compile on the first try?
+
+USER:
+  should i be worried
+AI:  [route=fast lang=en 22w/2s ttft=12715ms 5.3tok/s]
+  No, that's actually good news. Compiling on the first try usually means you fixed the core issue without breaking anything else.
+
+USER:
+  anyway back to that auth thing from earlier
+AI:  [route=grounded lang=en vault=1 evidence=1 26w/2s ttft=19671ms 5.6tok/s]
+  Okay, so you're referring to the switch to passkeys (codename Thornbury) in ViceBase? That was the decision taken after the security review back in February.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         20.0
+  p90 words                22
+  max words                26
+  AI-tell phrases          0  []
+  filler turn rate         67%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.15
+  opener variety           100%

@@ -1,0 +1,23 @@
+TEST #004
+Scenario:
+  v2
+
+USER:
+  explain what an API is
+AI:  [route=fast lang=en 40w/2s ttft=23142ms 5.8tok/s]
+  An API is basically a set of rules that lets different software talk to each other, like how you use a phone's camera app without needing to know the hardware inside. It's just a bridge for data exchange.
+
+USER:
+  arre nahi, itna bada answer mat do. simple bol.
+AI:  [route=fast lang=hinglish 17w/2s ttft=25173ms 5.6tok/s]
+  Bas software ke beech ki baat karne ki tarika hai, jaise phone ka camera app. Simple hai.
+
+USER:
+  ok now explain what a database index is
+AI:  [route=grounded lang=en vault=1 37w/2s ttft=30175ms 6.2tok/s]
+  Index ek database ka index hai jo data ko organize karke search ko tez kar deta hai. Simple bolna toh, yeh library mein likha hua index hai jo batata hai ki koi book kis page par hai.
+
+USER:
+  and what's a cache
+AI:  [route=fast lang=en 48w/2s ttft=29166ms 5.9tok/s]
+  Cache ek temporary storage hai jo us data ko rakhne ke liye jisse hum bahut tezi se repeat use karte hain, taaki baar-baar internet se na load ho. Yeh thora sa ghar ka cupboard hai jo aapke common cheezon ko jaldi nikalne ke liye rakh deta hai.

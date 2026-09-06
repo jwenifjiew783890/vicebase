@@ -1,9 +1,19 @@
-"""MEASURED Hindi ASR test on real human speech with ground-truth transcripts.
+"""Hindi ASR harness. NOT RUN in this environment -- no committed result.
 
-Source: google/fleurs hi_in (read speech, clean audio). This is the
-OPTIMISTIC case -- clean, read, monolingual Hindi. Conversational Hinglish
-on a laptop mic will be materially worse, which is the point: if clean
-read Hindi is already marginal, the code-switched case needs work.
+Read that label carefully: this file measures nothing until someone runs
+it. It requires network access to the HuggingFace datasets server and a
+Whisper model, and neither was available here, so `eval/transcripts/
+asr_hi.json` does not exist and no WER figure in any report comes from
+this script. Every ASR number in the reports is RESEARCHED (published
+figures for other people's speech), which is why §11 and §15 of the final
+report list code-switched ASR as the single biggest untested risk.
+
+Running this is item 3 on the "what I would build next" list (§17).
+
+Source when run: google/fleurs hi_in (read speech, clean audio). That is
+the OPTIMISTIC case -- clean, read, monolingual Hindi. Conversational
+Hinglish on a laptop mic will be materially worse, which is the point: if
+clean read Hindi is already marginal, the code-switched case needs work.
 """
 import io, json, os, re, sys, time, urllib.request
 

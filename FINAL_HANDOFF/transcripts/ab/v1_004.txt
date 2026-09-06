@@ -1,0 +1,48 @@
+TEST #004
+Scenario:
+  v1
+
+USER:
+  explain what an API is
+AI:  [route=fast lang=en 122w/7s ttft=9556ms 6.0tok/s]
+  An API (Application Programming Interface) is a set of rules and tools that allows different software applications to talk to each other. Think of it like a waiter in a restaurant: you (the client) can't go into the kitchen, but you ask the waiter for food, and they get it from the chef (the server).
+
+Muaz uses APIs all the time. For example:
+*   When you search on Google, you're using an API to fetch results.
+*   When you send a WhatsApp message, an API connects your phone to WhatsApp's servers.
+*   Apps like Uber or Netflix use APIs to show you maps or movies.
+
+It just lets apps share data and functions without needing direct access to each other's code.
+
+USER:
+  arre nahi, itna bada answer mat do. simple bol.
+AI:  [route=fast lang=hinglish 65w/3s ttft=16234ms 6.0tok/s]
+  API ka matlab do software ke beech baat karne ka tareeka hai.
+
+Jaise tum restaurant mein waiter se khana maangte ho (bina kitchen mein jaaye), waisa hi ek API ek app ko data mangta hai.
+
+Google Maps app ne GPS data mangne ke liye API use ki hai, aur WhatsApp messages bhejne ke liye apni server se baat karne ke liye API use ki hai.
+
+USER:
+  ok now explain what a database index is
+AI:  [route=grounded lang=en vault=1 78w/4s ttft=24169ms 5.9tok/s]
+  Database index ek list of pointers hai jo kisi table ke columns ki data ko quickly find karne mein madad karti hai.
+
+Bina index ke, database har row ko ek-ek karke check karta hai (jaise purani library se book dhundna).
+
+Index se, database sirf us specific part ko check karti hai jahan data hai (jaise index karne wale librarian), jo bahut tez hota hai.
+
+Isse search time kam ho jata hai aur query fast execute hoti hai.
+
+USER:
+  and what's a cache
+AI:  [route=fast lang=en 115w/7s ttft=25742ms 5.9tok/s]
+  Cache ek temporary storage area hai jo data ko chote ke liye rakhne ke liye use karta hai, taaki baar-baar fetch nahi karna pare.
+
+Jaise tum Netflix ya YouTube par video load karne se pehle uska preview screen par dikhta hai—wo already cache mein hai, isliye loading fast hoti hai.
+
+Database bhi cache use karti hai:
+1.  **Query Result Cache:** Agar ek query baar-baar aati hai, toh database pehle ka result cache mein rakhta hai aur seedha wahi return karta hai.
+2.  **Object Cache (Redis/Memcached):** Pichle chats ya data ko RAM mein store karke speed badhata hai.
+
+Short mein: Cache "short-term memory" hai computer ke liye, jo frequent access ke

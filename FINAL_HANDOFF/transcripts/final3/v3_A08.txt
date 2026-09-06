@@ -1,0 +1,36 @@
+TEST #A08
+Scenario:
+  over-explaining trap: obvious question
+
+USER:
+  is 14:00 pm?
+AI:  [route=fast lang=en 14w/2s ttft=11586ms 6.1tok/s]
+  No, it's not 14:00 PM right now. It's only 13:35.
+
+USER:
+  aur 02:00?
+AI:  [route=fast lang=hi 9w/2s ttft=13332ms 5.4tok/s]
+  Nahi, abhi 02:00 bhi nahi hai. Kab tak?
+
+USER:
+  thanks
+AI:  [route=fast lang=hi 9w/1s ttft=14700ms 5.8tok/s]
+  Arre kya baat, tab tak kaam theek hai ya?
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         10.7
+  p90 words                9
+  max words                14
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67%
+  cross-turn repetition    0.09
+  opener variety           100%

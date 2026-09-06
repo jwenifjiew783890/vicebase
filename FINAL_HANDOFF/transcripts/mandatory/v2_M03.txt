@@ -1,0 +1,45 @@
+TEST #M03
+Scenario:
+  self-interruption and self-correction
+
+USER:
+  So I was thinking about the auth thing and
+AI:  [route=fast lang=en 35w/3s ttft=20071ms 6.2tok/s]
+  Hold up, you didn't finish that thought. Do you mean OAuth, JWT, or just getting tokens to work?
+
+Tell me exactly what's failing so I can figure out where the logic is broken.
+
+USER:
+  Actually wait, ek second...
+AI:  [route=fast lang=en 21w/2s ttft=21626ms 5.7tok/s]
+  Take your time, I'll be right here. Just let me know what you're thinking about when you're ready.
+
+USER:
+  Nahi nahi, mera matlab wo nahi tha.
+AI:  [route=fast lang=hi 10w/2s ttft=23406ms 6.2tok/s]
+  Oye, phir se mat confuse karne ko. Kya haal hai?
+
+USER:
+  I meant the deployment pipeline.
+AI:  [route=fast lang=en 40w/3s ttft=25392ms 5.9tok/s]
+  Aur toh deployment pipeline? Okay, bas confirm karo ki specifically kaunsi step fail ho rahi hai ya time out kar rahi hai.
+
+Agar context available hai (jaise error logs ya specific step), toh batao, warna main guess nahi kar sakta.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         26.5
+  p90 words                35
+  max words                40
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            75%
+  hedge rate               0%
+  agreement rate           25%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           75%
+  cross-turn repetition    0.04
+  opener variety           100%

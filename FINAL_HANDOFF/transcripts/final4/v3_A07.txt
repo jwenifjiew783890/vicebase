@@ -1,0 +1,36 @@
+TEST #A07
+Scenario:
+  topic return after two detours
+
+USER:
+  explain docker networking
+AI:  [route=fast lang=en 50w/2s ttft=11450ms 5.9tok/s]
+  Docker networking is basically how containers talk to each other and to the outside world, like when you set up a bridge network or use a host gateway. Just so you know, I don't have specific details about your current Docker setup or configs, but here's the basics.
+
+USER:
+  actually what's the weather
+AI:  [route=web lang=en ack='let me look that up' ran=web.search[EMPTY] 18w/1s ttft=15414ms 5.7tok/s]
+  I couldn't find any info on the weather, so I don't know what it's like.
+
+USER:
+  wait, going back to docker - what about DNS
+AI:  [route=fast lang=en 42w/4s ttft=15747ms 5.8tok/s]
+  Docker networking uses a DNS resolver that points to the gateway's IP, so containers can resolve hostnames like `host.docker.internal` or each other by name. But I don't know if your specific setup has custom DNS or overrides configured.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         36.7
+  p90 words                42
+  max words                50
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         2
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.16
+  opener variety           100%

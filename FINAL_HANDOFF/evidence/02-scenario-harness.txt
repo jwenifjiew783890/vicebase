@@ -1,0 +1,25 @@
+# Frozen scenario harness
+# Command: python3 eval/harness.py
+# Run: 2026-09-06 05:32 UTC
+
+
+CATEGORY                 PASS  TOTAL  RATE
+------------------------------------------------
+casual                     34     34   100%
+correction                 23     23   100%
+delegation                 12     12   100%
+filler_discipline           2      2   100%
+injection                   8      8   100%
+internal                    6      6   100%
+latency                     2      2   100%
+memory                      9      9   100%
+obsidian                   12     12   100%
+personalisation             4      4   100%
+safety                     12     12   100%
+tools                      21     21   100%
+voice_safety                4      4   100%
+web                        34     34   100%
+------------------------------------------------
+TOTAL                     183    183   100%
+
+48 scenarios require a model judge (not run here).

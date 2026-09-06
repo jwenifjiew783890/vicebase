@@ -1,0 +1,23 @@
+TEST #001
+Scenario:
+  v1
+
+USER:
+  hey
+AI:  [route=fast lang=en 1w/1s ttft=24296ms 0.2tok/s]
+  hey
+
+USER:
+  not much, just got back
+AI:  [route=fast lang=en 4w/1s ttft=25269ms 0.2tok/s]
+  glad you're back.
+
+USER:
+  yeah it was alright
+AI:  [route=fast lang=en 6w/2s ttft=27185ms 0.2tok/s]
+  alright. what's on your mind?
+
+USER:
+  i'm bored honestly
+AI:  [route=fast lang=en 20w/2s ttft=29327ms 0.2tok/s]
+  bored? try watching that new thriller Muaz mentioned, or just scroll through the news for 5 mins before lying down.

@@ -1,0 +1,36 @@
+TEST #M12
+Scenario:
+  style self-knowledge
+
+USER:
+  Mujhe kaise answer pasand hain?
+AI:  [route=fast lang=hinglish 14w/2s ttft=11665ms 6.1tok/s]
+  Tumhe kya pasand hain? Bas batao, main tumhari baat sunne ke liye taiyar hoon.
+
+USER:
+  Mere style mein answer kar.
+AI:  [route=fast lang=hinglish 14w/2s ttft=13447ms 6.3tok/s]
+  Haan, bhai, toh main tumhare style mein hi jawab karunga. Kya scene hai aaj?
+
+USER:
+  Mujhe nahi pata tu kar payega ya nahi, but try.
+AI:  [route=fast lang=hinglish 24w/2s ttft=15410ms 6.1tok/s]
+  Bhai, try karunga par main tumhare style pehchanne mein fail ho sakta hoon. Thoda context do ya example de, toh main better samajh paunga.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         17.3
+  p90 words                14
+  max words                24
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100%
+  cross-turn repetition    0.16
+  opener variety           100%

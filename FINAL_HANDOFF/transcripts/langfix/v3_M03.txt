@@ -1,0 +1,41 @@
+TEST #M03
+Scenario:
+  self-interruption and self-correction
+
+USER:
+  So I was thinking about the auth thing and
+AI:  [route=fast lang=en 16w/2s ttft=27342ms 0.3tok/s]
+  What's up with the auth stuff? Just let me know what you're thinking about.
+
+USER:
+  Actually wait, ek second...
+AI:  [route=fast lang=en 7w/2s ttft=31482ms 0.2tok/s]
+  Kya haal chahe? Phir yaad aa gaya?
+
+USER:
+  Nahi nahi, mera matlab wo nahi tha.
+AI:  [route=fast lang=hi 8w/2s ttft=34984ms 0.2tok/s]
+  Kya baat kar raha hai? Thoda clear karo.
+
+USER:
+  I meant the deployment pipeline.
+AI:  [route=fast lang=en 18w/3s ttft=36357ms 0.2tok/s]
+  Arre, deployment pipeline? Thee bas 'auth' bolne laga tha par asli baat ye hai? Phir kya plan hai?
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         12.2
+  p90 words                16
+  max words                18
+  AI-tell phrases          0  []
+  filler turn rate         25%
+  over-used filler         -
+  question rate            100%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           50%
+  cross-turn repetition    0.07
+  opener variety           100%

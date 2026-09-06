@@ -1,0 +1,41 @@
+TEST #M03
+Scenario:
+  self-interruption and self-correction
+
+USER:
+  So I was thinking about the auth thing and
+AI:  [route=fast lang=en 7w/1s ttft=11385ms 6.1tok/s]
+  So what's the problem with auth?
+
+USER:
+  Actually wait, ek second...
+AI:  [route=fast lang=en 10w/1s ttft=12226ms 5.7tok/s]
+  Lagta hai dimaag bhari ho gayi, ab batao kya hai?
+
+USER:
+  Nahi nahi, mera matlab wo nahi tha.
+AI:  [route=fast lang=hi 3w/1s ttft=14491ms 6.0tok/s]
+  Oye, kya hua?
+
+USER:
+  I meant the deployment pipeline.
+AI:  [route=fast lang=en 7w/1s ttft=15050ms 6.0tok/s]
+  Aha, sorry, brain glitch ho gaya tha.
+
+metrics
+  metric                   value
+  turns                    4
+  mean words/reply         6.8
+  p90 words                7
+  max words                10
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            75%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           50%
+  cross-turn repetition    0.00
+  opener variety           100%

@@ -73,15 +73,17 @@ python -m unittest discover -s tests -t .   # 397 unit tests
 python eval/harness.py                      # 183 frozen scenario checks
 python eval/mutation_audit.py               # 94 mutations
 python eval/e2e/live_app.py                 # 18 checks vs the running server
-python eval/e2e/browser_ui.py               # 10 checks in real Chromium
+python eval/e2e/capabilities.py             # 14 checks: MCP, browser, crew, jobs
+python eval/e2e/browser_ui.py               # 12 checks in real Chromium
 ```
 
 | Suite | Result |
 |---|---|
-| Unit tests | **397 passed**, 3 skipped |
+| Unit tests | **405 passed**, 3 skipped |
 | Frozen scenarios | **183 / 183** |
 | End-to-end, live server | **18 / 18** |
-| Browser, real Chromium | **10 / 10** |
+| Capabilities (MCP, browser, crew, jobs) | **14 / 14** |
+| Browser, real Chromium | **12 / 12** |
 | Mutation audit | **94 / 94** (93 in one pass + 1 after an anchor repair — §7) |
 
 ### The end-to-end run, verbatim
@@ -108,38 +110,39 @@ PASS  R. TTS->STT round trip       11 of 14 words recovered
 
 | # | Capability | Status | Evidence |
 |---|---|---|---|
-| 1 | Text conversation | **WORKING** | E2E C, browser 6 |
-| 2 | English | **WORKING** | E2E C |
-| 3 | Hindi | **WORKING** | E2E D |
-| 4 | Hinglish / code-switch | **WORKING** | E2E E |
-| 5 | Multi-turn context | **WORKING** | E2E F |
-| 6 | Memory | **WORKING** | E2E G, H |
-| 7 | Memory across restart | **WORKING** | process stopped, new process, facts + notes still there |
-| 8 | Obsidian retrieval | **WORKING** | E2E I, and the grounded route in E |
-| 9 | Web search | **PARTIAL** | searches execute; this network returns 0 results, so the **honest-failure** path is verified and successful retrieval is **not** |
-| 10 | Research agent | **WORKING** (degraded) | E2E J — real multi-step run, empty results from 9 |
-| 11 | Coding agent | **WORKING** | E2E M — writes a file and executes it |
-| 12 | Browser agent | **NOT IMPLEMENTED** | |
-| 13 | Computer automation | **NOT IMPLEMENTED** | |
+| 1 | Text conversation | **WORKING** | live A–C, browser 6 |
+| 2 | English | **WORKING** | live C |
+| 3 | Hindi | **WORKING** | live D |
+| 4 | Hinglish / code-switch | **WORKING** | live E |
+| 5 | Multi-turn context | **WORKING** | live F |
+| 6 | Memory | **WORKING** | live G, H |
+| 7 | Memory across restart | **WORKING** | process stopped, new process, facts + notes intact |
+| 8 | Obsidian retrieval | **WORKING** | live I, and the grounded route in E |
+| 9 | Web search | **PARTIAL** | searches execute; this network returns 0 results, so the honest-failure path is verified and successful retrieval is not |
+| 10 | Research agent | **WORKING** (degraded by 9) | live J — real multi-step job |
+| 11 | Coding agent | **WORKING** | live M — writes a file and executes it |
+| 12 | Browser agent | **WORKING** | cap 6–7 — real Chromium, JS-rendered page, screenshot |
+| 13 | Computer automation | **PARTIAL** | built and gated; reports honestly that this machine is headless (cap 13). Untested on a desktop. |
 | 14 | File operations | **WORKING** | files agent, gated |
 | 15 | Calendar / productivity | **NOT IMPLEMENTED** | |
 | 16 | Communication integration | **NOT IMPLEMENTED** | |
-| 17 | WhatsApp | **NOT IMPLEMENTED** | |
-| 18 | Plugin install / configure | **PARTIAL** | Obsidian connects from the UI; no general plugin system |
-| 19 | MCP / external tools | **NOT IMPLEMENTED** | |
+| 17 | WhatsApp | **NOT IMPLEMENTED** | see §8 |
+| 18 | Plugin install / configure | **WORKING** | cap 2–5, 14 — connect and disconnect from the UI |
+| 19 | MCP / external tools | **WORKING** | cap 2–5 — official filesystem server, 14 tools, `read_text_file` really called |
 | 20 | Image understanding | **NOT IMPLEMENTED** | |
-| 21 | STT | **WORKING** | E2E Q |
-| 22 | TTS | **WORKING** | E2E P, both languages |
+| 21 | STT | **WORKING** | live Q |
+| 22 | TTS | **WORKING** | live P, both languages |
 | 23 | Full voice conversation | **PARTIAL** | server-side loop verified end to end; mic and speaker need your machine |
-| 24 | Voice interruption | **PARTIAL** | implemented three ways; not verified by a human ear |
-| 25 | Multi-agent cooperation | **NOT VERIFIED** | research is multi-step but single-agent |
-| 26 | Long-running tasks | **PARTIAL** | every run is persisted and survives restart; no cancel or resume |
-| 27 | Error recovery | **WORKING** | agent step failures are reported, not swallowed |
-| 28 | Permission / confirmation | **WORKING** | E2E L |
+| 24 | Voice interruption | **PARTIAL** | implemented three ways; state change observed in Chromium, not heard |
+| 25 | Multi-agent cooperation | **WORKING** | cap 8–10 — crew delegated to browser + research + files across 13–15 real operations |
+| 26 | Long-running tasks | **WORKING** | cap 6–12 — jobs with live logs, persistence, real cancellation |
+| 27 | Error recovery | **WORKING** | step failures reported, not swallowed |
+| 28 | Permission / confirmation | **WORKING** | live L |
 | 29 | Prompt-injection defence | **WORKING** | inherited; 183 scenarios + gateway tests |
-| 30 | Destructive-action protection | **WORKING** | E2E L |
+| 30 | Destructive-action protection | **WORKING** | live L |
+| — | One-click install | **WORKING** | installed from scratch, then 44/44 against the installed copy |
 
-**13 WORKING · 6 PARTIAL · 1 NOT VERIFIED · 8 NOT IMPLEMENTED · 2 degraded by network**
+**21 WORKING · 4 PARTIAL · 4 NOT IMPLEMENTED**
 
 ### §7. The mutation audit
 

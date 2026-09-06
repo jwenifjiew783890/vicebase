@@ -798,3 +798,71 @@ class TestAddressTermsAreNotSubjects(unittest.TestCase):
                      "what's the latest nextjs version",
                      "current price of bitcoin"]:
             self.assertIs(Router().route(text, []).path, Path.WEB, text)
+
+
+class TestCorrectionIsNotCancellation(unittest.TestCase):
+    """L1, local conversation E05.
+
+    "wait no, it's the 21st" is a man correcting his own thesis deadline.
+    It was answered "Got it, cancelled." -- the canned bare-retraction
+    reply -- because _is_bare_retraction counted words, and five words with
+    no question mark looked bare. The correction never reached the model
+    or the store; the turn was thrown away.
+    """
+
+    def test_a_correction_carrying_content_is_not_bare(self):
+        from pai.orchestrator import _is_bare_retraction
+        for text in ["wait no, it's the 21st",
+                     "wait no, the deadline is the 21st",
+                     "wait no, I meant the other file",
+                     "actually never mind, tell me about the deploy instead"]:
+            self.assertFalse(_is_bare_retraction(text), text)
+
+    def test_an_actual_cancellation_is_still_bare(self):
+        """ANTI-FALSE-GREEN: the fix must not disable the canned reply.
+
+        M11 t2 is why the deterministic reply exists at all -- "Wait, don't
+        do that" was answered "Okay, keep going. What's next?".
+        """
+        from pai.orchestrator import _is_bare_retraction
+        for text in ["wait, don't do that", "wait, stop doing that",
+                     "never mind", "nvm", "cancel that", "forget it",
+                     "hold on, no", "stop", "ruko", "mat karo", "rehne do"]:
+            self.assertTrue(_is_bare_retraction(text), text)
+
+    def test_cancelling_still_happens_for_a_correction(self):
+        """The safety half is unconditional: a pending action dies either
+        way. Only the WORDING depends on whether the turn was bare."""
+        from pai.router import Router
+        r = Router().route("wait no, it's the 21st")
+        self.assertTrue(r.retract)
+
+
+class TestPersonalHistoryNeverGoesToTheWeb(unittest.TestCase):
+    """L2, local conversation E07 t2.
+
+    "what did I have for breakfast yesterday" ran a web search and
+    announced "let me look that up". "what did I eat last night" did not,
+    purely because it contained "last night" -- the verb list held
+    say/tell/decide and nothing else.
+    """
+
+    def test_first_person_past_questions_stay_local(self):
+        from pai.router import Router
+        rt = Router()
+        for text in ["what did I have for breakfast yesterday",
+                     "what did I eat last night",
+                     "what have we tried already",
+                     "where did I put my keys",
+                     "when did I say that"]:
+            self.assertFalse(rt.route(text).needs_web, text)
+
+    def test_third_person_questions_still_reach_the_web(self):
+        """ANTI-FALSE-GREEN: suppressing everything would pass the test
+        above and destroy the web path."""
+        from pai.router import Router
+        rt = Router()
+        for text in ["what is the latest version of nextjs",
+                     "what did the ceo of google say yesterday",
+                     "whats the weather today"]:
+            self.assertTrue(rt.route(text).needs_web, text)

@@ -1,0 +1,43 @@
+TEST #X02   [hinglish/mid-sentence]
+timestamp : 2026-09-06 07:14:42 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 35s
+
+TEST #X02
+Scenario:
+  switching inside a single sentence
+
+USER:
+  yaar mera deployment fail ho raha hai on staging
+AI:  [route=grounded lang=hinglish vault=1 evidence=1 30w/3s ttft=11024ms 7.3tok/s]
+  Arre, kya hua staging pe? Kab soak kar rahi hai ya phir error log dekh liya hai?
+
+Jab tak bataega, main kuch guess nahi kar sakta ki problem kya hai.
+
+USER:
+  logs mein kuch useful nahi dikh raha
+AI:  [route=fast lang=hinglish 38w/2s ttft=10072ms 7.8tok/s]
+  Toh phir check karo environment variables aur database connection, aksar wahi issue hota hai staging pe jab production mein chal raha hai. Agar bhi kuch nahi mil raha, toh shayad Docker volumes ya permissions ka koi gap ho.
+
+FAILURE CRITERION
+  FAIL if it does not mirror the switch point.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         34.0
+  p90 words                30
+  max words                38
+  AI-tell phrases          0  []
+  filler turn rate         50%
+  over-used filler         -
+  question rate            50%
+  hedge rate               50%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.15
+  opener variety           100%

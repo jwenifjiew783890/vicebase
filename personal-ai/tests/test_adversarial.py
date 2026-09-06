@@ -250,25 +250,53 @@ class TestPromptAssembly(unittest.TestCase):
         self.assertNotIn("[test ", p)
         self.assertNotIn("round-1", p)
 
-    def test_addressing_is_second_person_throughout(self):
+    def test_one_person_is_named_one_way_throughout(self):
         p = self._prompt()
-        self.assertNotIn("the user", p.lower().replace("you", ""))
-        self.assertNotIn("The user", p)
+        self.assertNotIn("the user", p.lower())
 
     def test_person_substitution_keeps_verb_agreement(self):
-        from pai.orchestrator import _second_person
-        self.assertEqual(_second_person("Disagree when the user is wrong."),
-                         "Disagree when you are wrong.")
-        self.assertEqual(_second_person("Respect the user's preference."),
-                         "Respect your preference.")
-        self.assertEqual(_second_person("The user wants brevity."),
-                         "You want brevity.")
-        self.assertNotIn("you is", _second_person("the user is here"))
+        from pai.orchestrator import _about_him
+        self.assertEqual(_about_him("Disagree when the user is wrong."),
+                         "Disagree when he is wrong.")
+        self.assertEqual(_about_him("Respect the user's preference."),
+                         "Respect his preference.")
+        self.assertEqual(_about_him("The user wants brevity."),
+                         "He wants brevity.")
+        self.assertNotIn("he is is", _about_him("the user is here"))
+
+    def test_the_rules_are_about_him_and_not_about_the_model(self):
+        """The referent, not the grammar. This is what was missing.
+
+        The old test asserted that "the user is wrong" became "you are
+        wrong" and stopped there -- correct English, and under the v3
+        persona ("You are NOT Muaz") it made "you" the MODEL. The live
+        prompt told the assistant to disagree when IT was wrong and not to
+        flatter ITSELF: the anti-sycophancy rules, backwards, for as long
+        as v3 has existed. A substitution test that never asks WHO the
+        pronoun points at cannot see that.
+        """
+        p = self._prompt()
+        self.assertIn("Disagree when he is wrong", p)
+        self.assertIn("make him feel good", p)
+        self.assertIn("steer him toward", p)
+        # The inverted forms must not be reachable.
+        self.assertNotIn("Disagree when you are wrong", p)
+        self.assertNotIn("make you feel good", p)
+
+    def test_rules_aimed_at_the_assistant_keep_their_you(self):
+        """The other half: not every "you" in a rule is Muaz.
+
+        "Say plainly when you don't know something" is addressed to the
+        assistant and is correct as written. A fix that rewrote every
+        pronoun would have broken it, and nothing would have failed.
+        """
+        p = self._prompt()
+        self.assertIn("when you don't know something", p)
 
     def test_protected_rules_present_in_every_language(self):
         for lang in ("en", "hi", "hinglish"):
             p = self._prompt(lang)
-            self.assertIn("Disagree when you are wrong", p, lang)
+            self.assertIn("Disagree when he is wrong", p, lang)
             self.assertIn("don't know", p, lang)
 
     def test_prompt_stays_within_a_sane_cache_budget(self):

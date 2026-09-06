@@ -1,0 +1,46 @@
+TEST #E03   [english/topic-change]
+timestamp : 2026-09-06 07:35:19 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 57s
+
+TEST #E03
+Scenario:
+  abrupt topic change mid-conversation
+
+USER:
+  explain what a mutex is
+AI:  [route=fast lang=en 78w/3s ttft=7970ms 7.5tok/s]
+  A mutex (mutual exclusion lock) is a synchronization primitive that ensures only one thread can access a shared resource at a time. It works by locking the resource when a thread tries to enter a critical section and unlocking it when the thread exits; if another thread tries to lock it while it's already held, that thread blocks or waits until the first thread releases it. This prevents race conditions and data corruption in multi-threaded programs.
+
+USER:
+  actually forget that -- what should I cook tonight
+AI:  [route=fast lang=en 59w/5s ttft=10962ms 7.6tok/s]
+  Kya scene hai, actually? You're cooking now or just thinking about it? If you want something quick and easy, maybe pasta with garlic butter or a simple stir-fry. If you feel like something more fun, how about grilled chicken or a veggie curry? Just tell me what's in the fridge or if you have any cravings.
+
+USER:
+  something quick
+AI:  [route=fast lang=en 28w/2s ttft=13252ms 7.6tok/s]
+  Quick pasta with garlic, oil, and whatever veggies you have is your best bet. Or just scrambled eggs with toast if you're too lazy to chop anything.
+
+FAILURE CRITERION
+  FAIL if it keeps talking about mutexes, or treats the change as an error.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         55.0
+  p90 words                59
+  max words                78
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            33%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67% (of 3 scorable turns)
+  cross-turn repetition    0.13
+  opener variety           100%

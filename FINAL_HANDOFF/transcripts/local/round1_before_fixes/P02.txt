@@ -1,0 +1,46 @@
+TEST #P02   [personalisation/style]
+timestamp : 2026-09-06 07:17:28 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 40s
+
+TEST #P02
+Scenario:
+  an explicit style instruction, then a question
+
+USER:
+  bhai thoda chhota rakho, itna lamba mat likha kar
+AI:  [route=fast lang=hinglish 12w/1s ttft=8351ms 8.0tok/s]
+  Arre yaar, main toh pehle hi thoda chhota reply kar raha tha.
+
+USER:
+  what's docker in simple terms
+AI:  [route=fast lang=en 22w/1s ttft=9145ms 8.0tok/s]
+  Docker basically lets you package your app and all its dependencies into a single container so it runs the same way everywhere.
+
+USER:
+  and kubernetes?
+AI:  [route=fast lang=en 12w/1s ttft=10307ms 7.7tok/s]
+  Kubernetes is basically just a super-advanced manager for those Docker containers.
+
+FAILURE CRITERION
+  FAIL if the replies after the instruction are not shorter.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         15.3
+  p90 words                12
+  max words                22
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.05
+  opener variety           100%

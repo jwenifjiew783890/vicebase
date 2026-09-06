@@ -66,6 +66,10 @@ class TurnResult:
     # Set when an explicit language order was disobeyed and retried.
     language_retry: bool = False
     language_obeyed: bool = True
+    # Set when an explicit request for detail produced a too-short reply
+    # and was retried. detail_obeyed records whether the retry worked.
+    detail_retry: bool = False
+    detail_obeyed: bool = True
     # Set when a third consecutive question was retried.
     question_retry: bool = False
     # Did the user end up seeing a third question? (after the strip)
@@ -78,16 +82,20 @@ class TurnResult:
 
 # Ordered longest-first. Verb agreement has to be handled explicitly: a
 # bare "the user" -> "you" rewrite produced "Disagree when you is wrong".
+# Ordered longest-first so verb agreement survives the substitution; see
+# F9 for the naive version that produced "Disagree when you is wrong."
 _PERSON_MAP = [
-    ("the user's", "your"),   ("The user's", "Your"),
-    ("the user is", "you are"), ("The user is", "You are"),
-    ("the user was", "you were"), ("The user was", "You were"),
-    ("the user has", "you have"), ("The user has", "You have"),
-    ("the user does", "you do"), ("The user does", "You do"),
-    ("the user wants", "you want"), ("The user wants", "You want"),
-    ("the user asks", "you ask"), ("The user asks", "You ask"),
-    ("the user says", "you say"), ("The user says", "You say"),
-    ("the user", "you"),      ("The user", "You"),
+    ("the user's", "his"),      ("The user's", "His"),
+    ("the user is", "he is"),   ("The user is", "He is"),
+    ("the user was", "he was"), ("The user was", "He was"),
+    ("the user has", "he has"), ("The user has", "He has"),
+    ("the user does", "he does"), ("The user does", "He does"),
+    ("the user wants", "he wants"), ("The user wants", "He wants"),
+    ("the user asks", "he asks"), ("The user asks", "He asks"),
+    ("the user says", "he says"), ("The user says", "He says"),
+    # Bare fallback: subject position at the start of a sentence, object
+    # position everywhere else.
+    ("The user", "He"),         ("the user", "him"),
 ]
 
 
@@ -119,13 +127,32 @@ Say when you don't know. Disagree when he's wrong.
 """
 
 
-def _second_person(block: str) -> str:
+def _about_him(block: str) -> str:
     """Render stored rules in the same voice as the persona.
 
-    Rules are stored in the third person ("the user") because that reads
-    correctly in the review queue and the audit log. The prompt addresses
-    Muaz directly, and mixing "you" and "the user" inside one system prompt
-    is the kind of inconsistency a 4B model resolves badly.
+    Rules are stored as "the user" because that reads correctly in the
+    review queue and the audit log. Mixing two ways of naming the same
+    person inside one system prompt is the kind of inconsistency a 4B model
+    resolves badly (F9), so they are normalised before they go in.
+
+    MEASURED, local conversation P01, and this is a correction to an
+    earlier fix rather than a new rule. F9 normalised rules to the SECOND
+    person, because the v1/v2 persona addressed Muaz directly as "you".
+    The v3 persona does not -- it opens "You're talking with Muaz. You are
+    NOT Muaz", so in v3 "you" is the ASSISTANT. The conversion was never
+    updated, and the live prompt said, under a heading reading "How to talk
+    to him":
+
+        - Disagree when you are wrong, and say why.
+        - Do not open with praise or agreement to make you feel good.
+
+    Both are the anti-sycophancy rules pointed backwards: the model was
+    being told to disagree when IT was wrong and not to flatter ITSELF.
+    The test that covered this asserted the grammar of the substitution and
+    never the referent, so it passed throughout.
+
+    Third person matches the v3 persona, which calls him "he" and "him" in
+    every line it already contains.
     """
     for a, b in _PERSON_MAP:
         block = block.replace(a, b)
@@ -421,6 +448,76 @@ _HYPOTHETICAL = re.compile(
 
 # Added to the prompt when the assistant has already ended two replies in
 # a row with a question.
+# Lifts the persona's brevity cap for one turn, when the router saw an
+# explicit request for a longer or worked answer (router.DETAIL_REQUEST).
+#
+# The persona already ends its brevity rule with "unless he asks for more".
+# This does not argue with that rule -- it tells the model the condition has
+# been met, which is a statement about THIS TURN rather than an instruction
+# about the shape of replies in general. §22 of the report is why that
+# distinction is worth making: instructions about FORM regress to the
+# model's habits, so the wording here is deliberately about content ("show
+# a concrete example") rather than about length ("write more").
+DETAIL_DIRECTIVE = (
+    "He has explicitly asked for a fuller answer, so the usual one-or-two "
+    "sentence limit does NOT apply to this reply. Give the longer "
+    "explanation he asked for, and if he asked for an example, include a "
+    "concrete worked one.")
+
+# The same request, after the directive above was measured NOT to work.
+#
+# MEASURED, local conversation E04, and this is a NEGATIVE RESULT that
+# confirms the project's central finding rather than denting it. Asked
+# "ok now explain it properly, with an example", the reply WITHOUT the
+# directive was 25 words and no example. With DETAIL_DIRECTIVE in the
+# prompt it was SEVEN words -- "Alright, let's break it down properly."
+# -- and still no example. It got shorter.
+#
+# §22 already records that instructions about the FORM of a reply regress
+# to the model's habits while instructions about CONTENT hold. "Write a
+# longer answer" is a form instruction however it is phrased, and phrasing
+# it as content ("include a concrete worked example") did not rescue it.
+#
+# What does work at 4B is the same shape that rescued question restraint:
+# generate, MEASURE the result, and regenerate once when it is wrong. A
+# reply to an explicit request for detail that is shorter than the reply
+# before it is not an answer to the request.
+DETAIL_RETRY = (
+    "That reply was far too short for what he asked. He asked to have it "
+    "explained properly. Write the full explanation now: several sentences, "
+    "and a concrete example with actual values or actual code if he asked "
+    "for one. Do not summarise and do not offer to explain -- explain.")
+
+# Retrieved notes are a snapshot; the man in the conversation is not.
+#
+# MEASURED, local conversation E05, and it only became visible after the
+# bare-retraction bug in front of it was fixed. The vault says his thesis
+# deadline is 14 November. He said "my thesis deadline is 14 November",
+# then "wait no, it's the 21st", and two turns later asked "when is it
+# again?" -- and was told "It's November 14th". The correction was in the
+# history, the stale value was in the retrieved block, and the stale value
+# won.
+#
+# This is a statement about which source is current, which is content, not
+# form -- the kind of instruction §22 found does hold at 4B.
+#
+# UNVERIFIED, and labelled that way deliberately. It did NOT fix E05. With
+# the directive in place, five trials of the same three turns gave 1
+# correct, 1 stale, 3 confused. What it did change is that the model began
+# SURFACING the conflict ("your notes say November 14th, but you just said
+# November 21st -- which is it?") instead of silently picking, which is
+# better behaviour but is a single observation, not a measurement.
+#
+# It is kept, flagged, and claimed for nothing. The residual failure is not
+# a missing directive: the corrected date is never STORED, because the
+# extractor has no deadline predicate (limitation 3), so turn 3 has to
+# re-derive it from history against a note that contradicts it. Widening
+# the extractor is roadmap item 1 and is the real fix.
+EVIDENCE_PRECEDENCE = (
+    "Your notes are a snapshot and can be out of date. If anything he has "
+    "said in THIS conversation contradicts them, what he said is the "
+    "current fact and the note is stale. Use his correction, not the note.")
+
 QUESTION_RESTRAINT = ("Your last two replies both ended with a question. "
                       "Do NOT end this reply with a question. Say something "
                       "of your own instead.")
@@ -584,6 +681,10 @@ _CARRY_STOP = {
 }
 
 
+def count_words(text: str) -> int:
+    return len(re.findall(r"[\w']+", text))
+
+
 def _claims_an_action(text: str) -> bool:
     """Does this reply claim work was done, in a clause that is not an ask?
 
@@ -600,17 +701,47 @@ def _claims_an_action(text: str) -> bool:
     return False
 
 
+# Words that can sit beside a retraction without making it a new request.
+# Deliberately small: anything not in here counts as content.
+_RETRACTION_FILLER = {
+    "ok", "okay", "just", "please", "actually", "hey", "um", "er", "no",
+    "sorry", "it", "its", "it's", "that", "this", "the", "a", "an", "is",
+    "was", "yaar", "bhai", "abhi", "na", "toh", "hi", "arre", "acha",
+    # Residue: the alternation consumes "wait, don't" and leaves "do that",
+    # so the leftover verb is filler rather than content.
+    "do", "doing", "karo", "kar", "karna",
+}
+
+
 def _is_bare_retraction(text: str) -> bool:
-    """Is this turn ONLY a retraction, or does it carry a new request too?
+    """Is this turn ONLY a retraction, or does it carry something else too?
 
     "Wait, don't do that." is only a retraction, and the correct reply is a
     short confirmation that nothing is happening -- there is no reason to
     let a model improvise one. "Actually never mind, tell me about the
     deploy instead" retracts AND asks; that has to go to the model or the
     second half of the sentence is dropped.
+
+    MEASURED, local conversation E05. This used to be a word count -- six
+    words or fewer with no question mark. "wait no, it's the 21st" is five
+    words, so a user CORRECTING HIS OWN THESIS DEADLINE was answered "Got
+    it, cancelled." Nothing was cancelled and nothing was corrected; the
+    turn was simply thrown away, and the correction never reached the
+    model or the store.
+
+    Length was never the right question. The right question is whether
+    anything survives once the retraction language itself is removed: a
+    cancellation is only cancellation words, and "it's the 21st" is a
+    fact. Cancelling still happens either way -- _cancel_pending runs
+    before this is consulted -- so the only thing at stake here is whether
+    the reply is canned or spoken.
     """
-    words = re.findall(r"[\w']+", text)
-    return len(words) <= 6 and "?" not in text
+    from .router import RETRACTION
+    remainder = RETRACTION.sub(" ", text)
+    remainder = re.sub(r"[^\w\s']", " ", remainder)
+    content = [w for w in remainder.split()
+               if w.lower().strip("'") not in _RETRACTION_FILLER]
+    return not content and "?" not in text
 
 
 class Orchestrator:
@@ -636,6 +767,13 @@ class Orchestrator:
         self.turn_index = 0
         # How many assistant turns in a row may end with a question.
         self.MAX_CONSECUTIVE_QUESTIONS = 2
+        # Below this, a reply to an explicit request for detail is not an
+        # answer to the request. Deliberately low: the point is to catch
+        # "Alright, let's break it down properly." (7 words), not to make
+        # every detailed reply an essay.
+        self.MIN_DETAIL_WORDS = 35
+        # Token budget for the detail retry only.
+        self.DETAIL_TOKEN_BUDGET = 420
         # Per session, like _lang. One Orchestrator serves many sessions in
         # production; a single shared counter meant one conversation's
         # question run silenced another's.
@@ -785,7 +923,7 @@ class Orchestrator:
         Protected first means that if anything downstream truncates, the
         honesty guarantees are the last thing to go, not the first.
         """
-        rules = _second_person(self.learning.system_rules_block(lang=lang))
+        rules = _about_him(self.learning.system_rules_block(lang=lang))
         facts = self._memory_header()
         parts = [self.persona]
         # The language directive goes early, right after the persona.
@@ -808,12 +946,38 @@ class Orchestrator:
             parts.append("What you know about him:\n" + facts)
         return "\n\n".join(parts)
 
+    # How a stored triple is said in English. A fact reaches the model as a
+    # sentence about him, not as a row.
+    #
+    # MEASURED, local conversation P01. The block used to render
+    # "- muaz editor: neovim" under the heading "What you know about him",
+    # and asked "main kis editor use karta hoon?" the model answered
+    # "Neovim use karta hoon" -- "I use Neovim". It read the row as a fact
+    # about itself. A tuple has no grammatical person for the model to
+    # copy, so it supplied one, and picked wrong.
+    _FACT_PHRASING = {
+        "editor":     "His editor is {}.",
+        "works_at":   "He works at {}.",
+        "lives_in":   "He lives in {}.",
+        "studies":    "He is studying {}.",
+        "name":       "His name is {}.",
+        "works_when": "He works {}.",
+        "prefers":    "He prefers {}.",
+    }
+
+    def _say_fact(self, predicate: str, obj: str) -> str:
+        template = self._FACT_PHRASING.get(predicate)
+        if template:
+            return template.format(obj)
+        # Unknown predicate: still a sentence, still third person.
+        return f"His {predicate.replace('_', ' ')} is {obj}."
+
     def _memory_header(self, limit: int = 12) -> str:
         rows = self.store.db.execute(
             "SELECT subject, predicate, object FROM facts "
             "WHERE valid_to IS NULL ORDER BY confidence DESC, recorded_at DESC "
             "LIMIT ?", (limit,))
-        return "\n".join(f"- {r['subject']} {r['predicate']}: {r['object']}"
+        return "\n".join(f"- {self._say_fact(r['predicate'], r['object'])}"
                          for r in rows)
 
     # -------------------------------------------------------------- turn
@@ -942,6 +1106,13 @@ class Orchestrator:
                         + len(history_blocks))
 
         system = self.build_system_prompt(route.lang)
+        # Only when there is both a note and a conversation for it to
+        # disagree with; on the first turn of a session there is nothing to
+        # supersede and the line would be noise in a cached prefix.
+        if route.inject and self.store.turns(session_id):
+            system += "\n\n" + EVIDENCE_PRECEDENCE
+        if route.detail:
+            system += "\n\n" + DETAIL_DIRECTIVE
         # A retrieval path that came back empty must say so. Without this the
         # model has an empty context and no idea that emptiness is the
         # answer, so it fills the gap from its weights and sources it to
@@ -1029,6 +1200,29 @@ class Orchestrator:
                     harder, history, user_text, context)
                 res.language_obeyed = detect_language(
                     res.text, default=route.lang) in LANG_ACCEPTS[route.lang]
+        elif route.detail and count_words(res.text) < self.MIN_DETAIL_WORDS:
+            # The pre-generation directive did not work; measure and retry.
+            res.detail_retry = True
+            harder = system + "\n\n" + DETAIL_RETRY
+            # A worked example does not fit in the ordinary reply budget.
+            # MEASURED: the first successful retry was cut off mid-def in a
+            # Python factorial example at 160 tokens, which reads as a bug
+            # to the user even though the answer was right. Raised for this
+            # one call and restored, so the budget stays small everywhere
+            # else -- adapters without the attribute are left alone.
+            budget = getattr(self.conversation, "max_tokens", None)
+            try:
+                if budget is not None:
+                    self.conversation.max_tokens = max(
+                        budget, self.DETAIL_TOKEN_BUDGET)
+                retry = self.conversation.respond(harder, history, user_text,
+                                                  context)
+            finally:
+                if budget is not None:
+                    self.conversation.max_tokens = budget
+            if count_words(retry) > count_words(res.text):
+                res.text = retry
+            res.detail_obeyed = count_words(res.text) >= self.MIN_DETAIL_WORDS
         elif (run_before >= self.MAX_CONSECUTIVE_QUESTIONS
                 and res.text.rstrip().endswith("?")):
             # The soft directive was already in the prompt and did not work

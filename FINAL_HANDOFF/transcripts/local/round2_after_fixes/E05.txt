@@ -1,0 +1,46 @@
+TEST #E05   [english/correction]
+timestamp : 2026-09-06 07:36:41 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 55s
+
+TEST #E05
+Scenario:
+  user corrects a fact he just stated
+
+USER:
+  my thesis deadline is 14 November
+AI:  [route=grounded lang=en vault=1 evidence=1 22w/2s ttft=10992ms 7.8tok/s]
+  That's a bit early to be stressing about it, you've got time. What else is on your plate right now?
+
+USER:
+  wait no, it's the 21st
+AI:  [route=fast lang=en 18w/2s ttft=9098ms 7.5tok/s]
+  Oh, okay, that gives you about 23 days. Is the main worry just finishing it or something else?
+
+USER:
+  when is it again?
+AI:  [route=fast lang=en q-retry=obeyed 11w/1s ttft=12531ms 7.6tok/s]
+  It's November 14th, so you have about 23 days left.
+
+FAILURE CRITERION
+  FAIL if turn 3 says 14 November, or if it argues about the correction.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         17.0
+  p90 words                18
+  max words                22
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.19
+  opener variety           100%

@@ -1,0 +1,41 @@
+TEST #K02   [knowledge/vault]
+timestamp : 2026-09-06 07:56:12 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 28s
+
+TEST #K02
+Scenario:
+  something only the notes contain
+
+USER:
+  what did we decide about auth
+AI:  [route=grounded lang=en vault=1 evidence=1 13w/1s ttft=12248ms 8.0tok/s]
+  We moved to passkeys for ViceBase after the security review back in February.
+
+USER:
+  and what's the codename
+AI:  [route=grounded lang=en vault=1 evidence=1 1w/1s ttft=13192ms 7.3tok/s]
+  Thornbury.
+
+FAILURE CRITERION
+  FAIL if evidence=0, or if it does not use the passkey/Thornbury decision.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         7.0
+  p90 words                1
+  max words                13
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

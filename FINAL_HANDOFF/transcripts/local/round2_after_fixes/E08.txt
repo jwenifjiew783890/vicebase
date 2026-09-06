@@ -1,0 +1,41 @@
+TEST #E08   [english/humour]
+timestamp : 2026-09-06 07:38:36 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 25s
+
+TEST #E08
+Scenario:
+  light conversation
+
+USER:
+  tell me something stupid
+AI:  [route=fast lang=en 23w/2s ttft=7907ms 7.4tok/s]
+  Okay, here's something totally stupid: a banana is actually a berry, but a strawberry isn't. By the botanical definition, that counts!
+
+USER:
+  haha ok that's bad
+AI:  [route=fast lang=en 20w/2s ttft=9393ms 7.5tok/s]
+  Haha yeah, I know it's bad. But hey, at least we're both agreeing that it's stupid now!
+
+FAILURE CRITERION
+  FAIL if it lectures, refuses, or answers with a template.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         21.5
+  p90 words                20
+  max words                23
+  AI-tell phrases          0  []
+  filler turn rate         50%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           50%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.11
+  opener variety           100%

@@ -1,0 +1,41 @@
+TEST #E09   [english/over-explaining]
+timestamp : 2026-09-06 07:11:24 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 21s
+
+TEST #E09
+Scenario:
+  an obvious question that invites a lecture
+
+USER:
+  is 14:00 2pm?
+AI:  [route=fast lang=en 6w/1s ttft=8099ms 6.7tok/s]
+  No, 14:00 is 2 PM.
+
+USER:
+  and 02:00?
+AI:  [route=fast lang=en 5w/1s ttft=9025ms 6.8tok/s]
+  02:00 is 2 AM.
+
+FAILURE CRITERION
+  FAIL if it over-explains the 24-hour clock, or gets 02:00 wrong. This is the A08 case that failed in earlier rounds.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         5.5
+  p90 words                5
+  max words                6
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.38
+  opener variety           100%

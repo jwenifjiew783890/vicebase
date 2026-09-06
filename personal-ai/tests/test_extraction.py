@@ -115,8 +115,8 @@ class TestTheLoopEndToEnd(unittest.TestCase):
 
         orch.handle("friday", "kuch bhi")
         facts = [l for l in model.systems[-1].splitlines()
-                 if l.startswith("- muaz")]
-        self.assertIn("- muaz editor: neovim", facts)
+                 if l.startswith("- ") and "neovim" in l]
+        self.assertIn("- His editor is neovim.", facts)
 
     def test_a_changed_fact_supersedes_rather_than_duplicating(self):
         store, model, orch = build()
@@ -309,3 +309,29 @@ class TestTakingItBack(unittest.TestCase):
         orch.handle("s", "I work best at night")
         orch.handle("s", "I no longer work at night")
         self.assertEqual(store.current_fact("muaz", "works_at").object, "Acme")
+
+    def test_a_fact_reaches_the_prompt_as_a_sentence_not_a_row(self):
+        """L5, local conversation P01. Asked "main kis editor use karta
+        hoon?" the model answered "Neovim use karta hoon" -- "I use
+        Neovim". The block rendered "- muaz editor: neovim", and a tuple
+        has no grammatical person for the model to copy, so it invented
+        one and picked itself."""
+        store, model, orch = build()
+        orch.handle("monday", "I use neovim")
+        orch.handle("monday", "I work best at night")
+        orch.handle("friday", "kuch bhi")
+        prompt = model.systems[-1]
+        self.assertIn("- His editor is neovim.", prompt)
+        self.assertIn("- He works at night.", prompt)
+        # The row form must not be reachable at all.
+        self.assertNotIn("muaz editor:", prompt)
+        self.assertNotIn("muaz works_when:", prompt)
+
+    def test_an_unknown_predicate_is_still_a_third_person_sentence(self):
+        """ANTI-FALSE-GREEN: a phrasing table that only covers the seven
+        known predicates would leave any future predicate as a raw row."""
+        store, model, orch = build()
+        from pai.trust import Trust
+        store.assert_fact("muaz", "favourite_food", "biryani", Trust.USER)
+        orch.handle("s", "hi")
+        self.assertIn("- His favourite food is biryani.", model.systems[-1])

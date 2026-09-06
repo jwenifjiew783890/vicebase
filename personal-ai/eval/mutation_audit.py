@@ -142,8 +142,8 @@ MUTATIONS = [
      "        if False:  # MUTANT"),
 
     ("orchestrator: annotations reach the model", "pai/orchestrator.py",
-     "        rules = _second_person(self.learning.system_rules_block(lang=lang))",
-     '        rules = _second_person(self.learning.system_rules_block(lang=lang)) + "\\n[test 999: leak]"'),
+     "        rules = _about_him(self.learning.system_rules_block(lang=lang))",
+     '        rules = _about_him(self.learning.system_rules_block(lang=lang)) + "\\n[test 999: leak]"'),
 
     ("signals: negation exclusions removed", "pai/signals.py",
      "    excluded = bool(NEGATION_EXCLUSIONS.search(text))",
@@ -470,6 +470,46 @@ MUTATIONS = [
     ("obsidian: user text passed raw to FTS MATCH", "pai/obsidian.py",
      '    toks = [t for t in _tok(query) if len(t) > 1]\n    return " OR ".join(f\'"{t}"\' for t in toks)',
      "    return query  # MUTANT"),
+
+    # ---- local conversation battery, 2026-09-06 -------------------------
+
+    ('orchestrator: bare retraction is a word count again (L1/E05)',
+     'pai/orchestrator.py',
+     r'''    from .router import RETRACTION
+    remainder = RETRACTION.sub(" ", text)''',
+     r'''    from .router import RETRACTION
+    remainder = ""  # MUTANT'''),
+
+    ('router: personal history reaches the web again (L2/E07)',
+     'pai/router.py',
+     r'''    r"|\bwhat (did|have) (i|we) \w+"''',
+     r'''    r"|(?!x)x\bwhat (did|have) (i|we) \w+"'''),
+
+    ('router: an explicit request for detail is never seen (L3/E04)',
+     'pai/router.py',
+     r'''        r.detail = bool(DETAIL_REQUEST.search(user_text))''',
+     r'''        r.detail = False  # MUTANT'''),
+
+    ('orchestrator: the detail directive never reaches the prompt (L3/E04)',
+     'pai/orchestrator.py',
+     r'''        if route.detail:
+            system += "\n\n" + DETAIL_DIRECTIVE''',
+     r'''        if False:
+            system += "\n\n" + DETAIL_DIRECTIVE'''),
+
+    ('orchestrator: facts render as rows again (L5/P01)',
+     'pai/orchestrator.py',
+     r'''        template = self._FACT_PHRASING.get(predicate)
+        if template:
+            return template.format(obj)''',
+     r'''        template = self._FACT_PHRASING.get(predicate)
+        if False:
+            return template.format(obj)'''),
+
+    ('orchestrator: rules addressed to the model again (L5/P01)',
+     'pai/orchestrator.py',
+     r'''    ("the user's", "his"),      ("The user's", "His"),''',
+     r'''    ("the user's", "your"),     ("The user's", "Your"),'''),
 ]
 
 

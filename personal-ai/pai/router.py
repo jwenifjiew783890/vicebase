@@ -203,6 +203,16 @@ MEMORY_QUERY = re.compile(
     r"\b(do you )?remember\b|\b(you|we) (said|told|discussed|talked|agreed)\b"
     r"|\bi (said|told you|mentioned)\b|\blast (time|week|night)\b"
     r"|\bwhat did (i|we|you) (say|tell|decide)\b"
+    # Structural, not a verb list. MEASURED, local conversation E07 t2:
+    # "what did I have for breakfast yesterday" routed to a WEB SEARCH and
+    # announced "let me look that up". "what did I eat last night" did not,
+    # because it happened to contain "last night" -- the verb list covered
+    # say/tell/decide and nothing else. The web cannot know what the user
+    # did, whatever verb he reaches for, so the construction is the signal
+    # rather than the vocabulary. This is limitation 5 (lists have holes)
+    # answered by removing the list rather than lengthening it.
+    r"|\bwhat (did|have) (i|we) \w+"
+    r"|\b(when|where) did (i|we) \w+"
     r"|\byaad (hai|h|hai\?|nahi)\b|\byaad\b"
     r"|\b(maine|tumne|humne|hamne) .{0,24}(bola|kaha|bataya|batayi|discuss)"
     r"|\bpehle (bataya|bola|kaha|discuss)"
@@ -273,6 +283,25 @@ RETRACTION = re.compile(
     r"|\b(ruko|ruk ja|mat karo?|mat kar|rehne do|rehne de|chhod do|chod do|"
     r"cancel kar|band kar|rok do|rok)\b"
     r"|रुको|मत करो|रहने दो|छोड़ दो|रोक",
+    re.IGNORECASE | re.UNICODE)
+
+# An explicit request for a LONGER or worked answer. The persona caps every
+# reply at one or two sentences "unless he asks for more", and this is what
+# decides that he asked.
+#
+# MEASURED, local conversation E04. "explain recursion in one line" produced
+# 15 words, correctly. "ok now explain it properly, with an example" then
+# produced 25 words AND NO EXAMPLE -- the brevity rule beat the explicit
+# request, and the escape hatch the persona already contains was never
+# reached because nothing told the model it had been triggered.
+DETAIL_REQUEST = re.compile(
+    r"\b(in (more )?detail|properly|elaborate|expand on|go deeper|"
+    r"step by step|walk me through|tell me more|more detail|"
+    r"long(er)? (answer|version)|full(er)? (answer|explanation)|"
+    r"with an? example|give me an? example|show me an? example)\b"
+    r"|\b(detail mein|vistaar se|thoda detail|aur batao|aur bata|"
+    r"example de|example dekar|samjha kar bata|acche se samjha)\b"
+    r"|विस्तार से|उदाहरण",
     re.IGNORECASE | re.UNICODE)
 
 FORCE_NO_TOOL = re.compile(
@@ -417,6 +446,9 @@ class Route:
     # A question about the shared conversation history. Answered from the
     # store; never from the web.
     memory_query: bool = False
+    # The user asked for a longer or worked answer. Lifts the persona's
+    # one-or-two-sentence cap for this turn only.
+    detail: bool = False
     # The user explicitly ordered this language. The caller should make it
     # stick for the rest of the session rather than re-detecting each turn.
     lang_locked: bool = False
@@ -511,6 +543,7 @@ class Router:
         forbidden = bool(FORCE_NO_TOOL.search(user_text))
         forced_vault = bool(FORCE_VAULT.search(user_text))
         memory_q = bool(MEMORY_QUERY.search(user_text))
+        r.detail = bool(DETAIL_REQUEST.search(user_text))
 
         # 0. Retraction outranks every other rule, including the explicit
         #    overrides below. "Wait, don't do that" must not be able to

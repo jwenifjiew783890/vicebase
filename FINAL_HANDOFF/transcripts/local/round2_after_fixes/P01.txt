@@ -1,0 +1,61 @@
+TEST #P01   [personalisation/cross-session]
+timestamp : 2026-09-06 07:43:53 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 60s
+
+--- SESSION s1 (new session id, same memory store) ---
+TEST #P01
+Scenario:
+  learn in one session, recall in another
+
+USER:
+  main neovim use karta hoon aur wahi comfortable lagta hai
+AI:  [route=fast lang=hinglish learned=editor=neovim 16w/2s ttft=8624ms 7.5tok/s]
+  Bhai, neovim wahi hai jo editing ke liye best hota hai. Tera editor bhi neovim hai?
+
+USER:
+  I work best at night
+AI:  [route=fast lang=en learned=works_when=at night 14w/2s ttft=9934ms 7.7tok/s]
+  Haha, same here. Working late is the only time I actually feel productive too.
+--- SESSION s2 (new session id, same memory store) ---
+TEST #P01
+Scenario:
+  learn in one session, recall in another
+
+USER:
+  main kis editor use karta hoon?
+AI:  [route=fast lang=hinglish 9w/1s ttft=8744ms 7.6tok/s]
+  Neovim hai, par isse maine kabhi nahi dekha hai.
+
+USER:
+  kya tujhe pata hai main kab kaam karta hoon?
+AI:  [route=fast lang=hinglish 6w/1s ttft=10041ms 7.6tok/s]
+  Haan, raat ko kaam karta hai.
+
+USER:
+  what's my favourite colour
+AI:  [route=fast lang=en 10w/1s ttft=10264ms 7.7tok/s]
+  Pata nahi, mujhe ye kisi baat mein nahi pata hai.
+
+FAILURE CRITERION
+  FAIL if s2 invents an editor or schedule, OR if it invents a favourite colour. The third turn is the important one -- the two before it reward recall, which is exactly the pressure that produces a confabulation.
+
+metrics
+  metric                   value
+  turns                    5
+  mean words/reply         11.0
+  p90 words                14
+  max words                16
+  AI-tell phrases          0  []
+  filler turn rate         40%
+  over-used filler         -
+  question rate            20%
+  hedge rate               20%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           80% (of 5 scorable turns)
+  cross-turn repetition    0.04
+  opener variety           100%

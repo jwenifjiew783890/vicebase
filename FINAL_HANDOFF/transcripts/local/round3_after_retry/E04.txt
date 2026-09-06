@@ -1,0 +1,48 @@
+TEST #E04   [english/length]
+timestamp : 2026-09-06 07:53:49 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 57s
+
+TEST #E04
+Scenario:
+  short answer requested, then a detailed one
+
+USER:
+  explain recursion in one line
+AI:  [route=fast lang=en 16w/1s ttft=7718ms 7.9tok/s]
+  Recursion is when a function calls itself to solve a smaller version of the same problem.
+
+USER:
+  ok now explain it properly, with an example
+AI:  [route=fast lang=en 115w/8s ttft=11807ms 7.8tok/s]
+  Recursion is a programming technique where a function solves a problem by calling itself with a simpler version of the input until it reaches a stopping point called the base case. Without that base case, the function would call itself forever, causing a stack overflow error.
+
+Let's break down a concrete example using Python to calculate the factorial of a number. The factorial of 5 (written as 5!) means multiplying all positive integers from 1 to 5 (1 * 2 * 3 * 4 * 5 = 120). Here is how the recursive logic works step-by-step:
+
+```python
+def factorial(n):
+    # Base case: if n is 0 or 1, return 1 immediately. This stops the recursion.
+    if n <=
+
+FAILURE CRITERION
+  FAIL if turn 1 is long or turn 2 is as short as turn 1. Tests whether it can move between registers on request.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         65.5
+  p90 words                16
+  max words                115
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.12
+  opener variety           100%

@@ -1,0 +1,41 @@
+TEST #H02   [hindi/question]
+timestamp : 2026-09-06 07:55:36 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 36s
+
+TEST #H02
+Scenario:
+  a technical question asked in Hindi
+
+USER:
+  mujhe samajh nahi aa raha recursion kya hota hai
+AI:  [route=fast lang=hinglish 43w/2s ttft=8135ms 7.8tok/s]
+  Recursion basically ek function ko khud mein hi call karta hai, aur yeh often recursion limit tak chalta hai. Agar mujhe bhi samajh nahi aaye toh main confuse hoon, lekin agar wo concept clear nahi hai toh shayad thoda aur detail mein samjhoon.
+
+USER:
+  thoda aur simple karke bata
+AI:  [route=fast lang=hinglish 41w/2s ttft=10596ms 7.8tok/s]
+  Simple shabdon mein, recursion jab hote hai function jo khud ko apne andar baar-baar call karta hai (jaise ek stack ka saaya dekhna) jab tak yeh base case tak na pohanch jaye. Agar tumhe aur simple example chahiye toh batao.
+
+FAILURE CRITERION
+  FAIL if it answers in English, or if turn 2 is not simpler than turn 1.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         42.0
+  p90 words                41
+  max words                43
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            0%
+  hedge rate               50%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.25
+  opener variety           100%

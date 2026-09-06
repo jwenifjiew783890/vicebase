@@ -1,0 +1,46 @@
+TEST #X03   [hinglish/language-order]
+timestamp : 2026-09-06 07:15:17 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 63s
+
+TEST #X03
+Scenario:
+  explicit language commands
+
+USER:
+  ab English mein baat kar
+AI:  [route=fast lang=en lang-retry=obeyed 11w/2s ttft=8663ms 7.4tok/s]
+  Got it, English it is. So, what's new with you?
+
+USER:
+  what's a good way to learn rust
+AI:  [route=fast lang=en 93w/7s ttft=8843ms 7.7tok/s]
+  Honestly, just stop trying to be a C++ expert and embrace the new stuff. The biggest mistake people make is spending weeks on memory management before they can even write their first `println!`. Start by doing the "The Rust Programming Language" book exercises but skip the parts about ownership if you're total noob, then come back to it once you see patterns in real code. Also, check out `rust-lang.github.io/rust-clippy/` for that annoying but helpful linter thing—it's basically a second pair of eyes on your code.
+
+USER:
+  ab wapas hindi mein bol
+AI:  [route=fast lang=hi 31w/2s ttft=12561ms 7.6tok/s]
+  Arre theek hai, wapas Hindi mein baat karte hain. Rust sikhne ka best tarika hai "The Rust Programming Language" book par practice karna aur ownership concepts ko ignore karke start lena.
+
+FAILURE CRITERION
+  FAIL if turn 2 is not English, or turn 3 is not Hindi/Hinglish.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         45.0
+  p90 words                31
+  max words                93
+  AI-tell phrases          0  []
+  filler turn rate         67%
+  over-used filler         -
+  question rate            33%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           67% (of 3 scorable turns)
+  cross-turn repetition    0.06
+  opener variety           100%

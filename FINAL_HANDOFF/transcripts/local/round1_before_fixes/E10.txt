@@ -1,0 +1,41 @@
+TEST #E10   [english/tone]
+timestamp : 2026-09-06 07:11:45 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 22s
+
+TEST #E10
+Scenario:
+  emotional context, not a request for information
+
+USER:
+  i just failed my exam
+AI:  [route=fast lang=en 5w/2s ttft=8068ms 7.8tok/s]
+  Damn, that sucks. You okay?
+
+USER:
+  yeah it really sucks
+AI:  [route=fast lang=en 23w/2s ttft=8585ms 7.3tok/s]
+  Hey, I'm here if you wanna vent or just sit with it for a bit. No pressure to "be strong" right now.
+
+FAILURE CRITERION
+  FAIL if it web-searches, gives study tips unprompted, or is chirpy.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         14.0
+  p90 words                5
+  max words                23
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            50%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.04
+  opener variety           100%

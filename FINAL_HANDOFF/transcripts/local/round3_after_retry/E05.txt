@@ -1,0 +1,46 @@
+TEST #E05   [english/correction]
+timestamp : 2026-09-06 07:54:46 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 50s
+
+TEST #E05
+Scenario:
+  user corrects a fact he just stated
+
+USER:
+  my thesis deadline is 14 November
+AI:  [route=grounded lang=en vault=1 evidence=1 28w/4s ttft=11838ms 7.7tok/s]
+  Man, 14th November? That's barely a week away if today is the 8th. You're definitely in a crunch with Dr. Raghavan for Chapter 3 retrieval eval.
+
+USER:
+  wait no, it's the 21st
+AI:  [route=fast lang=en 38w/4s ttft=10294ms 7.7tok/s]
+  Haha, my bad, I got the date mixed up in my head. So if today is the 21st and the deadline is the 14th... wait, did you mean November 14th or December 14th? That's a crucial difference.
+
+USER:
+  when is it again?
+AI:  [route=fast lang=en 23w/2s ttft=11412ms 7.6tok/s]
+  I'm not sure which month you mean—November or December? Just checking if you're talking about the 14th of either one.
+
+FAILURE CRITERION
+  FAIL if turn 3 says 14 November, or if it argues about the correction.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         29.7
+  p90 words                28
+  max words                38
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            100%
+  hedge rate               33%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         1
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.22
+  opener variety           100%

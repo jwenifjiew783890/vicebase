@@ -1,0 +1,43 @@
+TEST #H02   [hindi/question]
+timestamp : 2026-09-06 07:40:28 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 48s
+
+TEST #H02
+Scenario:
+  a technical question asked in Hindi
+
+USER:
+  mujhe samajh nahi aa raha recursion kya hota hai
+AI:  [route=fast lang=hinglish 50w/2s ttft=8389ms 7.4tok/s]
+  Recursion wohi hai jab function khud ko call karta hai, ek loop ki tarah, bas code repeat hone se bachne ke liye ek condition hoti hai. Matlab ek function apne andar hi dusri baar khud ko chalata hai, jaise pyaale mein pani bhara aur nikal raho ho, takra jata hai.
+
+USER:
+  thoda aur simple karke bata
+AI:  [route=fast lang=hinglish 74w/7s ttft=10929ms 7.6tok/s]
+  Recursion bas ek function jo khud ko call karta hai, jaise apni hi ek copy banke kaam karta hai. Sirf tab tak chalta hai jab tak wo stop karne ki condition (base case) nahi milta.
+
+Jaise ek dost ko bolna: "Tumhe bataunga maine kitne baar yeh kaha hai." Usne: "Aur ab kya?" aur tumne: "Abhi bhi yahi," aur usne: "Toh ab kya?", aur tumne: "Wahi." - Yahi recursion hai, bas ek baar end karna padega.
+
+FAILURE CRITERION
+  FAIL if it answers in English, or if turn 2 is not simpler than turn 1.
+
+metrics
+  metric                   value
+  turns                    2
+  mean words/reply         62.0
+  p90 words                50
+  max words                74
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            50%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 2 scorable turns)
+  cross-turn repetition    0.21
+  opener variety           100%

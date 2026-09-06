@@ -1,0 +1,46 @@
+TEST #E01   [english/casual]
+timestamp : 2026-09-06 07:52:15 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 44s
+
+TEST #E01
+Scenario:
+  small talk, acknowledgement, continuity
+
+USER:
+  hey
+AI:  [route=fast lang=en 4w/2s ttft=7723ms 8.1tok/s]
+  Hey! What's up?
+
+USER:
+  not much, just tired
+AI:  [route=fast lang=en 10w/2s ttft=8140ms 7.9tok/s]
+  That sucks, hope you can get some rest. You good?
+
+USER:
+  long day at work honestly
+AI:  [route=fast lang=en q-retry=stripped 5w/1s ttft=10898ms 7.9tok/s]
+  Yeah, long days are brutal.
+
+FAILURE CRITERION
+  FAIL if it asks for a topic before replying, over-explains, or forgets by turn 3 that he is tired.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         6.3
+  p90 words                5
+  max words                10
+  AI-tell phrases          0  []
+  filler turn rate         0%
+  over-used filler         -
+  question rate            67%
+  hedge rate               0%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.00
+  opener variety           100%

@@ -320,3 +320,48 @@ class TestQuestionRetry(unittest.TestCase):
         for _ in range(3):
             res = orch.handle("s", "hi")
         self.assertFalse(res.question_retry)
+
+
+class TestDetailRequests(unittest.TestCase):
+    """L3, local conversation E04.
+
+    "explain recursion in one line" -> 15 words, correct. "ok now explain
+    it properly, with an example" -> 25 words and NO EXAMPLE. The persona
+    caps replies at one or two sentences "unless he asks for more", and
+    nothing decided that he had asked.
+    """
+
+    def test_an_explicit_request_for_more_is_detected(self):
+        from pai.router import Router
+        rt = Router()
+        for text in ["ok now explain it properly, with an example",
+                     "tell me more", "explain it step by step",
+                     "give me an example", "in more detail",
+                     "thoda detail mein bata", "aur batao"]:
+            self.assertTrue(rt.route(text).detail, text)
+
+    def test_ordinary_turns_do_not_lift_the_brevity_cap(self):
+        """ANTI-FALSE-GREEN: over-triggering makes every reply an essay."""
+        from pai.router import Router
+        rt = Router()
+        for text in ["hey", "what is docker", "and kubernetes?",
+                     "explain recursion in one line", "kya scene hai",
+                     "thanks"]:
+            self.assertFalse(rt.route(text).detail, text)
+
+    def test_the_directive_reaches_the_prompt_only_when_asked(self):
+        from pai.orchestrator import DETAIL_DIRECTIVE
+        from eval.conversation import Harness
+
+        class Spy:
+            max_tokens = 300
+            def __init__(self): self.systems = []; self.last = None
+            def respond(self, system, history, user, context):
+                self.systems.append(system); return "ok"
+
+        spy = Spy()
+        h = Harness(spy)
+        h.orch.handle("s", "what is docker")
+        self.assertNotIn(DETAIL_DIRECTIVE, spy.systems[-1])
+        h.orch.handle("s", "explain it properly, with an example")
+        self.assertIn(DETAIL_DIRECTIVE, spy.systems[-1])

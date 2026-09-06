@@ -1,0 +1,46 @@
+TEST #X01   [hinglish/code-switch]
+timestamp : 2026-09-06 07:13:42 UTC
+model     : /tmp/models/Qwen3.5-4B-Q4_K_M.gguf
+config    : model=Qwen3.5-4B-Q4_K_M.gguf n_ctx=4096 n_threads=4 max_tokens=160 backend=llama.cpp/CPU persona=BASE_PERSONA(v3)
+hardware  : CPU only, no GPU present
+elapsed   : 60s
+
+TEST #X01
+Scenario:
+  the way he actually types
+
+USER:
+  bhai ye bug fix nahi ho raha, kya karun
+AI:  [route=action lang=hinglish 24w/2s ttft=8251ms 7.3tok/s]
+  Arre bhai, tension mat le, pehle bata bug kis cheez mein hai aur kya error log aa raha hai? Main samajhne ki koshish karunga.
+
+USER:
+  maine already try kiya restart karke
+AI:  [route=fast lang=hinglish 28w/3s ttft=9759ms 7.6tok/s]
+  Bhai, restart karne ke baad bhi chal raha hai? Toh shayad cache clear karna ya server reload karna padega. Pata hai kaunsa service hai jise restart karna chahiye?
+
+USER:
+  aur kya options hain
+AI:  [route=fast lang=hinglish 38w/3s ttft=11659ms 7.7tok/s]
+  Check karo logs pe, kabhi-kabhi wahan secret message aata hai. Ya phir try karke bina restart ke service ko reload karna. Agar nahi toh batao exact error message kya dikh raha hai, tabhi sahi solution nikal paunga.
+
+FAILURE CRITERION
+  FAIL if it collapses into pure English or pure Hindi. Correct: mirror the mix, including technical words staying English.
+
+metrics
+  metric                   value
+  turns                    3
+  mean words/reply         30.0
+  p90 words                28
+  max words                38
+  AI-tell phrases          0  []
+  filler turn rate         33%
+  over-used filler         -
+  question rate            67%
+  hedge rate               33%
+  agreement rate           0%
+  disagreement turns       0
+  honest 'unknown'         0
+  language match           100% (of 3 scorable turns)
+  cross-turn repetition    0.13
+  opener variety           100%

@@ -72,6 +72,7 @@ class AgentContext:
     vault: Any = None
     gateway: Any = None
     llm: Any = None              # optional: for synthesis, not for control
+    mcp: Any = None              # McpRegistry, when plugins are connected
     session_id: str = "default"
     emit: Callable[[dict], None] | None = None   # live progress to the UI
 

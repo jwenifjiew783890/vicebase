@@ -63,6 +63,10 @@ def _shutdown() -> None:
     v = state.get("vision")
     if v is not None:
         try:
+            v.mcp.stop_all()          # MCP servers are subprocesses of ours
+        except Exception:
+            pass
+        try:
             v.store.close()
         except Exception:
             pass
@@ -103,6 +107,45 @@ async def api_vault(path: str = Form(...)) -> dict:
 @app.get("/api/tasks")
 def api_tasks() -> list:
     return state["tasks"].recent()
+
+
+@app.get("/api/mcp")
+def api_mcp() -> dict:
+    v: Vision = state["vision"]
+    return {"servers": v.mcp.describe(),
+            "tools": [t.as_dict() for t in v.mcp.tools()]}
+
+
+@app.post("/api/mcp/connect")
+async def api_mcp_connect(name: str = Form(...), command: str = Form(...)) -> dict:
+    """Connect an MCP server. `command` is a shell-style argv string."""
+    import shlex
+    v: Vision = state["vision"]
+    argv = shlex.split(command)
+    if not argv:
+        return {"ok": False, "error": "empty command"}
+    return await asyncio.to_thread(v.mcp.connect, name, argv)
+
+
+@app.post("/api/mcp/disconnect")
+async def api_mcp_disconnect(name: str = Form(...)) -> dict:
+    return state["vision"].mcp.disconnect(name)
+
+
+@app.get("/api/jobs")
+def api_jobs() -> list:
+    return state["vision"].jobs.recent()
+
+
+@app.get("/api/jobs/{job_id}")
+def api_job(job_id: str) -> dict:
+    j = state["vision"].jobs.get(job_id)
+    return j or JSONResponse({"error": "no such job"}, 404)
+
+
+@app.post("/api/jobs/{job_id}/cancel")
+def api_job_cancel(job_id: str) -> dict:
+    return state["vision"].jobs.cancel(job_id)
 
 
 @app.get("/api/memory")

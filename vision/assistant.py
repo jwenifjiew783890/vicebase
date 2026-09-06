@@ -24,6 +24,8 @@ from .agents.base import AgentContext
 from .agents.registry import get as get_agent, describe as describe_agents
 from . import agents as _agents  # noqa: F401  (populates the registry)
 from .agents import builtin as _builtin  # noqa: F401
+from .jobs import JobStore
+from .mcp import McpRegistry
 
 
 @dataclass
@@ -80,9 +82,34 @@ class Vision:
                                  self.planner, gateway=self.gateway,
                                  router=self.router, learning=self.learning)
 
+        # Agents that can run for minutes get a job rather than a request.
+        self.jobs = JobStore(self.db_path, self._run_job)
+        # Plugins: every connected MCP server and the tools it exposes.
+        self.mcp = McpRegistry()
+
         path = vault_path or config.OBSIDIAN_VAULT
         if path:
             self.connect_vault(path)
+
+    # Agents whose work routinely outlasts a chat round-trip. Everything
+    # else answers inline, because turning a two-second lookup into a job
+    # makes the assistant feel slower, not more capable.
+    LONG = {"crew", "research", "browser", "coding"}
+
+    def _run_job(self, agent_name: str, task: str, job) -> dict:
+        """Executed on a job thread. Progress goes to the job log."""
+        def emit(ev: dict) -> None:
+            msg = ev.get("message") or ev.get("type", "")
+            if msg:
+                self.jobs.note(job, str(msg))
+        ctx = AgentContext(store=self.store, vault=self.vault,
+                           gateway=self.gateway, mcp=self.mcp,
+                           llm=self._raw_llm if self.conversation else None,
+                           session_id=job.session_id, emit=emit)
+        agent = get_agent(agent_name)
+        if agent is None:
+            return {"ok": False, "summary": f"no agent named {agent_name!r}"}
+        return agent.run(task, ctx).as_dict()
 
     # ------------------------------------------------------------- model
     def _load_llm(self) -> None:
@@ -149,7 +176,7 @@ class Vision:
     # ------------------------------------------------------------- turn
     def respond(self, session_id: str, text: str,
                 emit: Callable[[dict], None] | None = None,
-                *, channel: str = "text") -> Reply:
+                *, channel: str = "text", background: bool = True) -> Reply:
         t0 = time.perf_counter()
         d = classify(text)
 
@@ -157,8 +184,25 @@ class Vision:
             if emit:
                 emit({"type": "agent_start", "agent": d.agent,
                       "task": d.task, "reason": d.reason})
+            # Work that routinely outlasts a chat round-trip becomes a job:
+            # the user gets an id and a live log instead of a frozen tab,
+            # and the result is still there after a restart.
+            if background and d.agent in self.LONG:
+                agent = get_agent(d.agent)
+                payload = d.utterance if getattr(
+                    agent, "wants_utterance", False) else d.task
+                job = self.jobs.start(d.agent, payload, session_id)
+                if emit:
+                    emit({"type": "job_started", "job": job.as_dict()})
+                return Reply(
+                    text=(f"Working on it -- {d.agent} is running as job "
+                          f"{job.id}. I'll keep the log updated."),
+                    session_id=session_id, route="job", agent=d.agent,
+                    agent_result={"ok": True, "summary": "job started",
+                                  "job_id": job.id, "steps": []},
+                    ms=(time.perf_counter() - t0) * 1000)
             ctx = AgentContext(store=self.store, vault=self.vault,
-                               gateway=self.gateway,
+                               gateway=self.gateway, mcp=self.mcp,
                                llm=self._raw_llm if self.conversation else None,
                                session_id=session_id, emit=emit)
             agent = get_agent(d.agent)
@@ -204,8 +248,12 @@ class Vision:
                     f"anyway.")
         if not res.ok:
             failed = [s for s in res.steps if not s.ok]
-            why = failed[0].error if failed else "nothing ran"
-            return f"{res.summary} It didn't work: {why}"
+            if not failed:
+                # Nothing was attempted. That is a capability reporting that
+                # it cannot run here, not a thing that was tried and broke,
+                # and "it didn't work: nothing ran" reads like the latter.
+                return f"{res.summary} {res.detail}".strip()
+            return f"{res.summary} It didn't work: {failed[0].error}"
         return res.summary if not res.detail else f"{res.summary}\n\n{res.detail}"
 
     # ------------------------------------------------------------- status
@@ -223,4 +271,6 @@ class Vision:
             "vault": {"path": self.vault_path, "notes": self.vault_notes,
                       "chunks": len(self.vault.chunks)},
             "agents": describe_agents(),
+            "plugins": self.mcp.describe(),
+            "mcp_tools": [t.as_dict() for t in self.mcp.tools()],
         }

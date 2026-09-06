@@ -79,6 +79,14 @@ def main() -> int:
         page.screenshot(path="/tmp/vision_ui.png", full_page=False)
         check("9. screenshot captured", True, "/tmp/vision_ui.png")
 
+        for tab, want in (("jobs", ("task", "no tasks")),
+                          ("plugins", ("plugin", "mcp", "connect"))):
+            page.click(f".tabs button[data-tab='{tab}']")
+            page.wait_for_timeout(1800)
+            body = page.inner_text("#rightpane").lower()
+            check(f"10{tab[0]}. {tab} panel renders",
+                  any(w in body for w in want), body[:70].replace("\n", " | "))
+
         page.click(".tabs button[data-tab='memory']")
         page.wait_for_timeout(1500)
         mem = page.inner_text("#rightpane")

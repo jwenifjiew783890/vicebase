@@ -31,6 +31,19 @@ _RULES: list[tuple[str, re.Pattern, str]] = [
     ("memory", re.compile(
         r"\bwhat do you (remember|know) about\b|\bwhat did i tell you\b",
         re.I), "asking what is remembered"),
+    # A goal that needs several different specialists, not one. Checked
+    # before "research" so "research X and write it to a file" goes to the
+    # crew rather than to a single searcher that cannot write files.
+    ("crew", re.compile(
+        r"\b(and then|, then |after that)\b.*\b(write|save|summar|report|code|open)\b"
+        r"|^\s*(vision[,\s]+)?(do this|handle this|work on this|take care of)\b"
+        r"|\bmulti[- ]step\b|\bstep by step and\b", re.I),
+     "a goal needing several specialists"),
+    ("browser", re.compile(
+        r"^\s*(vision[,\s]+)?(open|visit|browse|go to|load)\s+\S*https?://"
+        r"|\bopen (the )?(page|site|url|link)\b"
+        r"|\bwhat(?:'s| is) on (this|that) page\b", re.I),
+     "explicit page to open"),
     ("research", re.compile(
         r"^\s*(vision[,\s]+)?(research|investigate|look into|compare)\b"
         r"|\bdo (some )?research\b|\bresearch kar\b", re.I),
@@ -57,6 +70,14 @@ _RULES: list[tuple[str, re.Pattern, str]] = [
     # doing safety filtering, which is the wrong layer -- routing decides
     # WHERE a request goes and the capability gateway decides whether it
     # may happen. A dangerous command must reach the thing that can say no.
+    ("mcp", re.compile(
+        r"\bmcp\b|\b(what|which) tools\b|\bconnected tools\b", re.I),
+     "MCP tools"),
+    ("desktop", re.compile(
+        r"\b(screenshot|screen shot|what'?s on (my |the )?screen)\b"
+        r"|^\s*(vision[,\s]+)?(open|launch|start) (the )?(app|application|chrome|firefox|"
+        r"notepad|terminal|vscode|code|explorer|finder)\b", re.I),
+     "desktop automation"),
     ("shell", re.compile(r"^\s*(?:vision[,\s]+)?run\s+`?(?P<cmd>.+?)`?\s*$",
                          re.I), "explicit command to run"),
     ("web", re.compile(
@@ -64,15 +85,23 @@ _RULES: list[tuple[str, re.Pattern, str]] = [
         r"|\bweb pe search\b", re.I), "explicit web request"),
 ]
 
-# A turn this short is conversation whatever words it contains. "plan" on
-# its own is not a planning request.
-_MIN_WORDS = 3
+# A single word is conversation whatever it says: "plan" on its own is not
+# a planning request and "remember" on its own is not a write. Two words
+# can be a real command ("open chrome", "take screenshot"), so the floor
+# stops at one.
+_MIN_WORDS = 2
+
+
+_HAS_URL = re.compile(r"https?://\S+", re.I)
 
 
 def classify(text: str) -> Dispatch:
     words = text.split()
-    if len(words) < _MIN_WORDS:
-        return Dispatch(reason="too short to be a task")
+    # The length floor stops "plan" on its own becoming a planning request.
+    # A URL is never ambiguous, so it is exempt: "open https://x.com" is two
+    # words and unmistakably a browser request.
+    if len(words) < _MIN_WORDS and not _HAS_URL.search(text):
+        return Dispatch(utterance=text, reason="too short to be a task")
     for agent, pattern, reason in _RULES:
         m = pattern.search(text)
         if m:

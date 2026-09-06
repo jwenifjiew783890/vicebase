@@ -113,7 +113,8 @@ button.mic.on{border-color:var(--gold);color:var(--gold)}
 .badge.bad{color:var(--red);border-color:rgba(248,113,113,.4)}
 .badge.run{color:var(--gold);border-color:rgba(255,200,87,.4)}
 .tabs{display:flex;gap:4px;padding:8px 10px 0}
-.tabs button{flex:1;padding:6px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase}
+.tabs{flex-wrap:wrap}
+.tabs button{flex:1 1 30%;padding:5px 4px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
 .tabs button.sel{border-color:var(--cyan-dim);color:var(--cyan)}
 .empty{color:var(--muted);font-size:11.5px;padding:12px;text-align:center}
 .kv{display:flex;justify-content:space-between;font-size:11px;padding:3px 10px;color:var(--muted)}
@@ -155,7 +156,9 @@ button.mic.on{border-color:var(--gold);color:var(--gold)}
   <aside class="side right">
     <div class="tabs">
       <button data-tab="agents" class="sel">Agents</button>
+      <button data-tab="jobs">Tasks</button>
       <button data-tab="memory">Memory</button>
+      <button data-tab="plugins">Plugins</button>
       <button data-tab="system">System</button>
     </div>
     <div class="scroll" id="rightpane"></div>
@@ -177,7 +180,7 @@ function setState(s, label){
 setState('idle','connecting');
 
 /* ---------- agent ring ---------- */
-const RING = ['research','web','knowledge','memory','files','coding','shell','planner'];
+let RING = ['research','web','browser','knowledge','memory','files','coding','crew'];
 function drawRing(){
   const nodes = $('#nodes'), svg = $('#wires');
   const stage = document.querySelector('.stage');
@@ -231,6 +234,11 @@ function handle(m){
     setState('thinking', m.agent);
   }
   else if(m.type==='agent_progress'){ addActivity(m.message, '', m.ok===false?'bad':'ok'); }
+  else if(m.type==='job_started'){
+    addActivity(`job ${m.job.id} started`, `${m.job.agent}: ${m.job.request.slice(0,60)}`, 'run');
+    if(tab==='jobs') renderRight();
+    if(!window._jobPoll) window._jobPoll = setInterval(()=>{ if(tab==='jobs') renderRight(); }, 4000);
+  }
   else if(m.type==='reply'){
     busyAgent = null; drawRing();
     let meta = [];
@@ -351,8 +359,37 @@ async function renderRight(){
     const ag = (status?.agents)||[];
     p.innerHTML = ag.map(a=>`<div class="item">
       <span class="badge ${a.dangerous?'bad':''}">${a.dangerous?'gated':'safe'}</span>
-      <div class="t">${a.name}</div><div class="s">${esc(a.description)}</div></div>`).join('')
+      <div class="t">${a.name}</div><div class="s">${esc(a.description)}</div>
+      <div class="s" style="opacity:.6">${esc((a.capabilities||[]).join(' · '))}</div></div>`).join('')
       || '<div class="empty">No agents.</div>';
+  } else if(tab==='jobs'){
+    try{
+      const js = await (await fetch('/api/jobs')).json();
+      p.innerHTML = js.length ? js.map(j=>`<div class="item">
+        <span class="badge ${j.status==='done'?'ok':j.status==='running'?'run':j.status==='queued'?'run':'bad'}">${j.status}</span>
+        <div class="t">${esc(j.agent||'')} · ${esc((j.request||'').slice(0,52))}</div>
+        <div class="s">${esc((j.progress||'').slice(0,90))}</div>
+        <div class="s" style="opacity:.7">${Math.round(j.age_s)}s ago · ${(j.log||[]).length} log lines
+          ${(j.status==='running'||j.status==='queued')?`· <a href="#" onclick="cancelJob('${j.id}');return false" style="color:var(--red)">cancel</a>`:''}
+        </div></div>`).join('') : '<div class="empty">No tasks yet.</div>';
+    }catch(e){ p.innerHTML='<div class="empty">Tasks unavailable.</div>'; }
+  } else if(tab==='plugins'){
+    try{
+      const m = await (await fetch('/api/mcp')).json();
+      p.innerHTML =
+        `<div style="padding:10px">
+           <input id="mcpname" placeholder="name (e.g. filesystem)" style="width:100%;margin-bottom:5px;background:rgba(8,20,36,.9);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px">
+           <input id="mcpcmd" placeholder="npx -y @modelcontextprotocol/server-filesystem /path" style="width:100%;background:rgba(8,20,36,.9);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px">
+           <button style="margin-top:7px;width:100%" onclick="connectMcp()">Connect MCP server</button>
+         </div>` +
+        (m.servers.length ? m.servers.map(sv=>`<div class="item">
+            <span class="badge ${sv.running?'ok':'bad'}">${sv.running?'connected':'down'}</span>
+            <div class="t">${esc(sv.name)}</div>
+            <div class="s">${sv.tools.length} tools${sv.error?' · '+esc(sv.error.slice(0,60)):''}</div>
+            <div class="s" style="opacity:.7">${esc(sv.tools.slice(0,6).map(t=>t.name).join(', '))}</div>
+            <div class="s"><a href="#" onclick="disconnectMcp('${esc(sv.name)}');return false" style="color:var(--red)">disconnect</a></div>
+          </div>`).join('') : '<div class="empty">No plugins connected.</div>');
+    }catch(e){ p.innerHTML='<div class="empty">Plugins unavailable.</div>'; }
   } else if(tab==='memory'){
     try{
       const m = await (await fetch('/api/memory')).json();
@@ -383,6 +420,26 @@ async function renderRight(){
          <button style="margin-top:7px;width:100%" onclick="connectVault()">Connect vault</button></div>`;
     }catch(e){ p.innerHTML='<div class="empty">Status unavailable.</div>'; }
   }
+}
+async function cancelJob(id){
+  await fetch(`/api/jobs/${id}/cancel`, {method:'POST'});
+  addActivity('cancel requested', id, 'run'); renderRight();
+}
+async function connectMcp(){
+  const name = $('#mcpname').value.trim(), cmd = $('#mcpcmd').value.trim();
+  if(!name || !cmd) return;
+  addActivity('connecting plugin', name, 'run');
+  const fd = new FormData(); fd.append('name', name); fd.append('command', cmd);
+  const r = await (await fetch('/api/mcp/connect', {method:'POST', body:fd})).json();
+  addActivity(r.ok?'plugin connected':'plugin failed',
+              r.ok?`${name}: ${r.server.tools.length} tools`:(r.server?.error||r.error||''),
+              r.ok?'ok':'bad');
+  renderRight();
+}
+async function disconnectMcp(name){
+  const fd = new FormData(); fd.append('name', name);
+  await fetch('/api/mcp/disconnect', {method:'POST', body:fd});
+  addActivity('plugin disconnected', name, ''); renderRight();
 }
 async function connectVault(){
   const path = $('#vaultpath').value.trim(); if(!path) return;

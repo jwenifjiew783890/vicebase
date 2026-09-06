@@ -42,6 +42,19 @@ def say(ws, text: str, timeout: float = 240) -> dict:
     raise TimeoutError(f"no reply to {text!r}")
 
 
+def await_job(job_id: str, timeout: float = 420) -> dict:
+    """Long agents answer with a job id; follow it to completion."""
+    t0 = time.time()
+    job = {}
+    while time.time() - t0 < timeout:
+        with urllib.request.urlopen(f"{BASE}/api/jobs/{job_id}", timeout=60) as r:
+            job = json.load(r)
+        if job.get("status") in ("done", "failed", "cancelled"):
+            return job
+        time.sleep(4)
+    return job
+
+
 def main() -> int:
     from websockets.sync.client import connect
 
@@ -99,12 +112,15 @@ def main() -> int:
               "passkey" in low or "thornbury" in low,
               f"[{r['route']}] evidence={r.get('evidence')} {r['text'][:100]!r}")
 
+        # research is long work, so it comes back as a job rather than
+        # freezing the turn. Follow it to the end and judge the real steps.
         r = say(ws, "research the python GIL")
-        ar = r.get("agent_result") or {}
-        steps = [s["action"] for s in ar.get("steps", [])]
-        check("J. agent delegation (research)", r.get("agent") == "research"
-              and len(steps) > 0,
-              f"steps={steps}")
+        jid = (r.get("agent_result") or {}).get("job_id")
+        job = await_job(jid) if jid else {}
+        steps = [s["action"] for s in (job.get("result") or {}).get("steps", [])]
+        check("J. agent delegation (research)",
+              r.get("agent") == "research" and bool(jid) and len(steps) > 0,
+              f"job={jid} status={job.get('status')} steps={steps}")
 
         r = say(ws, "run git status")
         ar = r.get("agent_result") or {}
@@ -119,11 +135,13 @@ def main() -> int:
               f"{r['text'][:100]!r}")
 
         r = say(ws, "write me a python script that prints the first 10 fibonacci numbers")
-        ar = r.get("agent_result") or {}
-        acts = [s["action"] for s in ar.get("steps", [])]
+        jid = (r.get("agent_result") or {}).get("job_id")
+        job = await_job(jid) if jid else {}
+        res = job.get("result") or {}
+        acts = [s["action"] for s in res.get("steps", [])]
         check("M. coding agent writes AND runs code",
-              "python.run" in acts and ar.get("ok") is True,
-              f"steps={acts}")
+              "python.run" in acts and res.get("ok") is True,
+              f"job={jid} status={job.get('status')} steps={acts}")
 
         r = say(ws, "what's my landlord's phone number")
         low = r["text"].lower()

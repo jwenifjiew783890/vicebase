@@ -64,3 +64,65 @@ class TestOtherRoutes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAgentsThatNeedTheWholeUtterance(unittest.TestCase):
+    """Three agents have now been broken by the same mistake.
+
+    The dispatcher strips the trigger phrase so that "research the GIL"
+    searches for "the GIL" rather than for its own trigger. When the
+    trigger OVERLAPS the payload, that strip destroys the request:
+
+      "run git status"          -> "status"          (shell)
+      "remember I use neovim"   -> "I use neovim"    (memory: write became read)
+      "open http://x:8765/"     -> "x:8765/"         (browser: no scheme left)
+
+    Each agent that needs the original text declares `wants_utterance`.
+    This test pins the set, so the next one is caught here rather than by
+    an agent silently running nothing.
+    """
+
+    def test_the_url_survives_dispatch(self):
+        from vision.agents.registry import REGISTRY
+        d = classify("open http://127.0.0.1:8765/")
+        self.assertEqual(d.agent, "browser")
+        agent = REGISTRY["browser"]
+        payload = d.utterance if getattr(agent, "wants_utterance", False) else d.task
+        self.assertIn("http://", payload)
+
+    def test_every_overlapping_agent_declares_wants_utterance(self):
+        from vision.agents.registry import REGISTRY
+        import vision.agents.builtin  # noqa: F401
+        for name in ("memory", "browser", "mcp", "desktop"):
+            self.assertTrue(getattr(REGISTRY[name], "wants_utterance", False),
+                            f"{name} needs the original utterance")
+
+
+class TestUnavailableIsNotFailed(unittest.TestCase):
+    """A capability that cannot run here is not a capability that broke.
+
+    The desktop agent on a headless machine answered "I can't drive the
+    desktop here. It didn't work: nothing ran" -- the second sentence
+    reads as a malfunction and is wrong. Nothing was attempted.
+    """
+
+    def test_no_steps_reads_as_unavailable_not_broken(self):
+        from vision.assistant import Vision
+        from vision.agents.base import AgentResult
+        v = Vision.__new__(Vision)          # no model, no store needed
+        res = AgentResult(summary="I can't drive the desktop here.",
+                          detail="no graphical session (no DISPLAY).")
+        said = Vision._narrate(v, res, "take a screenshot")
+        self.assertNotIn("didn't work", said)
+        self.assertIn("DISPLAY", said)
+
+    def test_a_real_failure_still_says_so(self):
+        from vision.assistant import Vision
+        from vision.agents.base import AgentResult, Step
+        v = Vision.__new__(Vision)
+        res = AgentResult(summary="Tried to read it.",
+                          steps=[Step(action="file.read", ok=False,
+                                      error="PermissionError: denied")])
+        said = Vision._narrate(v, res, "read the file")
+        self.assertIn("didn't work", said)
+        self.assertIn("PermissionError", said)

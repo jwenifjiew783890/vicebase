@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence
@@ -34,19 +35,45 @@ class GenStats:
 
 
 class LlamaBackend:
-    """Thin wrapper so the model is loaded once and shared."""
+    """Thin wrapper so the model is loaded once and shared.
+
+    Every call is serialised, and that is not caution -- it is a crash
+    this project actually took. Background jobs (a research crew, a browser
+    summary) call the model on worker threads while the conversation
+    handler calls it on another. llama.cpp keeps mutable decode state on
+    the context and is not re-entrant, so two threads inside one context
+    corrupt it. The observed symptom was not an exception but the whole
+    process dying:
+
+        traps: python3[13757] trap divide error ip:... in libc.so.6
+
+    A SIGFPE from native code, no traceback, uvicorn simply gone. One lock
+    at this boundary covers every caller -- conversation, planner, agents
+    and jobs alike -- because they all end up here.
+    """
 
     def __init__(self, model_path: str, n_ctx: int = 4096,
-                 n_threads: int | None = None, verbose: bool = False):
+                 n_threads: int | None = None, verbose: bool = False, **kw):
         from llama_cpp import Llama
         self.llm = Llama(model_path=model_path, n_ctx=n_ctx,
-                         n_threads=n_threads, verbose=verbose, logits_all=False)
+                         n_threads=n_threads, verbose=verbose,
+                         logits_all=False, **kw)
         self.model_path = model_path
+        self._lock = threading.RLock()
 
     def chat(self, messages: list[dict], *, max_tokens: int = 300,
              temperature: float = 0.7, top_p: float = 0.9,
              stop: Sequence[str] | None = None,
              repeat_penalty: float = 1.05) -> tuple[str, GenStats]:
+        with self._lock:
+            return self._chat(messages, max_tokens=max_tokens,
+                              temperature=temperature, top_p=top_p,
+                              stop=stop, repeat_penalty=repeat_penalty)
+
+    def _chat(self, messages: list[dict], *, max_tokens: int,
+              temperature: float, top_p: float,
+              stop: Sequence[str] | None,
+              repeat_penalty: float) -> tuple[str, GenStats]:
         t0 = time.perf_counter()
         first_at: float | None = None
         chunks: list[str] = []

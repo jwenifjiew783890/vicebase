@@ -347,3 +347,10 @@ class PlannerAgent(BaseAgent):
         if not plan:
             return self.result("The model produced no plan.")
         return self.result(f"Planned {task!r}.", plan.strip())
+
+
+# Agents that live in their own modules because they carry real
+# dependencies of their own.
+from . import browser  # noqa: E402,F401
+from . import crew  # noqa: E402,F401
+from . import system  # noqa: E402,F401

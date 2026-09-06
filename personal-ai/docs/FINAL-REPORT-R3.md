@@ -137,7 +137,7 @@ conversation went wrong in a way no test had predicted.
 |---|---|---|
 | Unit tests | **374** (3 skipped: opt-in live network) | MEASURED |
 | Frozen scenario checks | **183 / 183** | MEASURED |
-| Mutation audit | **88 mutations**, see §31c — 86/86 in one pass, plus two added after it | MEASURED |
+| Mutation audit | **88 mutations, 88 killed** in one pass — see §31c | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
 | Real conversations with the model | **110 transcripts, 373 user turns** | MEASURED |
 | Documented failures found + fixed | **46** | MEASURED |
@@ -1879,12 +1879,11 @@ mutation dies if *any* test fails), so the two compose soundly, but a
 composite is not one clean run, and this report reported it as a composite
 while a confirming pass was still going.
 
-**The confirming pass has since finished: 86 applied, 86 killed, 0
-survived, 0 anchors drifted, in one uninterrupted run.** MEASURED. It
-re-applied every mutation in the catalogue to the code committed here,
-against the suite committed here (370 tests, 3 skipped, green immediately
-before and after). **That single number — 86/86 — is now the result, and
-the composite is only how it was reached.**
+**The confirming pass then finished: 86 applied, 86 killed, 0 survived, 0
+anchors drifted, in one uninterrupted run.** MEASURED. It re-applied every
+mutation in the catalogue as it then stood to the committed code, against
+the suite committed with it (370 tests, 3 skipped, green immediately before
+and after), and replaced the composite with a single measured figure.
 
 The two agree, which is what a sound composite is supposed to predict and
 is not what you always get: a re-run adds tests, and added tests can shift
@@ -1892,13 +1891,30 @@ which mutations the *other* 82 anchors still match. They didn't here, and
 that was worth measuring rather than assuming.
 
 **Then the catalogue grew to 88.** F46 (§31d) was found after that pass and
-added two mutations, so the clean 86/86 describes a catalogue that is no
-longer the current one. Both new mutations were verified killed, by
-different tests, in a targeted run. A full 88-mutation pass over the
-committed code is the number this section will carry; until it is quoted
-here as a single figure, the honest statement is 86/86 in one pass plus two
-verified separately — which is a composite again, for the ordinary reason
-that finding a bug late is better than not finding it.
+added two mutations, so the clean 86/86 described a catalogue that was no
+longer the current one — a composite again, for the ordinary reason that
+finding a bug late is better than not finding it. Rather than leave it
+there, the whole catalogue was re-run against the committed code:
+
+```
+baseline: 0 failures
+mutations killed by the suite : 88/88
+mutations that SURVIVED       : 0
+```
+
+**88 applied, 88 killed, 0 survived, 0 anchors drifted, in one
+uninterrupted pass over the code and suite committed here.** MEASURED.
+Both F46 mutations are in that run, not bolted on beside it. That is the
+figure this section carries, and the full output is committed at
+`eval/evidence/mutation_audit_88.txt` — every mutation, its verdict, and
+the test that killed it, rather than a number you have to take from me.
+
+The composite is worth keeping in the record anyway, because the sequence
+is the point: 82 + 4, then a clean 86, then a bug that made 86 the wrong
+denominator, then a clean 88. Each of those was true when written and
+superseded by measurement rather than by argument — which is the same
+discipline the memory store applies to facts, applied to the report about
+it.
 
 **The lesson, sharpened by its third repetition:** it is not enough for
 every defence to have a test. **Every defence needs a test that fails when

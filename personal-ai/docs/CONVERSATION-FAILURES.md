@@ -1492,10 +1492,14 @@ compose soundly — but a composite is not one clean run, so a confirming
 pass was run against the committed code and the committed suite.
 
 **It finished 86/86: 86 applied, 86 killed, 0 survived, 0 anchors
-drifted, in one uninterrupted run.** That is the result now; the composite
-is only how it was reached. The two agree, which a sound composite should
-predict and does not guarantee — added tests can shift which mutations the
-other anchors still match.
+drifted, in one uninterrupted run.** The two agree, which a sound composite
+should predict and does not guarantee — added tests can shift which
+mutations the other anchors still match.
+
+F46 then added two mutations, making 86 the wrong denominator, so the whole
+catalogue was re-run: **88 applied, 88 killed, 0 survived, 0 anchors
+drifted, one pass, both F46 mutations inside it.** That is the result; the
+composite is only how it was reached.
 
 This is the third time this project has hit defence masking (F18, F40 and
 now this), and the lesson has sharpened each time: **it is not enough for

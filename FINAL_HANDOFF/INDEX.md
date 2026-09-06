@@ -277,8 +277,11 @@ FINAL_HANDOFF/
 | `personal-ai/docs/` | The original reports (unmodified originals) |
 | `docs/` (repo root) | The two architecture/R&D documents |
 
-The repository root also contains an **unrelated Next.js application**
-(`app/`, `components/`, `package.json`). This project does not touch it.
+The repository root **previously** also held an unrelated Next.js site
+(`app/`, `components/`, `data/`, `public/`, `types/`, and the Node
+toolchain). It was removed on 2026-09-06 — the repository is now Python
+only. Nothing in this project ever depended on it, and the removal changed
+no measured result. See `../CLEANUP_REPORT.md`.
 
 ### To reproduce any number here
 

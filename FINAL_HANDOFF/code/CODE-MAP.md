@@ -4,8 +4,11 @@ Every file, what it does, and where the evidence for it lives. Line counts
 and docstrings are extracted from the source, not transcribed.
 
 All paths are relative to the repository root. The runtime lives in
-`personal-ai/`; the repo also contains an unrelated Next.js app at the root
-(`app/`, `components/`, `package.json`) which this project does not touch.
+`personal-ai/`. The repository previously also held an unrelated Next.js
+site at the root (`app/`, `components/`, `data/`, `public/`, `types/` and
+the Node toolchain); it was removed on 2026-09-06 and the repository is now
+Python only. See `../../CLEANUP_REPORT.md`. Nothing in this project ever
+depended on it.
 
 ---
 

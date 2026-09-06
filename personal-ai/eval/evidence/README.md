@@ -17,6 +17,11 @@ same idea for the runs that check the *tests* rather than the model.
   which is the evidence that removing the site changed nothing about the
   runtime. See `../../../CLEANUP_REPORT.md`.
 
+- `mutation_audit_94_after_local_fixes.txt` — 94 mutations after the local
+  conversation battery added six defences (F47-F51). **94 applied, 94
+  killed, 0 survived.** Each new mutation is killed by a different test.
+  See `../../../LOCAL_CONVERSATION_TEST_REPORT.md`.
+
 A line reading `SURVIVED` in any of these is a defence with no test that
 depends on it, or an anchor that has drifted and could not run the
 experiment. Both are defects. The audit prints which.

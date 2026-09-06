@@ -1,0 +1,20 @@
+# The runtime, the 386 tests, the scenario harness and the mutation audit
+# need NOTHING from this file. They are Python standard library only, which
+# is deliberate: the checks that prove the system works must not depend on
+# anything that can fail to install.
+#
+#   python -m unittest discover -s tests -t .    <- no install needed
+#   python eval/harness.py                       <- no install needed
+#   python eval/mutation_audit.py                <- no install needed
+#
+# Everything below is for running the actual model.
+
+# Live local inference through llama.cpp. Loaded lazily inside
+# pai/llm.py::LlamaBackend, so the suite imports and runs without it.
+# Verified working on 0.3.35.
+llama-cpp-python>=0.3.0
+
+# Audio file reading for eval/asr_test.py ONLY. That harness has never been
+# run in this project and produces no committed result; every WER figure in
+# every report is RESEARCHED. Install only if you intend to run it.
+# soundfile>=0.12

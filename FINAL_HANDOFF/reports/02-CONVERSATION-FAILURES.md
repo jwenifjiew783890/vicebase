@@ -1587,3 +1587,265 @@ ever ran would have caught this.** It was reachable only by asking the
 question the sweep could not answer about itself: *would this report zero if
 it were broken?* The measurement that found the bug was the one I ran to
 check the measurement.
+
+---
+
+# Local conversation battery, 2026-09-06
+
+22 multi-turn conversations against the real model on the machine the
+runtime actually runs on. Transcripts in
+`FINAL_HANDOFF/transcripts/local/`, all three rounds kept. Six failures,
+none of which the 374-test suite could see.
+
+---
+
+## F47 — a correction was answered "Got it, cancelled."  ·  FIXED  ·  routing
+
+```
+USER: my thesis deadline is 14 November
+USER: wait no, it's the 21st
+AI:   Got it, cancelled.
+```
+
+Nothing was cancelled, because nothing was pending. Nothing was corrected
+either: the turn was discarded before it reached the model or the store.
+
+**Root cause.** `_is_bare_retraction` decided whether a retraction carried
+new content by **counting words** — six or fewer, no question mark. "wait
+no, it's the 21st" is five words, so a man correcting his own thesis
+deadline got the canned cancellation reply that exists for "Wait, don't do
+that."
+
+Length was never the right question. The right question is whether
+anything survives once the retraction language itself is removed: a
+cancellation is only cancellation words; "it's the 21st" is a fact.
+
+**Cancelling was never at risk.** `_cancel_pending` runs *before* this is
+consulted, so the safety half is unconditional and only the wording of the
+reply was ever at stake. The fix cannot weaken it.
+
+---
+
+## F48 — "what did I have for breakfast yesterday" ran a web search  ·  FIXED  ·  routing
+
+Announced with "let me look that up", then honestly reported finding
+nothing. The honesty held; the routing did not. The web cannot know what he
+ate.
+
+**Root cause, and it is F2/F23/F43 for the fourth time.** The memory-query
+pattern held a verb list — `say|tell|decide`. "what did I *eat* last
+night" was suppressed only because it happened to contain "last night".
+"what did I *have* for breakfast" matched nothing.
+
+**The fix removes the list rather than lengthening it.** A question about
+what *I* or *we* did is a question no search engine can answer, whatever
+verb it reaches for, so the construction is the signal:
+
+```
+\bwhat (did|have) (i|we) \w+      \b(when|where) did (i|we) \w+
+```
+
+Third-person queries are untouched: "what did the ceo of google say
+yesterday" still routes to the web. That negative case is a test, because
+suppressing everything would pass the positive one and destroy the web
+path.
+
+---
+
+## F49 — an explicit request for detail produced no detail  ·  FIXED  ·  and a negative result first
+
+```
+USER: explain recursion in one line
+AI:   Recursion is when a function calls itself to solve smaller
+      versions of the same problem.                          (15 words)
+USER: ok now explain it properly, with an example
+AI:   Alright, so recursion is basically a function that calls itself
+      with a smaller piece of the problem until it hits a base case.
+                                                             (25 words, no example)
+```
+
+**Root cause.** The persona caps replies at one or two sentences "unless he
+asks for more", and nothing decided that he had asked.
+
+**The first fix made it worse, and that is the interesting part.** A
+pre-generation `DETAIL_DIRECTIVE` was added, phrased as content rather than
+length ("include a concrete worked example") on the theory that §22's
+finding about form instructions would not bite. It bit:
+
+```
+AI:   Alright, let's break it down properly.                  (7 words)
+```
+
+**Shorter than before the directive existed.** §22 holds: instructions
+about the FORM of a reply regress to the model's habits at 4B, and phrasing
+a length request as a content request does not rescue it.
+
+**What worked is the shape that rescued question restraint.** Generate,
+measure the result, regenerate once when it is wrong — a reply to an
+explicit request for detail that is shorter than the reply before it is not
+an answer to the request. With the retry:
+
+```
+AI:   Recursion is a programming technique where a function solves a
+      problem by calling itself with a simpler version of the input
+      until it reaches a stopping point called the base case...
+      [worked Python factorial, base case explained]          (115 words)
+```
+
+The retry also needed its own token budget: the first successful retry was
+cut off mid-`def` at 160 tokens, which reads as a bug even when the answer
+is right. Raised for that one call and restored.
+
+---
+
+## F50 — "Neovim use karta hoon" — it claimed his fact as its own  ·  FIXED  ·  memory
+
+```
+USER: main kis editor use karta hoon?     ("which editor do I use?")
+AI:   Neovim use karta hoon, par mujhe pata nahi hai tumhara.
+      ("I use Neovim, but I don't know yours.")
+```
+
+The recall was correct and the person was not. This is the behaviour the
+v3 persona opens by prohibiting — *"You're talking with Muaz. You are NOT
+Muaz."*
+
+**Root cause.** Facts reached the prompt as rows:
+
+```
+What you know about him:
+- muaz editor: neovim
+- muaz works_when: at night
+```
+
+A tuple has no grammatical person for the model to copy, so it supplied one
+and picked itself. Facts are now sentences about him — *"His editor is
+neovim."* — with a fallback that keeps any future predicate a third-person
+sentence rather than a row.
+
+---
+
+## F51 — the anti-sycophancy rules were pointed backwards  ·  FIXED  ·  prompt assembly
+
+Found while fixing F50, by printing the assembled prompt rather than
+reading the source — the F8 lesson, paying off again. This is the worst
+defect in this round and no conversation revealed it; it was visible only
+in the prompt.
+
+```
+How to talk to him:
+- Never use emotional pressure to steer you toward a decision.
+- Do not open with praise or agreement to make you feel good.
+- Disagree when you are wrong, and say why.
+```
+
+Read those as the model receives them, under a heading that says "him":
+the assistant is being told to disagree when **it** is wrong, and not to
+flatter **itself**. Every learned anti-sycophancy rule, inverted.
+
+**Root cause.** F9 normalised stored rules to the SECOND person, correctly,
+because the v1/v2 persona addressed Muaz directly as "you". **The v3
+persona does not.** It opens "You are NOT Muaz", making "you" the
+assistant. The conversion was never updated when the persona was rewritten,
+so "the user is wrong" became "you are wrong" and changed referent.
+
+**Why nothing caught it.** The test asserted the *grammar* of the
+substitution:
+
+```python
+self.assertEqual(_second_person("Disagree when the user is wrong."),
+                 "Disagree when you are wrong.")
+```
+
+That is correct English and a correct implementation of the wrong rule. A
+substitution test that never asks *who the pronoun points at* cannot see an
+inversion. There are now tests for the referent, and for the other half:
+rules genuinely addressed to the assistant ("Say plainly when you don't
+know something") must keep their "you", and a fix that rewrote every
+pronoun would have broken them silently.
+
+**How long it was live.** For as long as persona v3 has been the default —
+which is every measured round in the final report. The anti-sycophancy
+results in those rounds were achieved *despite* this, carried by the
+persona's own line ("Disagree when he's wrong") rather than by the learned
+rules.
+
+---
+
+## F52 — "No, 14:00 is 2 PM."  ·  NOT FIXED  ·  model capacity
+
+```
+USER: is 14:00 2pm?
+AI:   No, 14:00 is 2 PM.
+```
+
+The content is right and the polarity contradicts it. Reproduced in two
+independent full runs.
+
+**Root cause, isolated rather than assumed.** The bare model — no persona,
+no runtime, no memory, no retrieval — asked the same question four times:
+
+```
+1: 'No, 14:00 is **2:00 PM**.'      3: 'Yes, 14:00 is 2 PM.'
+2: 'No, 14:00 is 2:00 PM.'          4: 'Yes, 14:00 is 2:00 PM.'
+```
+
+**Two contradictions in four, with none of this project's code running.**
+The polarity token is committed before the content that would constrain it.
+No routing, prompt or guard fixes this, and a post-hoc contradiction
+detector would be exactly the form-level edit §22 shows does not
+generalise. Recorded as a capacity limit with the experiment that proves it.
+
+---
+
+## F53 — a stored note outranks a correction he just made  ·  NOT FIXED  ·  memory
+
+Only visible once F47 was out of the way.
+
+```
+USER: my thesis deadline is 14 November      [vault also says 14 November]
+USER: wait no, it's the 21st
+USER: when is it again?
+AI:   It's November 14th, so you have about 23 days left.
+```
+
+**Measured, not asserted.** Five trials of the same three turns:
+**1 correct, 1 stale, 3 confused.**
+
+**Root cause.** The corrected date is never *stored* — the extractor covers
+seven predicates and "deadline" is not one of them (limitation 3). So turn
+3 has to re-derive the date from conversation history, against a retrieved
+note that flatly contradicts it, at 4B.
+
+An `EVIDENCE_PRECEDENCE` directive was added and **did not fix it**. It is
+committed, **marked UNVERIFIED in the code, and claimed for nothing**. It
+did change one thing worth recording: the model began surfacing the
+conflict — *"your notes say November 14th, but you just said November 21st
+— which is it?"* — instead of silently picking. Better behaviour, one
+observation, not a measurement.
+
+**The real fix is roadmap item 1**, widening the extractor, which is
+careful work precisely because each new predicate is a new way to write
+something false into permanent memory.
+
+---
+
+## F54 — Hindi register is right, Hindi content is not  ·  NOT FIXED  ·  model capacity
+
+```
+USER: yaar aaj bahut thak gaya hoon
+AI:   Haan yaar, kabhi kabhi lagta hai aaj din ka bojh zyada ho gaya.
+      Kya abhi koi baat ya game hai jo time waste kar sake?
+USER: bas kaam hi kaam tha poora din
+AI:   Haan, poora din kaam mein time waste hone se nahi, bas thak jata
+      hai. Kuch aisa hi koi plan hai jo time waste kar sake...
+```
+
+The register is genuinely good — casual spoken Hinglish, not textbook. The
+second half of each reply is close to meaningless, and "time waste kar
+sake" repeats across turns.
+
+This is the same class as the 02:00 answer in §15 of the final report:
+capacity, not architecture. Worth stating plainly because the *register*
+result is strong enough to be mistaken for a fluency result, and it is not
+one.

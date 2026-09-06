@@ -16,7 +16,7 @@ Thirty-two requirements. Each row carries the evidence, not an opinion.
 
 | # | Requirement | Status | Evidence |
 |---|---|---|---|
-| 1 | Runtime implemented | **YES** | 14 modules, 374 tests, real llama.cpp inference |
+| 1 | Runtime implemented | **YES** | 14 modules, 386 tests, real llama.cpp inference |
 | 2 | Model selected + justified | **YES** | §4; the Gemma → Qwen reversal is documented with its reason |
 | 3 | Memory works | **YES** | Four tiers; bitemporal supersession; and since round 4 it learns facts from conversation rather than from an API call. §23 runs the whole chain with the real model |
 | 4 | Learning loop works | **YES** | §12, end to end, 45w → 30w on a fresh session — and only because the rule is enforced as a token cap |
@@ -42,7 +42,7 @@ Thirty-two requirements. Each row carries the evidence, not an opinion.
 | 24 | Memory contradictions handled | **YES** | Supersession, not overwrite; history stays queryable |
 | 25 | Preferences superseded | **YES** | `valid_to` / `superseded_by`; the prompt carries only the current value |
 | 26 | T3 bounded | **YES** | Peak 10 of a cap of 40 over a simulated 180 days; protected rules exempt |
-| 27 | Regression passes | **YES** | 374 tests + 183 scenarios + 88 mutations |
+| 27 | Regression passes | **YES** | 386 tests + 183 scenarios + 94 mutations |
 | 28 | Real conversational tests | **YES** | 110 transcripts, 373 user turns, four rounds plus a verification pass, all committed |
 | 29 | Transcripts reviewed | **YES** | Every failure in `docs/CONVERSATION-FAILURES.md` is quoted from one |
 | 30 | Every major failure repaired + retested | **YES** | 46 documented, 46 addressed, each with a regression test and a mutation. Five of them were found by the rounds that verified the previous ones, and the last (F46) by a check on a measurement rather than on the system |

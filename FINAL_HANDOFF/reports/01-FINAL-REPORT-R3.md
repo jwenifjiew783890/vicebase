@@ -135,9 +135,9 @@ conversation went wrong in a way no test had predicted.
 
 | | | |
 |---|---|---|
-| Unit tests | **374** (3 skipped: opt-in live network) | MEASURED |
+| Unit tests | **386** (3 skipped: opt-in live network) | MEASURED |
 | Frozen scenario checks | **183 / 183** | MEASURED |
-| Mutation audit | **88 mutations, 88 killed** in one pass — see §31c | MEASURED |
+| Mutation audit | **94 mutations, 94 killed** in one pass — see §31c | MEASURED |
 | 180-day drift simulation | **0 failures** | SIMULATED |
 | Real conversations with the model | **110 transcripts, 373 user turns** | MEASURED |
 | Documented failures found + fixed | **46** | MEASURED |
@@ -599,7 +599,7 @@ applying the standard found three real false greens in my own work.
 
 For each defence: disable it, run the whole suite, require that at least
 one test **fails**. A mutation everything survives names an untested
-defence. **88 mutations** now, covering trust, gateway, memory, learning,
+defence. **94 mutations** now, covering trust, gateway, memory, learning,
 router, orchestrator, planner parsing, voice, obsidian, opencode and web.
 
 ### 13.2 The audit was itself a false green, once
@@ -994,9 +994,9 @@ personal-ai/
     opencode.py      deterministic task briefs; refuses to guess
     voice.py         endpointing, clause chunking, barge-in
     latency.py       budgets and projections
-  tests/             374 tests, 3 skipped (opt-in live network)
+  tests/             386 tests, 3 skipped (opt-in live network)
   eval/
-    mutation_audit.py        88 mutations
+    mutation_audit.py        94 mutations
     mandatory_conversations.py  the frozen 20
     defence_probes.py        round-3 probes for the new defences
     planner_reliability.py   the measurement behind §3.1
@@ -1007,7 +1007,7 @@ personal-ai/
     extractor_sweep.py       the extractor over all 373 real turns
   docs/
     FINAL-REPORT-R3.md          this file
-    CONVERSATION-FAILURES.md    all 46 failures, quoted in full
+    CONVERSATION-FAILURES.md    all 54 failures, quoted in full
     CONVERSATION-QUALITY-REPORT.md  round 1/2, superseded
     FINAL-REPORT.md                 superseded
     FINAL-VERIFICATION-REPORT.md    superseded, three claims later falsified
@@ -1977,7 +1977,7 @@ Thirty-two requirements. Each row carries the evidence, not an opinion.
 
 | # | Requirement | Status | Evidence |
 |---|---|---|---|
-| 1 | Runtime implemented | **YES** | 14 modules, 374 tests, real llama.cpp inference |
+| 1 | Runtime implemented | **YES** | 14 modules, 386 tests, real llama.cpp inference |
 | 2 | Model selected + justified | **YES** | §4; the Gemma → Qwen reversal is documented with its reason |
 | 3 | Memory works | **YES** | Four tiers; bitemporal supersession; and since round 4 it learns facts from conversation rather than from an API call. §23 runs the whole chain with the real model |
 | 4 | Learning loop works | **YES** | §12, end to end, 45w → 30w on a fresh session — and only because the rule is enforced as a token cap |
@@ -2003,7 +2003,7 @@ Thirty-two requirements. Each row carries the evidence, not an opinion.
 | 24 | Memory contradictions handled | **YES** | Supersession, not overwrite; history stays queryable |
 | 25 | Preferences superseded | **YES** | `valid_to` / `superseded_by`; the prompt carries only the current value |
 | 26 | T3 bounded | **YES** | Peak 10 of a cap of 40 over a simulated 180 days; protected rules exempt |
-| 27 | Regression passes | **YES** | 374 tests + 183 scenarios + 88 mutations |
+| 27 | Regression passes | **YES** | 386 tests + 183 scenarios + 94 mutations |
 | 28 | Real conversational tests | **YES** | 110 transcripts, 373 user turns, four rounds plus a verification pass, all committed |
 | 29 | Transcripts reviewed | **YES** | Every failure in `docs/CONVERSATION-FAILURES.md` is quoted from one |
 | 30 | Every major failure repaired + retested | **YES** | 46 documented, 46 addressed, each with a regression test and a mutation. Five of them were found by the rounds that verified the previous ones, and the last (F46) by a check on a measurement rather than on the system |

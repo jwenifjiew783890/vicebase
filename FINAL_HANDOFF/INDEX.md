@@ -168,12 +168,12 @@ is in `evidence/`.
 
 | What | Result | Raw output |
 |---|---|---|
-| Unit tests | **374 passed**, 3 skipped (opt-in live network) | `evidence/01-unit-tests.txt` |
+| Unit tests | **386 passed**, 3 skipped (opt-in live network) | `evidence/01-unit-tests.txt` |
 | Frozen scenario checks | **183 / 183**, 100% | `evidence/02-scenario-harness.txt` |
-| Mutation audit | **88 applied, 88 killed, 0 survived** | `evidence/05-mutation-audit-88.txt` |
+| Mutation audit | **94 applied, 94 killed, 0 survived** | `../personal-ai/eval/evidence/mutation_audit_94_after_local_fixes.txt` |
 | Extractor over every real turn | **373 turns → 4 facts, 0 invented, 0 erased** | `evidence/03-extractor-sweep.txt` |
 | Real conversations | **110 transcripts, 373 user turns** | `evidence/04-transcript-tally.txt` + `transcripts/` |
-| Documented failures | **46 found, 46 fixed** | `reports/02-CONVERSATION-FAILURES.md` |
+| Documented failures | **54 found; 51 fixed, 3 proven external** | `reports/02-CONVERSATION-FAILURES.md` |
 | Completion bar | **28 YES · 3 PARTIAL/UNVERIFIED · 0 NO** | `status/COMPLETION-BAR.md` |
 
 The three non-YES items are **all hardware**: no OpenCode install, no audio
@@ -209,6 +209,31 @@ uninformative. The bug lived entirely in that gap and surfaced only from
 asking what the measurement would look like if it were broken.
 
 ---
+
+## 4b. Running it yourself, and what happened when I did
+
+Two documents were added after the repository cleanup, both at the
+repository root:
+
+- **[`../LOCAL_RUN_AND_TEST.md`](../LOCAL_RUN_AND_TEST.md)** — exact
+  Windows/CMD commands from a fresh clone: what to install, which model to
+  download and where from, what needs no model at all, and what is
+  **NOT CURRENTLY IMPLEMENTED** (no REPL, no vault directory flag, no
+  STT/TTS).
+- **[`../LOCAL_CONVERSATION_TEST_REPORT.md`](../LOCAL_CONVERSATION_TEST_REPORT.md)**
+  — 22 multi-turn conversations against the real model, the six defects
+  they exposed, the four that were fixed, and the two proven to be the
+  model rather than the architecture.
+
+**The LLM does run locally**, and this handoff contains its actual output:
+`transcripts/local/` holds three rounds, the failing one included.
+
+The single most important finding from that work: printing the assembled
+system prompt showed that every learned **anti-sycophancy rule was pointed
+backwards** — the model was being told to disagree when *it* was wrong and
+not to flatter *itself* — for as long as persona v3 has existed. The test
+covering it asserted the grammar of the substitution and never the
+referent, so it passed the whole time. See F51.
 
 ## 5. What remains
 

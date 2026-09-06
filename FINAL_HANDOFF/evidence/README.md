@@ -6,11 +6,12 @@ hand-written.
 
 | File | Command | Result |
 |---|---|---|
-| `01-unit-tests.txt` | `python3 -m unittest discover -s tests -t .` | **374 tests, OK, 3 skipped** |
+| `01-unit-tests.txt` | `python3 -m unittest discover -s tests -t .` | **386 tests, OK, 3 skipped** |
 | `02-scenario-harness.txt` | `python3 eval/harness.py` | **183 / 183 checks, 100%** |
 | `03-extractor-sweep.txt` | `python3 eval/extractor_sweep.py` | **373 turns, 4 facts, 0 retractions** |
 | `04-transcript-tally.txt` | `python3 eval/tally.py` | **110 transcripts, 373 user turns** |
-| `05-mutation-audit-88.txt` | `python3 eval/mutation_audit.py` | **88 applied, 88 killed, 0 survived** |
+| `05-mutation-audit-88.txt` | `python3 eval/mutation_audit.py` | 88 applied, 88 killed, 0 survived (before the local battery) |
+| `06-mutation-audit-94.txt` | `python3 eval/mutation_audit.py` | **94 applied, 94 killed, 0 survived** (current) |
 
 All five were produced against the committed tree.
 

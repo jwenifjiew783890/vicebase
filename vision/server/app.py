@@ -73,6 +73,18 @@ def index() -> str:
     return (WEB / "index.html").read_text(encoding="utf-8")
 
 
+@app.get("/favicon.ico")
+def favicon() -> Response:
+    """An inline mark, so a page load does not 404 on every visit."""
+    svg = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+           '<defs><radialGradient id="g" cx="50%" cy="45%">'
+           '<stop offset="0" stop-color="#7ff0ff"/>'
+           '<stop offset="0.45" stop-color="#16a6d8"/>'
+           '<stop offset="1" stop-color="#05203a"/></radialGradient></defs>'
+           '<circle cx="16" cy="16" r="13" fill="url(#g)"/></svg>')
+    return Response(content=svg, media_type="image/svg+xml")
+
+
 @app.get("/api/status")
 def api_status() -> dict:
     v: Vision = state["vision"]

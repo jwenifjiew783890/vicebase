@@ -332,9 +332,9 @@ MUTATIONS = [
      "            for row in self.store.search_turns(user_text,"),
 
     ("orchestrator: invented memories allowed through", "vision/core/orchestrator.py",
-     "        elif route.memory_query and res.evidence == 0 \\\n"
+     "        elif route.memory_query and res.evidence == 0 and not local_history \\\n"
      "                and MEMORY_CLAIM.search(res.text):",
-     "        elif False and res.evidence == 0 \\\n"
+     "        elif False and res.evidence == 0 and not local_history \\\n"
      "                and MEMORY_CLAIM.search(res.text):"),
 
     ("memory: turn search leaks the current session", "vision/core/memory.py",

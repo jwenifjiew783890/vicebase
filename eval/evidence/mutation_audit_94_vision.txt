@@ -1,0 +1,197 @@
+baseline: 0 failures
+
+  KILLED  trust: retrieved content may write memory
+          (1 tests fail, e.g. test_retrieved_content_cannot_write_memory)
+  KILLED  trust: retrieved content may emit actions
+          (2 tests fail, e.g. test_injection_via_retrieved_origin_denied)
+  KILLED  gateway: taint check removed
+          (4 tests fail, e.g. test_gateway_denies_them_anyway)
+  KILLED  gateway: voice rule removed
+          (5 tests fail, e.g. test_negation_loss_cannot_cause_an_irreversible_action)
+  KILLED  gateway: schema validation removed
+          (2 tests fail, e.g. test_missing_required_arg_denied)
+  KILLED  gateway: app allowlist removed
+          (2 tests fail, e.g. test_unknown_app_denied)
+  KILLED  gateway: shell allowlist removed
+          (2 tests fail, e.g. test_shell_outside_allowlist_denied_not_confirmed)
+  KILLED  gateway: typed confirmation accepts anything
+          (1 tests fail, e.g. test_wrong_typed_phrase_denied)
+  KILLED  gateway: unimplemented tools return empty not error
+          (1 tests fail, e.g. test_unwired_tool_is_exec_err_not_empty)
+  KILLED  learning: evidence threshold ignored
+          (1 tests fail, e.g. test_single_session_cannot_manufacture_threshold)
+  KILLED  learning: one session can supply all evidence
+          (1 tests fail, e.g. test_single_session_cannot_manufacture_threshold)
+  KILLED  learning: sycophancy tripwire removed
+          (3 tests fail, e.g. test_sycophantic_candidate_rejected)
+  KILLED  memory: protected rules can be archived
+          (1 tests fail, e.g. test_protected_rule_cannot_be_archived)
+  KILLED  memory: protected rules decay
+          (1 tests fail, e.g. test_decay_never_touches_protected)
+  KILLED  memory: rule cap not enforced
+          (1 tests fail, e.g. test_cap_never_evicts_protected)
+  KILLED  memory: facts overwritten instead of superseded
+          (5 tests fail, e.g. test_retire_then_replace_in_one_turn)
+  KILLED  router: general-knowledge short-circuit removed
+          (1 tests fail, e.g. test_general_knowledge_answers_internally)
+  KILLED  router: volatile fires on self-statements
+          (2 tests fail, e.g. test_no_scenario_failures)
+  KILLED  router: injection gated on RRF score again
+          (2 tests fail, e.g. test_the_carry_is_what_supplied_the_evidence)
+  KILLED  llm: reasoning trace no longer stripped
+          (5 tests fail, e.g. test_case_insensitive)
+  KILLED  llm: empty response fallback removed
+          (3 tests fail, e.g. test_english_fallback_for_english_turn)
+  KILLED  orchestrator: learned brevity no longer enforced
+          (1 tests fail, e.g. test_orchestrator_trims_when_brevity_is_active)
+  KILLED  orchestrator: annotations reach the model
+          (1 tests fail, e.g. test_no_engineering_annotations_reach_the_model)
+  KILLED  signals: negation exclusions removed
+          (1 tests fail, e.g. test_negation_exclusions_prevent_false_corrections)
+  KILLED  web: results no longer tainted
+          (1 tests fail, e.g. test_results_are_tainted_with_the_host)
+  KILLED  web: search time budget removed
+          (1 tests fail, e.g. test_budget_stops_trying_further_providers)
+  KILLED  opencode: vague briefs are sent anyway
+          (6 tests fail, e.g. test_incomplete_delegation_is_not_acknowledged)
+  KILLED  opencode: dangling-reference check removed
+          (1 tests fail, e.g. test_dangling_reference_is_flagged)
+  KILLED  opencode: agent output no longer tainted
+          (1 tests fail, e.g. test_agent_output_is_tainted)
+  KILLED  orchestrator: post-hoc question strip removed
+          (2 tests fail, e.g. test_a_third_consecutive_question_never_reaches_the_user)
+  KILLED  orchestrator: restraint mangles pure questions
+          (1 tests fail, e.g. test_punctuation_only_remainder_is_rejected)
+  KILLED  router: lexical overlap gate removed
+          (2 tests fail, e.g. test_a_new_topic_does_not_inherit_it)
+  KILLED  router: overlap gate applied to strong hits too
+          (1 tests fail, e.g. test_strong_hit_is_injected)
+  KILLED  voice: endpointing ignores incomplete tails
+          (3 tests fail, e.g. test_code_switch_boundary_is_not_an_endpoint)
+  KILLED  voice: clause chunking disabled
+          (1 tests fail, e.g. test_splits_on_clause_boundaries)
+  KILLED  voice: barge-in does not clear pending speech
+          (1 tests fail, e.g. test_interruption_stops_the_remaining_chunks)
+  KILLED  voice: voice identity varies by language
+          (1 tests fail, e.g. test_one_voice_across_languages)
+  KILLED  router: retraction no longer detected
+          (6 tests fail, e.g. test_cancelling_still_happens_for_a_correction)
+  KILLED  orchestrator: retraction cancels nothing
+          (2 tests fail, e.g. test_a_retraction_cancels_a_pending_action)
+  KILLED  orchestrator: bare retraction goes back to the model
+          (1 tests fail, e.g. test_a_bare_retraction_never_reaches_the_model)
+  KILLED  router: explicit vault command ignored
+          (4 tests fail, e.g. test_denying_the_vault_after_searching_it_is_replaced)
+  KILLED  router: back-references may become web queries
+          (3 tests fail, e.g. test_a_statement_about_his_day_is_not_a_query)
+  KILLED  router: ack promised for an unstartable delegation
+          (2 tests fail, e.g. test_incomplete_delegation_is_not_acknowledged)
+  KILLED  signals: bare fillers count as English again
+          (2 tests fail, e.g. test_a_neutral_filler_inherits_the_conversation_language)
+  KILLED  orchestrator: web route dispatches nothing (F24 regression)
+          (6 tests fail, e.g. test_the_empty_directive_is_absent_when_evidence_exists)
+  KILLED  orchestrator: empty-retrieval directive removed
+          (3 tests fail, e.g. test_the_model_is_told_the_search_came_back_empty)
+  KILLED  orchestrator: fabricated source claims allowed through
+          (4 tests fail, e.g. test_a_source_claim_on_the_fast_path_is_caught_too)
+  KILLED  orchestrator: claimed-but-unrun actions allowed through
+          (8 tests fail, e.g. test_a_claim_followed_by_a_question_is_still_a_claim)
+  KILLED  orchestrator: the fabricated reply is what reaches memory
+          (1 tests fail, e.g. test_the_corrected_reply_is_what_reaches_memory)
+  KILLED  llm: planner accepts only arrays again (F26 regression)
+          (10 tests fail, e.g. test_flattened_args_are_lifted)
+  KILLED  llm: flattened planner args no longer lifted
+          (1 tests fail, e.g. test_flattened_args_are_lifted)
+  KILLED  opencode: only the first repo candidate is considered
+          (3 tests fail, e.g. test_delegation_uses_a_doing_ack_not_a_checking_one)
+  KILLED  orchestrator: pre-generation question restraint removed
+          (2 tests fail, e.g. test_a_statement_resets_the_run)
+  KILLED  orchestrator: question runs counted globally, not per session
+          (6 tests fail, e.g. test_a_third_consecutive_question_never_reaches_the_user)
+  KILLED  orchestrator: source claims allowed on the fast path
+          (3 tests fail, e.g. test_a_source_claim_on_the_fast_path_is_caught_too)
+  KILLED  router: explicit language orders ignored
+          (4 tests fail, e.g. test_a_later_order_replaces_the_earlier_one)
+  KILLED  orchestrator: a locked language does not stick
+          (1 tests fail, e.g. test_the_lock_survives_later_turns)
+  KILLED  signals: bare imperatives are English again
+          (2 tests fail, e.g. test_bare_imperatives_are_hindi)
+  KILLED  learning: an in-session style correction is ignored
+          (3 tests fail, e.g. test_a_brevity_correction_caps_the_next_reply)
+  KILLED  orchestrator: style corrections do not persist in the session
+          (3 tests fail, e.g. test_a_brevity_correction_caps_the_next_reply)
+  KILLED  router: memory questions may become web queries
+          (10 tests fail, e.g. test_first_person_past_questions_stay_local)
+  KILLED  orchestrator: memory questions search nothing
+          (1 tests fail, e.g. test_a_real_record_is_retrieved_and_the_claim_stands)
+  SKIP  orchestrator: invented memories allowed through
+        (anchor not found in vision/core/orchestrator.py)
+  KILLED  memory: turn search leaks the current session
+          (6 tests fail, e.g. test_a_fabricated_memory_about_yesterday_is_still_caught)
+  KILLED  orchestrator: a disobeyed language order is not retried
+          (1 tests fail, e.g. test_a_disobeyed_order_is_retried_once)
+  KILLED  orchestrator: every locked turn is retried, obeyed or not
+          (2 tests fail, e.g. test_an_obeyed_order_is_not_retried)
+  KILLED  signals: the brevity complaint form is not detected
+          (1 tests fail, e.g. test_a_brevity_correction_caps_the_next_reply)
+  KILLED  web: a contentless utterance is searched anyway
+          (3 tests fail, e.g. test_a_hollow_utterance_yields_no_query)
+  KILLED  orchestrator: an empty query is searched anyway
+          (1 tests fail, e.g. test_no_search_runs_when_there_is_nothing_to_search_for)
+  KILLED  orchestrator: a third consecutive question is not retried
+          (4 tests fail, e.g. test_a_third_consecutive_question_never_reaches_the_user)
+  KILLED  orchestrator: the question run is read after it is updated
+          (7 tests fail, e.g. test_a_third_consecutive_question_never_reaches_the_user)
+  KILLED  orchestrator: severed replies are left severed
+          (2 tests fail, e.g. test_a_severed_clause_is_closed_at_the_last_boundary)
+  KILLED  orchestrator: trailing connectives are not dropped
+          (1 tests fail, e.g. test_a_trailing_connective_is_dropped)
+  KILLED  extract: negations and questions become facts
+          (1 tests fail, e.g. test_nothing_is_extracted_from_any_of_these)
+  KILLED  extract: pronouns and placeholders become facts
+          (1 tests fail, e.g. test_nothing_is_extracted_from_any_of_these)
+  KILLED  extract: a schedule retraction closes the employer again (F46)
+          (2 tests fail, e.g. test_the_employer_survives_a_schedule_retraction_end_to_end)
+  KILLED  extract: a schedule can never be taken back (F46)
+          (2 tests fail, e.g. test_a_schedule_can_actually_be_taken_back_end_to_end)
+  KILLED  orchestrator: conversation facts are never stored
+          (10 tests fail, e.g. test_a_schedule_can_actually_be_taken_back_end_to_end)
+  KILLED  orchestrator: a repeated fact is written every time
+          (1 tests fail, e.g. test_repeating_a_fact_does_not_write_it_again)
+  KILLED  orchestrator: a fact cannot be taken back
+          (3 tests fail, e.g. test_a_negation_retires_the_stored_fact)
+  KILLED  memory: retiring a fact deletes its history
+          (5 tests fail, e.g. test_a_negation_retires_the_stored_fact)
+  KILLED  orchestrator: the hypothetical check runs over the whole reply again
+          (1 tests fail, e.g. test_the_clause_scoping_alone_catches_a_claim)
+  KILLED  orchestrator: roleplayed work is not a claim
+          (1 tests fail, e.g. test_roleplaying_the_work_counts_as_claiming_it)
+  KILLED  orchestrator: it may deny a source it just searched
+          (3 tests fail, e.g. test_denying_the_vault_after_searching_it_is_replaced)
+  KILLED  orchestrator: evidence is dropped after one turn
+          (2 tests fail, e.g. test_a_short_follow_up_keeps_the_evidence)
+  KILLED  orchestrator: context is carried to any later turn
+          (1 tests fail, e.g. test_it_does_not_reach_across_an_interleaved_session)
+  KILLED  orchestrator: context is carried without a shared word
+          (2 tests fail, e.g. test_a_new_topic_does_not_inherit_it)
+  KILLED  obsidian: user text passed raw to FTS MATCH
+          (1 tests fail, e.g. test_fts_query_is_built_not_passed_through)
+  KILLED  orchestrator: bare retraction is a word count again (L1/E05)
+          (1 tests fail, e.g. test_a_correction_carrying_content_is_not_bare)
+  KILLED  router: personal history reaches the web again (L2/E07)
+          (1 tests fail, e.g. test_first_person_past_questions_stay_local)
+  KILLED  router: an explicit request for detail is never seen (L3/E04)
+          (2 tests fail, e.g. test_an_explicit_request_for_more_is_detected)
+  KILLED  orchestrator: the detail directive never reaches the prompt (L3/E04)
+          (1 tests fail, e.g. test_the_directive_reaches_the_prompt_only_when_asked)
+  KILLED  orchestrator: facts render as rows again (L5/P01)
+          (1 tests fail, e.g. test_a_fact_reaches_the_prompt_as_a_sentence_not_a_row)
+  KILLED  orchestrator: rules addressed to the model again (L5/P01)
+          (1 tests fail, e.g. test_person_substitution_keeps_verb_agreement)
+
+======================================================================
+mutations killed by the suite : 93/94
+mutations that SURVIVED       : 1
+   - orchestrator: invented memories allowed through  (anchor missing)
+
+[exited with code 1]

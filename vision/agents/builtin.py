@@ -361,3 +361,4 @@ class PlannerAgent(BaseAgent):
 from . import browser  # noqa: E402,F401
 from . import crew  # noqa: E402,F401
 from . import system  # noqa: E402,F401
+from . import comms  # noqa: E402,F401

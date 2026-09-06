@@ -70,6 +70,13 @@ _RULES: list[tuple[str, re.Pattern, str]] = [
     # doing safety filtering, which is the wrong layer -- routing decides
     # WHERE a request goes and the capability gateway decides whether it
     # may happen. A dangerous command must reach the thing that can say no.
+    ("whatsapp", re.compile(
+        r"\bwhats\s?app\b|\bwa message\b|\bwhatsapp (par|pe|karo|bhej)\b", re.I),
+     "WhatsApp"),
+    ("email", re.compile(
+        r"\b(email|e-mail|mail)\b.*\b(send|draft|write|to)\b"
+        r"|^\s*(vision[,\s]+)?(send|draft|write) (an? )?(email|mail)\b", re.I),
+     "email"),
     ("mcp", re.compile(
         r"\bmcp\b|\b(what|which) tools\b|\bconnected tools\b", re.I),
      "MCP tools"),

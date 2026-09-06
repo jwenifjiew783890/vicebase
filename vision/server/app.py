@@ -49,6 +49,25 @@ def _startup() -> None:
           f"tts={'yes' if state['tts'].available else 'NO'}")
 
 
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    """Close the store so WAL is checkpointed into the database file.
+
+    Without this the process exits with everything committed but still in
+    the write-ahead log. SQLite recovers that on the next open, so nothing
+    is lost -- until someone copies or deletes vision.db without its -wal
+    sidecar, at which point the recent history silently is. Closing makes
+    the single file self-contained, which is what a user backing up their
+    memory will assume.
+    """
+    v = state.get("vision")
+    if v is not None:
+        try:
+            v.store.close()
+        except Exception:
+            pass
+
+
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
     return (WEB / "index.html").read_text(encoding="utf-8")

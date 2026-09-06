@@ -125,12 +125,24 @@ class MemoryAgent(BaseAgent):
 
         rows = self.step("memory.search", task,
                          lambda: ctx.store.search_turns(task, limit=5), ctx) or []
-        episodes = self.step("memory.episodes", "recent notes",
-                             lambda: [r["summary"] for r in
-                                      ctx.store.recent_episodes(limit=20)
-                                      if any(w in r["summary"].lower()
-                                             for w in task.lower().split()
-                                             if len(w) > 3)], ctx) or []
+        # A general "what do you remember about me" shares no content word
+        # with "my thesis deadline is 21 November", so requiring overlap
+        # returned nothing while the notes sat right there. An open
+        # question gets the recent notes; a specific one gets the matching
+        # ones.
+        general = bool(re.search(
+            r"\b(remember|know) about me\b|\bwhat do you (remember|know)\b"
+            r"|\bmere baare mein\b", task, re.IGNORECASE))
+        terms = [w for w in task.lower().split() if len(w) > 3]
+
+        def _episodes():
+            rows = ctx.store.recent_episodes(limit=20)
+            if general:
+                return [r["summary"] for r in rows]
+            return [r["summary"] for r in rows
+                    if any(w in r["summary"].lower() for w in terms)]
+
+        episodes = self.step("memory.episodes", "recent notes", _episodes, ctx) or []
         facts = self.step("memory.facts", "current facts",
                           lambda: list(ctx.store.db.execute(
                               "SELECT subject,predicate,object FROM facts "

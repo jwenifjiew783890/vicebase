@@ -166,6 +166,10 @@ def main() -> int:
     check("R. full voice loop TTS->STT round trip", overlap >= 6,
           f"{overlap} of {len(text.split())} words recovered")
 
+    # ---- persistence across a restart is checked by the caller ----
+    # (see eval/e2e/restart_memory.sh; it stops the server, starts a new
+    # process and asks again, which is the only way to test this honestly)
+
     passed = sum(1 for _, ok, _ in results if ok)
     print(f"\n{'='*66}\n  {passed}/{len(results)} end-to-end checks passed\n{'='*66}")
     for name, ok, _ in results:

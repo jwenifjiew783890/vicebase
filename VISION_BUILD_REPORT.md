@@ -79,12 +79,12 @@ python eval/e2e/browser_ui.py               # 12 checks in real Chromium
 
 | Suite | Result |
 |---|---|
-| Unit tests | **405 passed**, 3 skipped |
+| Unit tests | **409 passed**, 3 skipped |
 | Frozen scenarios | **183 / 183** |
 | End-to-end, live server | **18 / 18** |
 | Capabilities (MCP, browser, crew, jobs) | **14 / 14** |
 | Browser, real Chromium | **12 / 12** |
-| Mutation audit | **94 / 94** (93 in one pass + 1 after an anchor repair — §7) |
+| Mutation audit | **94 / 94 in one clean pass**, 0 survivors — §7 |
 
 ### The end-to-end run, verbatim
 
@@ -146,26 +146,16 @@ PASS  R. TTS->STT round trip       11 of 14 words recovered
 
 ### §7. The mutation audit
 
-**93 killed in one pass, 1 survivor, and the survivor was an anchor
-drift.** The audit reported:
+**94 applied, 94 killed, 0 survived, in one uninterrupted pass** against
+the committed code. Raw output at
+`eval/evidence/mutation_audit_94_final.txt`.
 
-```
-mutations killed by the suite : 93/94
-mutations that SURVIVED       : 1
-   - orchestrator: invented memories allowed through  (anchor missing)
-```
-
-The find-string no longer matched because this session changed that exact
-line while fixing the false-denial bug. **An audit whose anchor has drifted
-reports SURVIVED and is right to** — it could not run the experiment, and
-that is a different thing from a defence with no test. The anchor was
-repaired and the mutation re-run: **killed**, by
-`test_a_fabricated_memory_about_yesterday_is_still_caught`, one of the
-regression tests written earlier this session.
-
-So the honest figure is **94/94 as a composite**: 93 from the full pass
-plus 1 verified separately after the repair. Not one clean run of 94, and
-said as what it is.
+An earlier run this session reported 93/94 with one survivor, and the
+survivor was an **anchor drift** rather than a defence gap: a fix changed
+the exact line a mutation targets, so the audit could not run that
+experiment. An audit whose anchor has drifted reports SURVIVED and is right
+to. The anchor was repaired, and the clean 94/94 above is the pass that
+followed.
 
 ---
 

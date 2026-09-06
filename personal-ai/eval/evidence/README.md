@@ -11,6 +11,12 @@ same idea for the runs that check the *tests* rather than the model.
   to start on a dirty tree, and leaves a `.mutation-in-flight` breadcrumb
   naming the file it is currently rewriting).
 
+- `mutation_audit_88_post_cleanup.txt` — the same 88 mutations re-run
+  after the GTA VI site was removed from the repository (commit `db64c8b`).
+  **88 applied, 88 killed, 0 survived.** Identical to the pre-cleanup run,
+  which is the evidence that removing the site changed nothing about the
+  runtime. See `../../../CLEANUP_REPORT.md`.
+
 A line reading `SURVIVED` in any of these is a defence with no test that
 depends on it, or an anchor that has drifted and could not run the
 experiment. Both are defects. The audit prints which.

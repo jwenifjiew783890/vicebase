@@ -1,0 +1,32 @@
+# Vision -- the personal AI assistant.
+#
+# The 397 tests, the scenario harness and the mutation audit need NOTHING
+# from this file: they are Python standard library only, deliberately, so
+# the checks that prove the system works cannot be broken by an install.
+#
+#   python -m unittest discover -s tests -t .
+#   python eval/harness.py
+#   python eval/mutation_audit.py
+
+# --- the application -------------------------------------------------------
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9        # multipart upload for the /api/stt endpoint
+
+# --- the local model -------------------------------------------------------
+# Imported lazily in vision/core/llm.py, so the app starts without it and
+# says so rather than refusing to launch.
+llama-cpp-python>=0.3.0
+
+# --- speech ----------------------------------------------------------------
+# STT: multilingual, which is what Hinglish needs -- a monolingual
+# recogniser forces a choice the speaker did not make.
+faster-whisper>=1.0
+# TTS: ~20x realtime on CPU, one self-contained ONNX file per voice.
+piper-tts>=1.2
+
+# --- end-to-end tests ------------------------------------------------------
+websockets>=12.0               # eval/e2e/live_app.py talks to the real server
+
+# Optional, for eval/asr_test.py only -- a harness that has never been run.
+# soundfile>=0.12

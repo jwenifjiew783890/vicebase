@@ -25,6 +25,12 @@ faster-whisper>=1.0
 # TTS: ~20x realtime on CPU, one self-contained ONNX file per voice.
 piper-tts>=1.2
 
+# --- browser automation ----------------------------------------------------
+# The browser agent drives a real Chromium. The Python package is small;
+# the browser itself is fetched separately by `playwright install chromium`
+# (~150 MB), which the installers do for you.
+playwright>=1.40
+
 # --- end-to-end tests ------------------------------------------------------
 websockets>=12.0               # eval/e2e/live_app.py talks to the real server
 

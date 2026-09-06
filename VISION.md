@@ -4,8 +4,19 @@ A personal AI assistant that runs on your machine. One application: you
 talk to it, it talks back, it remembers you, it reads your notes, it
 searches the web, and it delegates real work to specialist agents.
 
+**Install it once:**
+
+| | |
+|---|---|
+| Windows | double-click `install\Install-Vision.bat` |
+| macOS / Linux | `bash install/install.sh` |
+
+That creates a private Python environment, installs everything, downloads
+the models (~2.9 GB, resumable) and puts a **Vision** shortcut on your
+Desktop and Start Menu. Then:
+
 ```
-python -m vision            # then open http://127.0.0.1:8765
+python -m vision            # or the Vision shortcut
 python -m vision --check    # what is available, what is missing
 ```
 
@@ -115,6 +126,7 @@ tools and the same failure modes are one agent.
 | Agent | Does | Gated |
 |---|---|---|
 | `web` | live search and page reads | |
+| `browser` | drives a **real Chromium**: loads JS-rendered pages, extracts, screenshots | ✓ |
 | `knowledge` | searches your Obsidian vault | |
 | `memory` | reads and writes what Vision knows about you | |
 | `files` | finds, reads and writes files | ✓ |
@@ -122,6 +134,9 @@ tools and the same failure modes are one agent.
 | `coding` | writes a script **and runs it** | ✓ |
 | `research` | plans sub-queries, searches each, synthesises | |
 | `planner` | breaks a goal into ordered steps | |
+| `crew` | plans, **delegates to the others**, verifies what ran | |
+| `desktop` | screenshots, launches apps — needs a graphical session | ✓ |
+| `mcp` | calls tools from connected MCP servers | ✓ |
 
 **An agent cannot claim what it did not do.** `AgentResult.ok` is computed
 from executed steps, never asserted: an agent that ran nothing did not
@@ -149,6 +164,34 @@ class CalendarAgent(BaseAgent):
 Then add a routing rule to `vision/dispatch.py`. Routing is deterministic
 on purpose: the model is not asked which agent to use, because that is
 control flow.
+
+---
+
+## Plugins (MCP)
+
+Vision speaks the Model Context Protocol, so anything with an MCP server
+becomes a tool it can use. Connect one from **Plugins** in the UI, or:
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/mcp/connect \
+  -F name=filesystem \
+  -F "command=npx -y @modelcontextprotocol/server-filesystem /path/to/dir"
+```
+
+The tools appear immediately — ask *"what tools do you have"* and Vision
+lists them; name one and it runs it. MCP tools are **not** more trusted for
+having arrived over a protocol: they cross the same capability gateway as
+everything else.
+
+## Long-running tasks
+
+Work that outlasts a chat round-trip (`crew`, `research`, `browser`,
+`coding`) becomes a **job**: an id, a live log, a result, and a cancel
+button, all persisted. Close the tab and come back — the **Tasks** panel
+shows what happened. Cancellation is cooperative and says so: a job stops
+between steps, not mid-network-call. Jobs left "running" by a process that
+died are marked interrupted on the next start, because a row still claiming
+to run is a lie.
 
 ---
 
@@ -233,7 +276,9 @@ including what is **not** verified. Briefly:
 python -m unittest discover -s tests -t .   # 397 unit tests
 python eval/harness.py                      # 183 frozen scenario checks
 python eval/mutation_audit.py               # 94 mutations
-python eval/e2e/live_app.py                 # 18 checks against the running server
+python eval/e2e/live_app.py                  # 18 checks vs the running server
+python eval/e2e/capabilities.py              # 14 checks: MCP, browser, crew, jobs
+python eval/e2e/browser_ui.py                # 12 checks in real Chromium
 ```
 
 The end-to-end suite is the one that matters: it talks to the real HTTP and

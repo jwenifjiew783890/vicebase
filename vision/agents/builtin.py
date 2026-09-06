@@ -215,7 +215,14 @@ class ShellAgent(BaseAgent):
                 "Allowed prefixes: " + ", ".join(sorted(SHELL_ALLOWLIST)),
                 needs_confirmation={"action": "shell.run", "command": cmd,
                                     "reason": "not on the allow-list"})
-        cwd = os.environ.get("VISION_WORKSPACE", str(Path.cwd()))
+        # The user's workspace, never Vision's install directory. Found by
+        # running the INSTALLED copy: cwd there is ~/.local/share/vision,
+        # so `run git status` reported "not a git repository" -- correct,
+        # and useless. Commands belong where the user's work is.
+        from .. import config
+        default = Path.home() / "vision-workspace"
+        cwd = os.environ.get("VISION_WORKSPACE", str(default))
+        Path(cwd).mkdir(parents=True, exist_ok=True)
 
         def _run():
             p = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True,

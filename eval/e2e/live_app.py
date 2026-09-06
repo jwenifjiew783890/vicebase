@@ -122,7 +122,11 @@ def main() -> int:
               r.get("agent") == "research" and bool(jid) and len(steps) > 0,
               f"job={jid} status={job.get('status')} steps={steps}")
 
-        r = say(ws, "run git status")
+        # `pwd`, not `git status`: the shell agent runs in the user's
+        # workspace, which is not a git repository, and a check that only
+        # passes when Vision happens to be launched from inside a checkout
+        # is testing the launch directory rather than the agent.
+        r = say(ws, "run pwd")
         ar = r.get("agent_result") or {}
         check("K. shell agent executes for real", ar.get("ok") is True,
               f"steps={[s['action'] for s in ar.get('steps', [])]} "

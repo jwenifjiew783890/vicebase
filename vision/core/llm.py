@@ -215,7 +215,7 @@ def _strip_fences(text: str) -> str:
 
 
 def _json_objects(text: str) -> list[dict]:
-    """Every top-level {...} in the text that parses as a JSON object.
+    r"""Every top-level {...} in the text that parses as a JSON object.
 
     A brace counter rather than a regex: `args` is itself an object, so
     `\{.*?\}` stops at the wrong brace and `\{.*\}` swallows several
